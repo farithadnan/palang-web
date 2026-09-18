@@ -283,6 +283,62 @@ input[type="color"] {
 .pagethumb.active { border-color: var(--color-accent); }
 .pagethumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
+/* ---------- gallery ---------- */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin: 0.8rem 0 1.2rem;
+}
+@media (min-width: 480px) {
+  .gallery { grid-template-columns: repeat(4, 1fr); }
+}
+.gitem {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+.gitem.selected { border-color: var(--color-accent); }
+.gthumb {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: #eeeeee;
+  cursor: pointer;
+  display: block;
+}
+.gthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gchips { position: absolute; left: 0.3rem; bottom: 0.3rem; display: flex; gap: 0.25rem; }
+.gcheck {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 6px;
+  padding: 0.15rem;
+}
+.gcheck input { width: 1.2rem; height: 1.2rem; margin: 0; }
+
+/* ---------- gallery action bar + editor ---------- */
+.gbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.4rem 0 0.6rem;
+}
+.gbar-actions { display: flex; gap: 0.5rem; }
+.editor {
+  border-top: 1px solid var(--color-line);
+  margin-top: 0.8rem;
+  padding-top: 1rem;
+  scroll-margin-top: 5rem;
+}
+
 /* ---------- misc ---------- */
 .divider { border-top: 1px solid var(--color-line); margin: 1.4rem 0; }
 .actionrow { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.5rem; }

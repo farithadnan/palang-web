@@ -61,6 +61,14 @@ export function removeImage(id) {
   }
 }
 
+export function removeImages(ids) {
+  const doomed = new Set(ids);
+  for (const im of app.images) {
+    if (doomed.has(im.id)) URL.revokeObjectURL(im.url);
+  }
+  app.images = app.images.filter((im) => !doomed.has(im.id));
+}
+
 export function revertImage(id) {
   updateImage(id, { crop: null, enhance: false });
 }
@@ -202,5 +210,5 @@ function downloadBlob(blob, filename) {
 
 /* Test/verification hook: lets headless checks read and drive the store. */
 if (typeof window !== "undefined") {
-  window.__palang = { app, updateImage, addImages, generate };
+  window.__palang = { app, updateImage, addImages, removeImages, generate };
 }

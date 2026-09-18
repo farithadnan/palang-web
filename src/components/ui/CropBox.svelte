@@ -3,7 +3,7 @@
    *  Presentational — emits crop fractions {l,t,r,b} (0..1) only on pointer release. */
   import { clamp, round2 } from "../../lib/domain.js";
 
-  let { url, crop = null, onChange } = $props();
+  let { url, crop = null, onChange, filter = "none" } = $props();
 
   let wrap;
   let box = $state(null); // displayed px {x,y,w,h}; null = full image
@@ -125,6 +125,7 @@
     src={url}
     alt=""
     draggable="false"
+    style="filter:{filter}"
     onload={initFromCrop}
     onpointerdown={(e) => e.preventDefault()}
   />
