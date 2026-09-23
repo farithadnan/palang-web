@@ -25,7 +25,13 @@
   );
 
   const basketItems = $derived(
-    app.previewFiles.map((f, i) => ({ id: "pf-" + i, name: f.name, icon: f.type?.startsWith("image/") ? "convert" : "file" }))
+    app.previewFiles.map((f, i) => ({
+      id: "pf-" + i,
+      name: f.name,
+      // Images shown instantly get a real thumbnail from their object URL.
+      url: f.type?.startsWith("image/") && app.preview?.client ? app.preview.pages[i]?.url : undefined,
+      icon: f.type?.startsWith("image/") ? "convert" : "file",
+    }))
   );
 
   // After ~5s of rendering, reassure the user the app is still working.
@@ -58,7 +64,6 @@
     sub="PDF, or images (converted to PDF first) · pages appear below for positioning"
     icon="palang"
     items={basketItems}
-    removable
     onRemove={(id) => removePreviewFile(Number(id.replace("pf-", "")))}
     onPick={pickPreviewFiles}
   />

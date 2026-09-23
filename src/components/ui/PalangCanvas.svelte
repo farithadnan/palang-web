@@ -19,7 +19,7 @@
   let box = $state(null); // points; lines band keeps x/y only
   let mode = $state(null); // null | "move" | corners (region) | "midb" (band height)
   let selected = $state(true);
-  let sx = 0, sy = 0, bx = 0, by = 0, bw = 0, bh = 0, sf0 = 18;
+  let sx = 0, sy = 0, bx = 0, by = 0, bw = 0, bh = 0, sf0 = 18, rotBase = 0;
   let pointers = new Map(); // active background touches (pinch zoom)
 
   const region = $derived(spec.mode === "region");
@@ -161,6 +161,16 @@
 
   function drag(e) {
     if (!mode || !box || !scale) return;
+
+    if (mode === "rotate") {
+      const cx = px.x + px.w / 2;
+      const cy = px.y + px.h / 2;
+      let deg = ((Math.atan2(e.clientY - cy, e.clientX - cx) - rotBase) * 180) / Math.PI;
+      deg = ((deg % 360) + 360) % 360;
+      if (Math.abs(deg - (spec.rotationDeg ?? 0)) > 0.2) onChange?.({ rotationDeg: round1(deg) });
+      return;
+    }
+
     const dx = (e.clientX - sx) / scale;
     const dy = (e.clientY - sy) / scale;
     const b = { ...box };
@@ -200,9 +210,30 @@
     if (ov && mode) ov.scrollIntoView({ block: "nearest", inline: "nearest" });
   }
 
+  function beginRotate(e) {
+    if (!box || !armed) return;
+    const cx = px.x + px.w / 2;
+    const cy = px.y + px.h / 2;
+    rotBase = Math.atan2(e.clientY - cy, e.clientX - cx) - ((spec.rotationDeg ?? 0) * Math.PI) / 180;
+    mode = "rotate";
+    selected = true;
+    wrap.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
   function release(e) {
-    if (!mode || !box) return;
-    mode = null;
+    if (!mode) return;
+    if (mode === "rotate") {
+      mode = null;
+      try {
+        wrap.releasePointerCapture(e.pointerId);
+      } catch {
+        /* pointer already released */
+      }
+      return;
+    }
+    if (!box) return;
     try {
       wrap.releasePointerCapture(e.pointerId);
     } catch {
@@ -272,6 +303,8 @@
       ? { x: Math.max(0, (widthPt - lineLenPt) / 2), y: Math.max(0, (heightPt - blockHPt) / 2) }
       : defaultBox();
     onChange?.({ topPt: null, leftPt: null });
+    // Un-scroll the frame so the recentred marking is actually in view.
+    if (frame) frame.scrollTo({ top: 0, left: 0 });
   }
 
   // Keep the canvas box in sync when geometry is edited in the number fields
@@ -362,6 +395,7 @@
               <div class="handle h-midb" role="button" tabindex="-1" aria-label="Resize marking height" onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>
             {/if}
             {#if showHandles && lines}
+              <div class="rotate-handle" role="button" tabindex="-1" aria-label="Rotate the marking" onpointerdown={(e) => { e.preventDefault(); e.stopPropagation(); beginRotate(e); }}></div>
               <div class="handle h-se" role="button" tabindex="-1" aria-label="Scale the marking" onpointerdown={(e) => { e.preventDefault(); begin(e, "scale"); }}></div>
             {/if}
             {#if showHandles && region}
@@ -408,10 +442,7 @@
   </div>
 
   <div class="canvas-zoom">
-    <span class="caption">Zoom</span>
-    <button type="button" class="btn btn-sm" aria-label="Zoom out" onclick={() => zoomBy(1 / 1.25)}>−</button>
     <span class="caption">{Math.round(zoom * 100)}%</span>
-    <button type="button" class="btn btn-sm" aria-label="Zoom in" onclick={() => zoomBy(1.25)}>+</button>
     <button type="button" class="btn btn-sm" aria-label="Reset marking position to the middle" onclick={centerReset}>
       Reset position
     </button>

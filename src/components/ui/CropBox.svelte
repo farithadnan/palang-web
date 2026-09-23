@@ -148,6 +148,10 @@
     onpointerdown={(e) => e.preventDefault()}
   />
   {#if box}
+    <div class="crop-dim" style="top:0; left:0; width:{rect().width}px; height:{box.y}px"></div>
+    <div class="crop-dim" style="top:{box.y + box.h}px; left:0; width:{rect().width}px; height:max(0px,{rect().height - box.y - box.h}px)"></div>
+    <div class="crop-dim" style="top:{box.y}px; left:0; width:{box.x}px; height:{box.h}px"></div>
+    <div class="crop-dim" style="top:{box.y}px; left:{box.x + box.w}px; width:max(0px,{rect().width - box.x - box.w}px); height:{box.h}px"></div>
     <div
       class="overlay-box"
       style="left:{box.x}px; top:{box.y}px; width:{box.w}px; height:{box.h}px"

@@ -105,6 +105,7 @@ describe("buildPalangSpec", () => {
     spec.horiz = "right";
     spec.widthPt = 200;
     spec.heightPt = 30;
+    spec.text = ""; // empty purpose text means no label at all
     const out = buildPalangSpec(spec, true);
     expect(out.mode).toBe("region");
     expect(out.position.left_pt).toBe(395);

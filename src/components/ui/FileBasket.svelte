@@ -1,6 +1,7 @@
 <script>
   /** Generic file basket shared by Convert and Palang: empty dropzone ↔ gallery
-   *  of chosen files, per-file remove, add-more, optional bulk select. */
+   *  of chosen files with a dashed "add" tile, per-file remove, optional edit
+   *  icon, and an optional paper-aspect frame around thumbnails. */
   import Icon from "./Icon.svelte";
   import Dropzone from "./Dropzone.svelte";
 
@@ -11,13 +12,9 @@
     main = "Choose files",
     sub = "",
     icon = "upload",
-    items = [], // {id, url?, name, chips?, icon?}
-    selecting = false,
-    selected = [], // ids
-    onToggleSelect,
-    onExitSelect,
-    onDeleteSelected,
-    removable = false,
+    items = [], // {id, url?, name, filter?, icon?}
+    editable = false,
+    frameAspect = "", // e.g. "595/842" — thumbnails shown in the chosen paper shape
     onRemove,
     onItem,
     onPick,
@@ -25,7 +22,6 @@
 
   let input;
   const count = $derived(items.length);
-  const editedOn = $derived(items.reduce((n, it) => n + (it.chips?.length ? 1 : 0), 0));
 </script>
 
 {#if !count}
@@ -34,32 +30,13 @@
   <div class="gbar">
     <span class="caption">
       <strong>{count}</strong> file{count > 1 ? "s" : ""}
-      {#if editedOn}<span> · <strong>{editedOn}</strong> edited</span>{/if}
-    </span>
-    <span class="gbar-actions">
-      {#if selecting && onDeleteSelected}
-        <button type="button" class="btn btn-danger" disabled={!selected.length} onclick={onDeleteSelected}>
-          Delete ({selected.length})
-        </button>
-        <button type="button" class="btn" onclick={onExitSelect}>Cancel</button>
-      {:else if onToggleSelect}
-        <button type="button" class="btn btn-sm" onclick={() => onToggleSelect()}>Select…</button>
-      {/if}
     </span>
   </div>
 
   <div class="gallery">
     {#each items as item (item.id)}
-      <div class="gitem" class:selected={selected.includes(item.id)}>
-        {#if selecting && onToggleSelect}
-          <label class="gcheck" aria-label={"Select " + item.name}>
-            <input
-              type="checkbox"
-              checked={selected.includes(item.id)}
-              onchange={() => onToggleSelect(item.id)}
-            />
-          </label>
-        {:else if removable && onRemove}
+      <div class="gitem">
+        {#if onRemove}
           <button
             type="button"
             class="gremove"
@@ -72,29 +49,41 @@
         <button
           type="button"
           class="gthumb"
-          onclick={() => (selecting ? onToggleSelect?.(item.id) : onItem?.(item.id))}
+          style={frameAspect ? "aspect-ratio:" + frameAspect : ""}
+          onclick={() => onItem?.(item.id)}
           aria-label={item.name}
         >
           {#if item.url}
-            <img src={item.url} alt={item.name} loading="lazy" />
+            <img
+              src={item.url}
+              alt={item.name}
+              style={(frameAspect ? "object-fit:contain;" : "") + (item.filter && item.filter !== "none" ? "filter:" + item.filter : "")}
+              loading="lazy"
+            />
           {:else}
             <span class="gfileicon"><Icon name={item.icon || "file"} size={26} /></span>
           {/if}
         </button>
-        {#if item.chips?.length}
-          <span class="gchips">
-            {#each item.chips as chip (chip)}
-              <span class="chip">{chip}</span>
-            {/each}
-          </span>
+        {#if editable && onItem}
+          <button
+            type="button"
+            class="gedit"
+            aria-label={"Edit " + item.name}
+            onclick={() => onItem(item.id)}
+          >
+            <Icon name="pencil" size={13} />
+          </button>
         {/if}
       </div>
     {/each}
+    {#if onPick}
+      <button type="button" class="gtile-add" aria-label="Add more files" onclick={() => input?.click()}>
+        <Icon name="plus" size={22} />
+        <span>Add</span>
+      </button>
+    {/if}
   </div>
 
-  <div class="actionrow">
-    <button type="button" class="btn btn-sm" onclick={() => input?.click()}>Add more</button>
-  </div>
   <input
     bind:this={input}
     class="hidden-input"

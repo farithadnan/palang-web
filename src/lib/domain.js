@@ -86,7 +86,7 @@ export function defaultSpec() {
     mode: "band",
     pages: "all",
     pagesCustom: "",
-    text: "",
+    text: "UNTUK KEGUNAAN BANK SAHAJA", // visible immediately: users see where the marking sits
     second: "",
     ref: "",
     color: "#000000",

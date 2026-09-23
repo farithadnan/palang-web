@@ -8,7 +8,7 @@
   import FileBasket from "./ui/FileBasket.svelte";
   import CropBox from "./ui/CropBox.svelte";
   import Modal from "./ui/Modal.svelte";
-  import { PAGE_SIZES } from "../lib/domain.js";
+  import { PAGE_DIMS, PAGE_SIZES } from "../lib/domain.js";
   import {
     app,
     addImages,
@@ -26,12 +26,14 @@
 
   const editingImage = $derived(app.images.find((im) => im.id === editing) ?? null);
 
+  const ENHANCE_FILTER = "contrast(1.08) saturate(1.15)"; // matches the modal preview
+
   const galleryItems = $derived(
     app.images.map((im) => ({
       id: im.id,
       url: im.url,
       name: im.file.name,
-      chips: [...(im.crop ? ["Cropped"] : []), ...(im.enhance ? ["Enhanced"] : [])],
+      filter: im.enhance ? ENHANCE_FILTER : "none",
     }))
   );
 
@@ -73,13 +75,14 @@
     sub="JPG, PNG, WEBP, BMP, TIFF · tap any photo to crop or enhance it"
     icon="convert"
     items={galleryItems}
-    removable
+    editable
+    frameAspect={app.pageSize !== "fit" ? PAGE_DIMS[app.pageSize]?.w + "/" + PAGE_DIMS[app.pageSize]?.h : ""}
     onRemove={removeImage}
     onItem={(id) => (editing = id)}
     onPick={addImages}
   />
 
-  <Field label="Paper size">
+  <Field label="Paper size" hint={app.pageSize === "fit" ? "Each photo becomes a full page at its own size." : "Each photo becomes one page in this size — the thumbnails show the proportion."}>
     <Select id="page-size" value={app.pageSize} options={PAGE_SIZES} onChange={(v) => (app.pageSize = v)} />
   </Field>
 

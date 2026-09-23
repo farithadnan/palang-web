@@ -23,21 +23,3 @@
 <Field label="Colour" hint="Used for the lines and the text — nothing is covered.">
   <input type="color" value={spec.color} oninput={(e) => patch({ color: e.currentTarget.value })} />
 </Field>
-
-<Field label="Rotation">
-  <div class="row">
-    <input
-      type="number"
-      min="-360"
-      max="360"
-      step="5"
-      value={spec.rotationDeg ?? 0}
-      oninput={(e) => {
-        const v = Number(e.currentTarget.value);
-        if (Number.isFinite(v)) patch({ rotationDeg: v });
-      }}
-    />
-    <span class="caption">degrees</span>
-  </div>
-  <p class="hint">Tilt the marking, e.g. 45° for a diagonal bar. Drag the bottom-right handle on the page to stretch it instead.</p>
-</Field>
