@@ -19,17 +19,28 @@ describe("pagesValue", () => {
 });
 
 describe("buildPalangSpec", () => {
-  it("builds a centred band with a labelled template", () => {
-    const spec = defaultSpec();
+  it("builds a centred lines band by default (transparent, text-coloured)", () => {
+    const spec = defaultSpec(); // style: "lines"
     spec.text = "UNTUK KEGUNAAN BANK SAHAJA";
-    spec.opacity = "see-through";
     const out = buildPalangSpec(spec, true);
     expect(out.mode).toBe("band");
+    expect(out.band_style).toBe("lines");
     expect(out.pages).toBe("all");
     expect(out.position.anchor).toBe("center");
     expect(out.position.top_pt).toBeUndefined();
-    expect(out.opacity).toBe(0.6);
+    expect(out.opacity).toBe(1.0);
     expect(out.label.text).toBe("UNTUK KEGUNAAN BANK SAHAJA");
+    // Lines style is monochrome: text shares the bar colour.
+    expect(out.label.color).toBe(spec.color);
+  });
+
+  it("builds a filled see-through band with white text", () => {
+    const spec = defaultSpec();
+    spec.style = "see-through";
+    spec.text = "UNTUK KEGUNAAN BANK SAHAJA";
+    const out = buildPalangSpec(spec, true);
+    expect(out.band_style).toBe("filled");
+    expect(out.opacity).toBe(0.6);
     expect(out.label.color).toBe("#FFFFFF");
   });
 
@@ -101,6 +112,7 @@ describe("presetSpecFromDoc", () => {
     expect(spec.text).toBe("UNTUK KEGUNAAN BANK SAHAJA");
     expect(spec.second).toBe("Dijana pada {date}");
     expect(spec.color).toBe("#003366");
-    expect(spec.opacity).toBe("see-through");
+    // No band_style in the preset: it renders with the new lines default.
+    expect(spec.style).toBe("lines");
   });
 });

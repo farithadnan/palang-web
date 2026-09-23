@@ -8,15 +8,23 @@
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
   import PresetsView from "./components/PresetsView.svelte";
-  import { app, generate } from "./lib/store.svelte.js";
+  import PrivacyView from "./components/PrivacyView.svelte";
+  import { app, generate, setConsent } from "./lib/store.svelte.js";
 
-  const TABS = [
-    { id: "convert", label: "Convert" },
-    { id: "palang", label: "Palang" },
-    { id: "merge", label: "Merge" },
-    { id: "presets", label: "Templates" },
-  ];
-  const HASH_TO_VIEW = { "": "convert", convert: "convert", palang: "palang", merge: "merge", presets: "presets" };
+    const TABS = [
+      { id: "convert", label: "Convert" },
+      { id: "palang", label: "Palang" },
+      { id: "merge", label: "Merge" },
+      { id: "presets", label: "Templates" },
+    ];
+    const HASH_TO_VIEW = {
+      "": "convert",
+      convert: "convert",
+      palang: "palang",
+      merge: "merge",
+      presets: "presets",
+      privacy: "privacy",
+    };
 
   function readHash() {
     const hash = (typeof location !== "undefined" ? location.hash : "").replace(/^#\/?/, "");
@@ -67,6 +75,22 @@
 <main>
   <Tabs items={TABS} value={view} onPick={(id) => (view = id)} variant="top" />
 
+  {#if view !== "privacy"}
+    {#if !app.consented}
+      <section class="consent">
+        <p>
+          <strong>Before you upload:</strong> your document is sent to this server, processed, and
+          deleted right after. It is not stored, logged or shared.{" "}
+          <button type="button" class="link" onclick={() => (view = "privacy")}>How we handle your files</button>
+        </p>
+        <label class="checkline">
+          <input type="checkbox" onchange={(e) => setConsent(e.currentTarget.checked)} />
+          <span>I understand and agree</span>
+        </label>
+      </section>
+    {/if}
+  {/if}
+
   {#if app.message}
     <Alert kind={app.message.kind}>{app.message.text}</Alert>
   {/if}
@@ -79,10 +103,16 @@
     <MergeView />
   {:else if view === "presets"}
     <PresetsView />
+  {:else if view === "privacy"}
+    <PrivacyView />
   {/if}
 
   <footer>
-    <p>Palang is open source (MIT). Programmers can also use the command line and the REST API directly.</p>
+    <p>
+      <button type="button" class="link" onclick={() => (view = "privacy")}>Privacy</button> ·
+      <a href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">Source (MIT)</a> ·
+      Palang is an open source tool — run it yourself via Docker if you'd rather nothing leave your device.
+    </p>
   </footer>
 </main>
 

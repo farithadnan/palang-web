@@ -11,8 +11,16 @@ export const BAND_THICKNESS = { thin: 32, normal: 48, thick: 72 };
 export const REGION_THICKNESS = { thin: 16, normal: 28, thick: 44 };
 export const REGION_WIDTH = { narrow: 120, normal: 180, wide: 260 };
 export const REGION_LEFT_PT = { left: 20, center: 207, right: 395 };
-export const OPACITY = { solid: 1.0, "see-through": 0.6 };
 export const FONT_SIZE = 18;
+
+/** Band rendering styles: lines = transparent, text with a line above+below;
+ *  solid / see-through = the classic filled bar at full / partial opacity. */
+export const BAND_STYLE_OPTIONS = [
+  { v: "lines", l: "Lines only (transparent, follows the text)" },
+  { v: "solid", l: "Filled bar, solid" },
+  { v: "see-through", l: "Filled bar, see-through" },
+];
+const FILLED_OPACITY = { solid: 1.0, "see-through": 0.6 };
 
 export function clamp(v, lo, hi) {
   return Math.min(hi, Math.max(lo, v));
@@ -66,7 +74,7 @@ export function defaultSpec() {
     second: "",
     ref: "",
     color: "#000000",
-    opacity: "solid",
+    style: "lines", // lines | solid | see-through
     topPt: null, // null = centred vertically
     leftPt: null, // null = centred horizontally (region)
     heightPt: 48,
@@ -87,7 +95,7 @@ export function presetDefaultSpec() {
     second: "",
     ref: "",
     color: "#000000",
-    opacity: "solid",
+    style: "lines",
     pages: "all",
     pagesCustom: "",
   };
@@ -98,15 +106,23 @@ export function presetDefaultSpec() {
  * anchored=true: position via anchors (templates); false: absolute points (canvas).
  */
 export function buildPalangSpec(spec, anchored = false) {
-  const opacity = OPACITY[spec.opacity] ?? 1.0;
-  const label = { text: (spec.text || "").trim(), color: "#FFFFFF", font_size: spec.fontSize || FONT_SIZE };
+  const style = spec.style || (spec.opacity || "lines");
+  const region = spec.mode === "region";
+  const opacity = region
+    ? FILLED_OPACITY[style] ?? 1.0
+    : style === "lines"
+      ? 1.0
+      : FILLED_OPACITY[style] ?? 1.0;
+  // Lines style is monochrome: text shares the bar colour (white would vanish
+  // on a transparent background). Filled bars keep white text.
+  const labelColor = !region && style === "lines" ? spec.color : "#FFFFFF";
+  const label = { text: (spec.text || "").trim(), color: labelColor, font_size: spec.fontSize || FONT_SIZE };
   const second = (spec.second || "").trim();
   const ref = (spec.ref || "").trim();
   if (second) label.second_line = second;
   if (ref) label.template_data = { ref: ref };
 
   const pages = pagesValue(spec.pages, spec.pagesCustom);
-  const region = spec.mode === "region";
 
   let position;
   if (anchored) {
@@ -121,6 +137,7 @@ export function buildPalangSpec(spec, anchored = false) {
   if (!region) {
     return {
       mode: "band",
+      band_style: style === "lines" ? "lines" : "filled",
       pages,
       position,
       height_pt: round1(spec.heightPt ?? BAND_THICKNESS.normal),
@@ -170,6 +187,13 @@ export function presetSpecFromDoc(doc) {
     spec.pagesCustom = Array.isArray(s.pages) ? s.pages.join(", ") : String(s.pages);
   }
   spec.color = s.color || "#000000";
-  spec.opacity = (s.opacity ?? 1) >= 0.9 ? "solid" : "see-through";
+  const isFilled = s.mode !== "region" && s.band_style === "filled";
+  if (isFilled) {
+    spec.style = (s.opacity ?? 1) >= 0.9 ? "solid" : "see-through";
+  } else if (s.mode === "region") {
+    spec.style = (s.opacity ?? 1) >= 0.9 ? "solid" : "see-through";
+  } else {
+    spec.style = "lines";
+  }
   return spec;
 }

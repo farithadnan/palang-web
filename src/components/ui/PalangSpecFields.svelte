@@ -15,6 +15,12 @@
     "A second line under the purpose text. {date} becomes today's date, {ref} becomes the reference.";
   const SECOND_PLACEHOLDER = "Dijana pada {date}";
 
+  const styleHint = $derived(
+    spec.style === "lines"
+      ? "The lines and the text use the colour you pick."
+      : "Text on the bar is always white."
+  );
+
   const POSITION_OPTIONS = [
     { v: "top", l: "Top of the page" },
     { v: "center", l: "Middle" },
@@ -36,8 +42,9 @@
     { v: "wide", l: "Wide" },
   ];
   const STYLE_OPTIONS = [
-    { v: "solid", l: "Solid (fully hides what's underneath)" },
-    { v: "see-through", l: "See-through (the page shows through)" },
+    { v: "lines", l: "Lines only (transparent, follows the text)" },
+    { v: "solid", l: "Filled bar, solid" },
+    { v: "see-through", l: "Filled bar, see-through" },
   ];
   const PAGES_OPTIONS = [
     { v: "all", l: "All pages" },
@@ -141,11 +148,15 @@
 {/if}
 
 <div class="row">
-  <Field label="Colour" hint="Text on the marking is always white.">
+  <Field label="Colour" hint={styleHint}>
     <input type="color" value={spec.color} oninput={(e) => patch({ color: e.currentTarget.value })} />
   </Field>
   <Field label="Style">
-    <Select value={spec.opacity} options={STYLE_OPTIONS} onChange={(v) => patch({ opacity: v })} />
+    <Select
+      value={spec.style}
+      options={spec.mode === "region" ? STYLE_OPTIONS.filter((o) => o.v !== "lines") : STYLE_OPTIONS}
+      onChange={(v) => patch({ style: v })}
+    />
   </Field>
 </div>
 

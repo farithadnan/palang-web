@@ -44,10 +44,12 @@
   </div>
   {#if app.preview.truncated}<p class="caption">Showing the first 20 pages.</p>{/if}
   {#if active}
-    {#key app.activePage + "-" + app.spec.mode}
+    {#key app.activePage + "-" + app.spec.mode + "-" + app.spec.style + "-" + (app.spec.text || "") + "-" + (app.spec.second || "")}
       <Field
         label={"Page " + active.page + " preview"}
-        hint="Drag the marking to position it; drag its handles to resize. Changes apply to the pages you choose below."
+        hint={app.spec.style === "lines"
+          ? "Transparent marking: the lines hug your text. Drag it to position it."
+          : "Drag the marking to position it; drag its handles to resize. Changes apply to the pages you choose below."}
       >
         <PalangCanvas
           url={pageUrl}

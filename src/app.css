@@ -252,6 +252,20 @@ input[type="color"] {
   box-sizing: border-box;
   cursor: move;
 }
+.overlay-box.overlay-lines {
+  background: transparent;
+  border: 0;
+  border-top: 3px solid var(--color-accent);
+  border-bottom: 3px solid var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.overlay-label {
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1;
+}
 .overlay-box .handle {
   position: absolute;
   width: 20px;
@@ -338,6 +352,30 @@ input[type="color"] {
   padding-top: 1rem;
   scroll-margin-top: 5rem;
 }
+
+/* ---------- consent + privacy ---------- */
+.consent {
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  margin: 0.8rem 0;
+  background: color-mix(in srgb, var(--color-muted) 6%, transparent);
+}
+.consent p { margin: 0 0 0.5rem; font-size: 0.95rem; }
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  min-height: 22px;
+}
+.prose { padding-left: 1.2rem; margin: 0.4rem 0 1rem; color: var(--color-ink); }
+.prose li { margin-bottom: 0.35rem; }
+.prose a { color: var(--color-accent); }
 
 /* ---------- misc ---------- */
 .divider { border-top: 1px solid var(--color-line); margin: 1.4rem 0; }

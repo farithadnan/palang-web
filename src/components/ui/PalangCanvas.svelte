@@ -1,8 +1,10 @@
 <script>
   /** Palang placement surface: drag/resize the marking over a rendered page.
    *  Presentational — emits absolute point geometry {topPt,leftPt,heightPt,widthPt}
-   *  only on pointer release. Initial geometry comes from `spec` on image load. */
-  import { clamp, round1 } from "../../lib/domain.js";
+   *  only on pointer release. Initial geometry comes from `spec` on image load.
+   *  Band style "lines" previews the transparent text-with-lines look, with the
+   *  line length measured from the actual text (like the server does). */
+  import { round1 } from "../../lib/domain.js";
 
   let { url, widthPt, heightPt, spec, onChange } = $props();
 
@@ -10,14 +12,40 @@
   let wrap;
   let scale = $state(0); // px per pt
   let box = $state(null); // current geometry in points {x,y,w,h}
-  let mode = $state(null); // null | "move" | "se" (region) | "midb" (band height)
+  let mode = $state(null); // null | "move" | "se" (region) | "midb" (filled band)
   let sx = 0, sy = 0, bx = 0, by = 0, bw = 0, bh = 0;
+
+  const region = $derived(spec.mode === "region");
+  const lines = $derived(spec.mode === "band" && spec.style === "lines");
+
+  const LINES_LINE_H = 24.3; // ~18pt text line height
+  const LINES_SECOND_H = 16.2;
+
+  function textWidthPt(text, sizePt) {
+    if (!text) return 0;
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = "bold " + Math.round(sizePt * scale) + "px system-ui, sans-serif";
+    return Math.max(0, ctx.measureText(text).width / scale);
+  }
+
+  function clampPt(v, lo, hi) {
+    return Math.min(hi, Math.max(lo, v));
+  }
 
   function init() {
     const w = img.clientWidth;
     if (!w || !widthPt) return;
     scale = w / widthPt;
-    const region = spec.mode === "region";
+    if (lines) {
+      const firstW = textWidthPt(spec.text || "", 18);
+      const secondW = textWidthPt(spec.second || "", 18);
+      const lineLen = Math.max(40, Math.max(firstW, secondW) + 14);
+      const hBlock = 6 + LINES_LINE_H + (spec.second ? 4 + LINES_SECOND_H : 0) + 6;
+      const x = (widthPt - lineLen) / 2;
+      const y = spec.topPt ?? (heightPt - hBlock) / 2;
+      box = { x, y, w: lineLen, h: hBlock };
+      return;
+    }
     const wpt = region ? spec.widthPt ?? 180 : widthPt;
     const hpt = spec.heightPt ?? (region ? 28 : 48);
     const x = region ? spec.leftPt ?? (widthPt - wpt) / 2 : 0;
@@ -43,16 +71,15 @@
     const dx = (e.clientX - sx) / scale;
     const dy = (e.clientY - sy) / scale;
     const b = { ...box };
-    const region = spec.mode === "region";
 
     if (mode === "move") {
-      if (region) b.x = clamp(bx + dx, 0, widthPt - bw);
-      b.y = clamp(by + dy, 0, heightPt - bh);
+      if (!lines && region) b.x = clampPt(bx + dx, 0, widthPt - bw);
+      b.y = clampPt(by + dy, 0, heightPt - bh);
     } else if (mode === "se" && region) {
-      b.w = clamp(bw + dx, 24, widthPt - bx);
-      b.h = clamp(bh + dy, 24, heightPt - by);
-    } else if (mode === "midb" || (mode === "se" && !region)) {
-      b.h = clamp(bh + dy, 12, heightPt - by);
+      b.w = clampPt(bw + dx, 24, widthPt - bx);
+      b.h = clampPt(bh + dy, 24, heightPt - by);
+    } else if (mode === "midb") {
+      b.h = clampPt(bh + dy, 12, heightPt - by);
     }
     box = b;
   }
@@ -60,15 +87,11 @@
   function release() {
     if (!mode || !box) return;
     mode = null;
-    const patch = {};
-    if (box.y >= 0.05) patch.topPt = round1(box.y);
-    else patch.topPt = 0;
-    if (spec.mode === "region") {
-      if (box.x >= 0.05) patch.leftPt = round1(box.x);
-      else patch.leftPt = 0;
+    const patch = { topPt: round1(box.y), heightPt: round1(box.h) };
+    if (region) {
+      patch.leftPt = round1(box.x);
       patch.widthPt = round1(box.w);
     }
-    patch.heightPt = round1(box.h);
     onChange?.(patch);
   }
 
@@ -76,6 +99,20 @@
     box
       ? { x: box.x * scale, y: box.y * scale, w: box.w * scale, h: box.h * scale }
       : { x: 0, y: 0, w: 0, h: 0 }
+  );
+  const boxStyle = $derived(
+    [
+      `left:${px.x}px`,
+      `top:${px.y}px`,
+      `width:${px.w}px`,
+      `height:${px.h}px`,
+      lines ? `border-color:${spec.color}` : "",
+    ]
+      .filter(Boolean)
+      .join("; ")
+  );
+  const labelStyle = $derived(
+    lines ? `color:${spec.color}; font-size:${Math.round(18 * scale)}px` : ""
   );
 </script>
 
@@ -99,13 +136,19 @@
   {#if box && scale > 0}
     <div
       class="overlay-box"
-      style="left:{px.x}px; top:{px.y}px; width:{px.w}px; height:{px.h}px"
+      class:overlay-lines={lines}
+      style={boxStyle}
       onpointerdown={(e) => begin(e, "move")}
       role="application"
-      aria-label="Palang marking"
+      aria-label={lines ? "Palang line marking" : "Palang marking"}
     >
-      <div class="handle h-midb" role="button" tabindex="-1" aria-label="Resize bar height" onpointerdown={(e) => { e.stopPropagation(); begin(e, "midb"); }}></div>
-      {#if spec.mode === "region"}
+      {#if lines}
+        <span class="overlay-label" style={labelStyle}>{spec.text || ""}</span>
+      {/if}
+      {#if !lines}
+        <div class="handle h-midb" role="button" tabindex="-1" aria-label="Resize bar height" onpointerdown={(e) => { e.stopPropagation(); begin(e, "midb"); }}></div>
+      {/if}
+      {#if region}
         <div class="handle h-se" role="button" tabindex="-1" aria-label="Resize section" onpointerdown={(e) => { e.stopPropagation(); begin(e, "se"); }}></div>
       {/if}
     </div>

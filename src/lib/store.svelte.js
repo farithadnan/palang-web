@@ -4,6 +4,16 @@
 import * as api from "./api.js";
 import { buildPalangSpec, defaultSpec, imageSettings } from "./domain.js";
 
+const CONSENT_KEY = "palang-consent-v1";
+
+function initialConsent() {
+  try {
+    return typeof localStorage !== "undefined" && localStorage.getItem(CONSENT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export const app = $state({
   view: "convert",
   pageSize: "A4",
@@ -17,7 +27,18 @@ export const app = $state({
   activePage: 0,
   busy: false,
   message: null, // { kind: "ok" | "error", text }
+  consented: initialConsent(),
 });
+
+export function setConsent(agreed) {
+  app.consented = agreed;
+  try {
+    if (agreed) localStorage.setItem(CONSENT_KEY, "1");
+    else localStorage.removeItem(CONSENT_KEY);
+  } catch {
+    /* storage unavailable: consent lasts for this session only */
+  }
+}
 
 export function setView(view) {
   app.view = view;
@@ -177,6 +198,10 @@ export async function generate() {
     flash("error", "Add at least one image or PDF first.");
     return;
   }
+  if (!app.consented) {
+    flash("error", "Tick the agreement first: your files are processed on this server and deleted right after.");
+    return;
+  }
   if (app.spec.armed && app.spec.mode === "band" && !(app.spec.text || "").trim()) {
     flash("error", "Add the purpose text for the bar.");
     return;
@@ -210,5 +235,5 @@ function downloadBlob(blob, filename) {
 
 /* Test/verification hook: lets headless checks read and drive the store. */
 if (typeof window !== "undefined") {
-  window.__palang = { app, updateImage, addImages, removeImages, generate };
+  window.__palang = { app, updateImage, addImages, removeImages, setConsent, generate };
 }
