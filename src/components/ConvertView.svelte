@@ -105,6 +105,37 @@
 
 {#if editingImage}
   <Modal title={editingImage.file.name} wide onClose={() => (editing = null)}>
+    {#if app.images.length > 1}
+      <div class="page-stepper">
+        <button
+          type="button"
+          class="btn btn-sm"
+          aria-label="Previous photo"
+          disabled={!app.images.findIndex((im) => im.id === editingImage.id)}
+          onclick={() => {
+            const idx = app.images.findIndex((im) => im.id === editingImage.id);
+            editing = app.images[Math.max(0, idx - 1)].id;
+          }}
+        >
+          ←
+        </button>
+        <span class="caption">
+          Photo {app.images.findIndex((im) => im.id === editingImage.id) + 1} of {app.images.length}
+        </span>
+        <button
+          type="button"
+          class="btn btn-sm"
+          aria-label="Next photo"
+          disabled={app.images.findIndex((im) => im.id === editingImage.id) >= app.images.length - 1}
+          onclick={() => {
+            const idx = app.images.findIndex((im) => im.id === editingImage.id);
+            editing = app.images[Math.min(app.images.length - 1, idx + 1)].id;
+          }}
+        >
+          →
+        </button>
+      </div>
+    {/if}
     {#key editingImage.id + "-" + (editingImage.crop ? JSON.stringify(editingImage.crop) : "none")}
       <Checkbox
         label="Improve quality"

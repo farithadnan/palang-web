@@ -265,8 +265,9 @@ input[type="color"] {
 }
 .checkline { display: flex; gap: 0.55rem; align-items: flex-start; font-weight: 500; font-size: 0.95rem; }
 .checkline input { margin-top: 0.25rem; width: 1.15rem; height: 1.15rem; accent-color: var(--accent); }
-.row { display: flex; gap: 0.85rem; flex-wrap: wrap; }
-.row .field { flex: 1 1 12rem; }
+.row { display: flex; gap: 0.9rem; flex-wrap: wrap; align-items: flex-end; }
+.row .field { flex: 1; min-width: 12rem; }
+.row .field:last-child { flex: 0 0 auto; min-width: 0; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .seg button {
   min-height: 44px;
@@ -353,7 +354,7 @@ input[type="color"] {
 .orderlist button:disabled { opacity: 0.35; cursor: default; }
 
 /* ---------- canvas surfaces ---------- */
-.canvas-zoom { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.55rem; }
+.canvas-zoom { display: flex; align-items: center; gap: 0.45rem; margin: 0.7rem 0 0.55rem; }
 .canvas-zoom .caption { margin: 0 0.4rem 0 0; }
 .canvas-frame {
   position: relative;
@@ -437,7 +438,6 @@ input[type="color"] {
 .overlay-box { z-index: 2; }
 
 /* ---------- page preview ---------- */
-.canvas-zoom { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.55rem; }
 
 /* ---------- modal ---------- */
 .modal-overlay {
