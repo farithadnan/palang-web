@@ -436,14 +436,7 @@ input[type="color"] {
 .overlay-box { z-index: 2; }
 
 /* ---------- page preview ---------- */
-.pagethumbs { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; margin: 0 0 0.8rem; }
-.pagethumb {
-  flex: none; width: 56px; height: 76px; padding: 0;
-  border: 2px solid var(--line); border-radius: 8px; overflow: hidden;
-  background: var(--panel); cursor: pointer;
-}
-.pagethumb.active { border-color: var(--accent); }
-.pagethumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.canvas-zoom { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.55rem; }
 
 /* ---------- modal ---------- */
 .modal-overlay {
@@ -458,8 +451,14 @@ input[type="color"] {
   border-radius: 16px; box-shadow: var(--shadow);
   padding: 1.2rem;
 }
+.modal.modal-wide { max-width: 1000px; }
 .modal h3 { margin: 0 0 0.2rem; font-size: 1.05rem; }
 .modal .modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1rem; }
+.modal .page-stepper {
+  display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+  margin-bottom: 0.2rem;
+}
+.modal .page-stepper .caption { min-width: 8rem; text-align: center; margin: 0; }
 
 /* ---------- toast ---------- */
 .toast {

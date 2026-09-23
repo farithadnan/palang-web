@@ -1,9 +1,8 @@
 <script>
-  /** Palang tab: shared file basket, rendered page preview with zoom,
-   *  drag-to-place marking (kept in view while dragging), marking fields,
-   *  and a bottom action bar. */
-  import Field from "./ui/Field.svelte";
+  /** Palang tab: file basket; tapping a file opens the positioning editor as an
+   *  expanded modal (same pattern as Convert's photo editor). */
   import FileBasket from "./ui/FileBasket.svelte";
+  import Modal from "./ui/Modal.svelte";
   import PalangCanvas from "./ui/PalangCanvas.svelte";
   import PalangSpecFields from "./ui/PalangSpecFields.svelte";
   import {
@@ -13,7 +12,6 @@
     setActivePage,
     updateSpec,
     loadPreview,
-    flash,
     generate,
   } from "../lib/store.svelte.js";
 
@@ -34,6 +32,8 @@
     }))
   );
 
+  let editing = $state(false);
+
   // After ~5s of rendering, reassure the user the app is still working.
   let slow = $state(false);
   $effect(() => {
@@ -53,7 +53,7 @@
 <div class="panel">
   <h2>Add a palang watermark</h2>
   <p class="desc">
-    Stamp a purpose bar across your document, or cover a section like an IC number or address. You get a new copy; the original file is untouched.
+    Stamp a purpose bar across your document — transparent, so nothing is covered. You get a new copy; the original file is untouched.
   </p>
 
   <FileBasket
@@ -61,61 +61,21 @@
     accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff"
     multiple
     main="Choose a document to stamp"
-    sub="PDF, or images (converted to PDF first) · pages appear below for positioning"
+    sub="PDF, or images · tap a file to position your marking"
     icon="palang"
     items={basketItems}
     onRemove={(id) => removePreviewFile(Number(id.replace("pf-", "")))}
+    onItem={() => (editing = true)}
     onPick={pickPreviewFiles}
   />
 
   {#if app.previewFiles.length}
     {#if app.previewLoading}
-      <div class="spinner" role="status" aria-label="Rendering pages"></div>
+      <div class="spinner" role="status" aria-label="Preparing document"></div>
       <p class="caption" style="text-align:center">
-        {slow ? "Still preparing your document… large files can take a little longer." : "Rendering pages…"}
+        {slow ? "Still preparing your document… large files can take a little longer." : "Preparing…"}
       </p>
-    {:else if app.preview}
-      <div class="pagethumbs" role="tablist" aria-label="Pages">
-        {#each app.preview.pages as page, i (page.page)}
-          <button
-            type="button"
-            class="pagethumb"
-            class:active={i === app.activePage}
-            role="tab"
-            aria-selected={i === app.activePage}
-            onclick={() => setActivePage(i)}
-            aria-label={"Page " + page.page}
-          >
-            <img
-              src={page.url ?? "data:" + (page.mime || "image/jpeg") + ";base64," + page.png_base64}
-              alt=""
-              loading="lazy"
-            />
-          </button>
-        {/each}
-      </div>
-      {#if app.preview.truncated}<p class="caption">Showing the first 20 pages.</p>{/if}
-
-      {#if active}
-        {#key app.activePage + "-" + app.spec.mode + "-" + app.spec.style + "-" + app.spec.armed}
-          <Field
-            label={"Page " + active.page + " — drag the marking anywhere"}
-            hint={app.spec.style === "lines"
-              ? "Transparent marking: the lines hug your text. Drag it to move it anywhere on the page; it stays in view as you drag."
-              : "Drag the marking to move it; drag its handles to resize. Reset position brings it back to the middle."}
-          >
-            <PalangCanvas
-              url={pageUrl}
-              widthPt={active.width_pt}
-              heightPt={active.height_pt}
-              spec={app.spec}
-              fitContain={!!active.url}
-              onChange={(patch) => updateSpec(patch)}
-            />
-          </Field>
-        {/key}
-      {/if}
-    {:else}
+    {:else if !app.preview}
       <div class="retrycard">
         <p class="desc">Unable to prepare this document. It may be too large or unsupported.</p>
         <div class="actionrow">
@@ -124,9 +84,6 @@
         </div>
       </div>
     {/if}
-
-    <div class="divider"></div>
-    <PalangSpecFields spec={app.spec} onChange={(patch) => updateSpec(patch)} />
   {/if}
 
   <div class="actbar">
@@ -134,7 +91,7 @@
       {app.spec.armed
         ? "Marking ready"
         : app.previewFiles.length
-          ? "Tap anywhere on the page to add the marking"
+          ? "Tap a file to position the marking"
           : "No document added yet"}
     </span>
     <button
@@ -147,3 +104,50 @@
     </button>
   </div>
 </div>
+
+{#if editing && active}
+  <Modal title="Position your marking" wide onClose={() => (editing = false)}>
+    {#if app.preview && app.preview.pages.length > 1}
+      <div class="page-stepper">
+        <button
+          type="button"
+          class="btn btn-sm"
+          aria-label="Previous page"
+          disabled={app.activePage === 0}
+          onclick={() => setActivePage(Math.max(0, app.activePage - 1))}
+        >
+          ←
+        </button>
+        <span class="caption">Page {app.activePage + 1} of {app.preview.pages.length}</span>
+        <button
+          type="button"
+          class="btn btn-sm"
+          aria-label="Next page"
+          disabled={app.activePage >= app.preview.pages.length - 1}
+          onclick={() => setActivePage(Math.min(app.preview.pages.length - 1, app.activePage + 1))}
+        >
+          →
+        </button>
+      </div>
+    {/if}
+
+    {#key app.activePage + "-" + app.spec.mode + "-" + app.spec.style + "-" + app.spec.armed}
+      <PalangCanvas
+        url={pageUrl}
+        widthPt={active.width_pt}
+        heightPt={active.height_pt}
+        spec={app.spec}
+        fitContain={!!active.url}
+        onChange={(patch) => updateSpec(patch)}
+      />
+    {/key}
+
+    <div class="divider"></div>
+    <PalangSpecFields spec={app.spec} onChange={(patch) => updateSpec(patch)} />
+
+    <div class="modal-actions">
+      <button type="button" class="btn" onclick={() => (editing = false)}>Close</button>
+      <button type="button" class="btn btn-primary" onclick={() => (editing = false)}>Done</button>
+    </div>
+  </Modal>
+{/if}

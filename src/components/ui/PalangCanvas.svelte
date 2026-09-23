@@ -86,10 +86,18 @@
   onMount(() => {
     window.addEventListener("resize", resizeFit);
     window.addEventListener("keydown", onWindowKey);
+    window.addEventListener("pointerup", releaseHeld);
+    window.addEventListener("pointercancel", releaseHeld);
+    window.addEventListener("blur", releaseHeld);
+    window.addEventListener("pointerdown", cancelStuck, true);
     ensureFit();
     return () => {
       window.removeEventListener("resize", resizeFit);
       window.removeEventListener("keydown", onWindowKey);
+      window.removeEventListener("pointerup", releaseHeld);
+      window.removeEventListener("pointercancel", releaseHeld);
+      window.removeEventListener("blur", releaseHeld);
+      window.removeEventListener("pointerdown", cancelStuck, true);
     };
   });
 
@@ -140,9 +148,17 @@
     bw = box.w ?? 0;
     bh = box.h ?? 0;
     sf0 = spec.fontSize ?? 18;
+    // Only arm the drag if pointer capture is actually held — otherwise the
+    // pointerup can be lost mid-drag and the marking would follow the cursor
+    // forever.
     mode = m;
+    try {
+      wrap.setPointerCapture(e.pointerId);
+    } catch {
+      mode = null;
+      return;
+    }
     selected = true;
-    wrap.setPointerCapture(e.pointerId);
     e.preventDefault();
     e.stopPropagation();
   }
@@ -150,6 +166,8 @@
   function wrapDown(e) {
     // Track background touches for pinch zoom.
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    // A background press always ends any held drag (stuck-drag safety net).
+    if (mode) releaseHeld();
     // Page background: re-add a deleted marking, or deselect the current one.
     if (!armed) {
       selected = true;
@@ -216,10 +234,24 @@
     const cy = px.y + px.h / 2;
     rotBase = Math.atan2(e.clientY - cy, e.clientX - cx) - ((spec.rotationDeg ?? 0) * Math.PI) / 180;
     mode = "rotate";
+    try {
+      wrap.setPointerCapture(e.pointerId);
+    } catch {
+      mode = null;
+      return;
+    }
     selected = true;
-    wrap.setPointerCapture(e.pointerId);
     e.preventDefault();
     e.stopPropagation();
+  }
+
+  /** Safety nets for a lost pointerup: a stuck drag must never survive. */
+  function releaseHeld() {
+    mode = null;
+  }
+  function cancelStuck(e) {
+    // Starting a new interaction outside the canvas always ends a held drag.
+    if (mode && !e.target.closest?.(".canvas-wrap")) releaseHeld();
   }
 
   function release(e) {
