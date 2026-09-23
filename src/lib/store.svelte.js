@@ -5,6 +5,7 @@ import * as api from "./api.js";
 import { buildPalangSpec, defaultSpec, imageSettings } from "./domain.js";
 
 const CONSENT_KEY = "palang-consent-v1";
+const THEME_KEY = "palang-theme";
 
 function initialConsent() {
   try {
@@ -14,9 +15,22 @@ function initialConsent() {
   }
 }
 
+function initialTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "dark" || saved === "light") return saved;
+  } catch {
+    /* fall through to system preference */
+  }
+  return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
 export const app = $state({
   view: "convert",
   pageSize: "A4",
+  theme: initialTheme(),
   images: [],
   pdfs: [],
   spec: defaultSpec(),
@@ -37,6 +51,15 @@ export function setConsent(agreed) {
     else localStorage.removeItem(CONSENT_KEY);
   } catch {
     /* storage unavailable: consent lasts for this session only */
+  }
+}
+
+export function setTheme(theme) {
+  app.theme = theme;
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    /* theme lasts for this session only */
   }
 }
 
@@ -151,6 +174,21 @@ export async function deletePreset(name) {
 export function pickPreviewFiles(fileList) {
   app.previewFiles = [...fileList];
   app.activePage = 0;
+  if (!app.previewFiles.length) {
+    app.preview = null;
+    return;
+  }
+  void loadPreview();
+}
+
+export function removePreviewFile(index) {
+  if (index < 0 || index >= app.previewFiles.length) return;
+  app.previewFiles.splice(index, 1);
+  app.activePage = 0;
+  if (!app.previewFiles.length) {
+    app.preview = null;
+    return;
+  }
   void loadPreview();
 }
 
@@ -187,33 +225,40 @@ export function canGenerate() {
   return app.images.length + app.pdfs.length > 0 && !app.busy;
 }
 
-export async function generate() {
-  // Images (per-image settings) + merge PDFs + the palang document all compile into one PDF.
-  const files = [
-    ...app.images.map((im) => im.file),
-    ...app.pdfs.map((p) => p.file),
-    ...app.previewFiles,
-  ];
+export async function generate(mode = "convert") {
+  const files =
+    mode === "merge"
+      ? app.pdfs.map((p) => p.file)
+      : mode === "palang"
+        ? app.previewFiles
+        : app.images.map((im) => im.file);
   if (!files.length) {
-    flash("error", "Add at least one image or PDF first.");
+    flash("error", "Add the files you want to process first.");
     return;
   }
   if (!app.consented) {
     flash("error", "Tick the agreement first: your files are processed on this server and deleted right after.");
     return;
   }
-  if (app.spec.armed && app.spec.mode === "band" && !(app.spec.text || "").trim()) {
+  if (mode === "palang" && app.spec.armed && app.spec.mode === "band" && !(app.spec.text || "").trim()) {
     flash("error", "Add the purpose text for the bar.");
     return;
   }
-  const fields = { merge: "true", page: app.pageSize };
-  if (app.images.length) fields.image_settings = JSON.stringify(imageSettings(app.images));
-  if (app.spec.armed) fields.palang = JSON.stringify(buildPalangSpec(app.spec));
 
+  const fields = { merge: "true" };
+  if (mode === "convert" && app.images.length) {
+    fields.page = app.pageSize;
+    fields.image_settings = JSON.stringify(imageSettings(app.images));
+  }
+  if (mode === "palang" && app.spec.armed) {
+    fields.palang = JSON.stringify(buildPalangSpec(app.spec));
+  }
+
+  const filename = mode === "merge" ? "merged.pdf" : mode === "palang" ? "stamped.pdf" : "converted.pdf";
   app.busy = true;
   try {
     const blob = await api.upload(files, fields);
-    downloadBlob(blob, "palang-output.pdf");
+    downloadBlob(blob, filename);
     flash("ok", "Done. Your file is downloading.");
   } catch (err) {
     flash("error", err.message);
@@ -235,5 +280,5 @@ function downloadBlob(blob, filename) {
 
 /* Test/verification hook: lets headless checks read and drive the store. */
 if (typeof window !== "undefined") {
-  window.__palang = { app, updateImage, addImages, removeImages, setConsent, generate };
+  window.__palang = { app, updateImage, addImages, removeImages, setConsent, setTheme, generate };
 }

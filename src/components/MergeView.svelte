@@ -1,8 +1,10 @@
 <script>
-  /** Merge tab: combine PDFs into one, in a user-chosen order. */
-  import FilePicker from "./ui/FilePicker.svelte";
+  /** Merge tab: dropzone + ordered PDF list + bottom action bar. */
+  import Dropzone from "./ui/Dropzone.svelte";
   import OrderedList from "./ui/OrderedList.svelte";
-  import { app, addPdfs, movePdf, removePdf } from "../lib/store.svelte.js";
+  import { app, addPdfs, movePdf, removePdf, generate } from "../lib/store.svelte.js";
+
+  let mergeInput;
 
   const items = $derived(
     app.pdfs.map((p, i) => ({
@@ -15,21 +17,50 @@
   );
 </script>
 
-<h2>Merge PDFs</h2>
-<p class="caption">Combine several PDFs into one, in the order you choose.</p>
+<div class="panel">
+  <h2>Merge PDFs</h2>
+  <p class="desc">Combine several PDFs into one, in the order you choose.</p>
 
-<FilePicker
-  id="merge-files"
-  accept=".pdf"
-  multiple
-  label="PDFs to combine"
-  hint="Choose the files, then use the up and down buttons to set the order."
-  onPick={addPdfs}
-/>
+  {#if !app.pdfs.length}
+    <Dropzone
+      id="merge-files"
+      accept=".pdf"
+      multiple
+      main="Choose PDFs to merge"
+      sub="Pick the files — the result follows the order in the list, which you can rearrange"
+      icon="merge"
+      onPick={addPdfs}
+    />
+  {:else}
+    <OrderedList items={items} onMove={movePdf} onRemove={removePdf} empty="" />
+    <div class="actionrow">
+      <button type="button" class="btn btn-sm" onclick={() => mergeInput?.click()}>Add more PDFs</button>
+    </div>
+    <input
+      bind:this={mergeInput}
+      class="hidden-input"
+      id="merge-more"
+      type="file"
+      accept=".pdf"
+      multiple
+      onchange={(e) => {
+        if (e.currentTarget.files?.length) addPdfs(e.currentTarget.files);
+        e.currentTarget.value = "";
+      }}
+    />
+  {/if}
 
-<OrderedList
-  items={items}
-  onMove={movePdf}
-  onRemove={removePdf}
-  empty="No PDFs chosen yet."
-/>
+  <div class="actbar">
+    <span class="caption">
+      {app.pdfs.length ? app.pdfs.length + " PDF" + (app.pdfs.length > 1 ? "s" : "") + " → one file" : "No PDFs added yet"}
+    </span>
+    <button
+      type="button"
+      class="btn btn-primary"
+      disabled={!app.pdfs.length || app.busy}
+      onclick={() => generate("merge")}
+    >
+      {app.busy ? "Working…" : "Merge PDFs"}
+    </button>
+  </div>
+</div>

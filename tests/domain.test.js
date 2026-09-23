@@ -54,6 +54,15 @@ describe("buildPalangSpec", () => {
     expect(out.height_pt).toBe(40);
   });
 
+  it("emits left_pt for a freely placed lines band", () => {
+    const spec = defaultSpec(); // style: "lines"
+    spec.topPt = 300;
+    spec.leftPt = 140;
+    const out = buildPalangSpec(spec, false);
+    expect(out.position.left_pt).toBe(140);
+    expect(out.position.top_pt).toBe(300);
+  });
+
   it("builds a region with left offset and no empty label", () => {
     const spec = defaultSpec();
     spec.mode = "region";

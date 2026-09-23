@@ -1,30 +1,29 @@
 <script>
-  /** App shell: header + generate action, tab navigation (top desktop / bottom mobile),
-   *  view switching with hash routes, and the shared message banner. */
+  /** App shell: header (brand + theme toggle), sidebar (desktop) / tabs (mobile),
+   *  view switching with hash routes, toast, consent and footer. */
   import { onMount } from "svelte";
-  import Tabs from "./components/ui/Tabs.svelte";
-  import Alert from "./components/ui/Alert.svelte";
+  import Icon from "./components/ui/Icon.svelte";
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
   import PresetsView from "./components/PresetsView.svelte";
   import PrivacyView from "./components/PrivacyView.svelte";
-  import { app, generate, setConsent } from "./lib/store.svelte.js";
+  import { app, setConsent, setTheme } from "./lib/store.svelte.js";
 
-    const TABS = [
-      { id: "convert", label: "Convert" },
-      { id: "palang", label: "Palang" },
-      { id: "merge", label: "Merge" },
-      { id: "presets", label: "Templates" },
-    ];
-    const HASH_TO_VIEW = {
-      "": "convert",
-      convert: "convert",
-      palang: "palang",
-      merge: "merge",
-      presets: "presets",
-      privacy: "privacy",
-    };
+  const TOOLS = [
+    { id: "convert", label: "Convert", icon: "convert" },
+    { id: "palang", label: "Palang", icon: "palang" },
+    { id: "merge", label: "Merge", icon: "merge" },
+    { id: "presets", label: "Templates", icon: "templates" },
+  ];
+  const HASH_TO_VIEW = {
+    "": "convert",
+    convert: "convert",
+    palang: "palang",
+    merge: "merge",
+    presets: "presets",
+    privacy: "privacy",
+  };
 
   function readHash() {
     const hash = (typeof location !== "undefined" ? location.hash : "").replace(/^#\/?/, "");
@@ -38,82 +37,128 @@
     if (typeof history !== "undefined") history.replaceState(null, "", "#/" + view);
   });
 
+  $effect(() => {
+    document.documentElement.dataset.theme = app.theme;
+  });
+
   onMount(() => {
     window.addEventListener("hashchange", () => {
       const v = readHash();
       if (v !== view) view = v;
     });
   });
-
-  const summary = $derived(
-    (() => {
-      const parts = [];
-      if (app.images.length) {
-        parts.push(app.images.length + " image" + (app.images.length === 1 ? "" : "s"));
-      }
-      const docs = app.pdfs.length + app.previewFiles.length;
-      if (docs) parts.push(docs + " file" + (docs === 1 ? "" : "s"));
-      if (app.spec.armed) parts.push("palang");
-      return parts.join(" + ");
-    })()
-  );
 </script>
 
-<header class="stick">
-  <div>
-    <h1>Palang</h1>
-    <p class="sub">Prepare documents for sharing — stamp a purpose marking so personal data can't be misused.</p>
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <b>Palang</b>
+        <span>prepare documents for sharing</span>
+      </div>
+      <button
+        type="button"
+        class="iconbtn"
+        aria-label={app.theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        onclick={() => setTheme(app.theme === "dark" ? "light" : "dark")}
+      >
+        <Icon name={app.theme === "dark" ? "sun" : "moon"} size={20} />
+      </button>
+    </div>
+  </header>
+
+  <div class="app-main">
+    <aside class="side">
+      <nav aria-label="Tools">
+        {#each TOOLS as tool (tool.id)}
+          <button
+            type="button"
+            class="tool"
+            class:active={view === tool.id}
+            onclick={() => (view = tool.id)}
+          >
+            <Icon name={tool.icon} size={19} />
+            {tool.label}
+          </button>
+        {/each}
+        <div class="sidegroup">
+          <button type="button" class="sidefoot" onclick={() => (view = "privacy")}>
+            <Icon name="info" size={17} />
+            Privacy
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="app-body">
+      <div class="tabs tabs-top">
+        {#each TOOLS as tool (tool.id)}
+          <button
+            type="button"
+            class="tabbtn"
+            class:active={view === tool.id}
+            onclick={() => (view = tool.id)}
+          >
+            <Icon name={tool.icon} size={18} />
+            {tool.label}
+          </button>
+        {/each}
+      </div>
+
+      {#if view !== "privacy" && !app.consented}
+        <section class="consent">
+          <p>
+            <strong>Before you upload:</strong> your document is sent to this server, processed, and
+            deleted right after. It is not stored, logged or shared.{" "}
+            <button type="button" class="link" onclick={() => (view = "privacy")}>How we handle your files</button>
+          </p>
+          <label class="checkline">
+            <input type="checkbox" onchange={(e) => setConsent(e.currentTarget.checked)} />
+            <span>I understand and agree</span>
+          </label>
+        </section>
+      {/if}
+
+      {#if view === "convert"}
+        <ConvertView />
+      {:else if view === "palang"}
+        <PalangView />
+      {:else if view === "merge"}
+        <MergeView />
+      {:else if view === "presets"}
+        <PresetsView />
+      {:else if view === "privacy"}
+        <PrivacyView />
+      {/if}
+    </div>
   </div>
-  <div class="rt">
-    <span class="caption">{summary}</span>
-    <button type="button" class="btn btn-primary" disabled={app.busy || !summary} onclick={generate}>
-      {app.busy ? "Working…" : "Generate PDF"}
-    </button>
-  </div>
-</header>
 
-<main>
-  <Tabs items={TABS} value={view} onPick={(id) => (view = id)} variant="top" />
-
-  {#if view !== "privacy"}
-    {#if !app.consented}
-      <section class="consent">
-        <p>
-          <strong>Before you upload:</strong> your document is sent to this server, processed, and
-          deleted right after. It is not stored, logged or shared.{" "}
-          <button type="button" class="link" onclick={() => (view = "privacy")}>How we handle your files</button>
-        </p>
-        <label class="checkline">
-          <input type="checkbox" onchange={(e) => setConsent(e.currentTarget.checked)} />
-          <span>I understand and agree</span>
-        </label>
-      </section>
-    {/if}
-  {/if}
-
-  {#if app.message}
-    <Alert kind={app.message.kind}>{app.message.text}</Alert>
-  {/if}
-
-  {#if view === "convert"}
-    <ConvertView />
-  {:else if view === "palang"}
-    <PalangView />
-  {:else if view === "merge"}
-    <MergeView />
-  {:else if view === "presets"}
-    <PresetsView />
-  {:else if view === "privacy"}
-    <PrivacyView />
-  {/if}
-
-  <footer>
-    <p>
-      <button type="button" class="link" onclick={() => (view = "privacy")}>Privacy</button> ·
-      <a href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">Source (MIT)</a> ·
-      Palang is an open source tool — run it yourself via Docker if you'd rather nothing leave your device.
-    </p>
+  <footer class="sitefoot">
+    <div class="wrap">
+      <button type="button" class="link" onclick={() => (view = "privacy")}>Privacy</button>
+      <a href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">Source (MIT)</a>
+      <span>Open source — run it yourself via Docker if you'd rather nothing leave your device.</span>
+    </div>
   </footer>
-</main>
+</div>
 
-<Tabs items={TABS} value={view} onPick={(id) => (view = id)} variant="bottom" />
+<div class="tabs tabs-bottom" aria-label="Tools">
+  {#each TOOLS as tool (tool.id)}
+    <button
+      type="button"
+      class="tabbtn"
+      class:active={view === tool.id}
+      aria-current={view === tool.id ? "page" : undefined}
+      onclick={() => (view = tool.id)}
+    >
+      <Icon name={tool.icon} size={20} />
+      {tool.label}
+    </button>
+  {/each}
+</div>
+
+{#if app.message}
+  <div class="toast" class:error={app.message.kind === "error"} role="status">
+    {app.message.text}
+  </div>
+{/if}

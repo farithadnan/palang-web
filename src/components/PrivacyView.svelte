@@ -3,8 +3,9 @@
   import { setView } from "../lib/store.svelte.js";
 </script>
 
-<h2>How we handle your files</h2>
-<p class="caption">Short version: your document is processed and deleted right after. We do not keep it, read it, or share it.</p>
+<div class="panel">
+  <h2>How we handle your files</h2>
+  <p class="desc">Short version: your document is processed and deleted right after. We do not keep it, read it, or share it.</p>
 
 <button type="button" class="btn" onclick={() => setView("convert")}>← Back to the tools</button>
 
@@ -39,3 +40,4 @@
 <p class="prose" style="margin-top:0.4rem">
   Questions about this page: <a href="mailto:dev@farithadnan.net">dev@farithadnan.net</a>
 </p>
+</div>

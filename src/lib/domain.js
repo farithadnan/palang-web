@@ -131,7 +131,8 @@ export function buildPalangSpec(spec, anchored = false) {
   } else {
     position = {};
     if (spec.topPt != null) position.top_pt = round1(spec.topPt);
-    if (region && spec.leftPt != null) position.left_pt = round1(spec.leftPt);
+    const usesX = (region || style === "lines") && spec.leftPt != null;
+    if (usesX) position.left_pt = round1(spec.leftPt);
   }
 
   if (!region) {

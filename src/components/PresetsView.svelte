@@ -61,7 +61,8 @@
   });
 </script>
 
-<h2>Templates</h2>
+<div class="panel">
+  <h2>Templates</h2>
 <p class="caption">
   Templates (called presets in the documentation) are ready-made markings for common uses. Create your own here and they appear in one click anywhere on this site.
 </p>
@@ -104,3 +105,4 @@
 {:else}
   <p class="caption">No templates yet. Create one to reuse your favourite markings.</p>
 {/if}
+</div>
