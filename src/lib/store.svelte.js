@@ -2,7 +2,7 @@
    Views read/write `app.*`; components stay presentational. */
 
 import * as api from "./api.js";
-import { buildPalangSpec, defaultSpec, imageSettings } from "./domain.js";
+import { buildPalangSpec, defaultSpec, imageSettings, PAGE_DIMS } from "./domain.js";
 
 const CONSENT_KEY = "palang-consent-v1";
 const THEME_KEY = "palang-theme";
@@ -198,11 +198,68 @@ export function removePdf(id) {
 
 /* ---------- palang preview + spec ---------- */
 
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/bmp", "image/tiff", "image/gif"]);
+
+function isImageFile(file) {
+  return file.type ? IMAGE_TYPES.has(file.type) : /\.(jpe?g|png|webp|bmp|tiff?|gif)$/i.test(file.name);
+}
+
+/**
+ * Preview pages for a pure-image document, built in the browser with no server
+ * round-trip. Mirrors the server's image->PDF placement exactly: each page is
+ * sized to the image fitted within the chosen page size (same formula as
+ * PyMuPDF's _page_rect), so preview geometry and the stamped output agree.
+ */
+function fittedRect(w, h) {
+  const size = PAGE_DIMS[app.pageSize] ?? PAGE_DIMS.A4;
+  const pageRatio = size.w / size.h;
+  if (w / h > pageRatio) return { w: size.w, h: size.w / (w / h) };
+  return { w: size.h * (w / h), h: size.h };
+}
+
+async function buildClientImagePreview(files) {
+  const seq = ++previewSeq;
+  const pages = [];
+  for (const f of files) {
+    let w = 0;
+    let h = 0;
+    const url = URL.createObjectURL(f);
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error("decode"));
+        i.src = url;
+      });
+      w = img.naturalWidth;
+      h = img.naturalHeight;
+    } catch {
+      /* fall back to A4 for undecodable images */
+    }
+    const rect = w && h ? fittedRect(w, h) : { w: PAGE_DIMS.A4.w, h: PAGE_DIMS.A4.h };
+    pages.push({ page: pages.length + 1, width_pt: Math.round(rect.w), height_pt: Math.round(rect.h), url, mime: f.type || "image/jpeg" });
+  }
+  if (seq !== previewSeq || !files.every((f, i) => app.previewFiles[i] === f)) return;
+  app.preview = { count: files.length, truncated: false, client: true, pages };
+  app.previewLoading = false;
+}
+
+let previewSeq = 0;
+
 export function pickPreviewFiles(fileList) {
-  app.previewFiles = [...fileList];
+  const files = [...fileList];
+  app.previewFiles = files;
   app.activePage = 0;
-  if (!app.previewFiles.length) {
+  if (!files.length) {
     app.preview = null;
+    return;
+  }
+  // Images can be shown instantly from the browser; only PDFs (or "fit"
+  // pages) need the server to render them.
+  if (files.every(isImageFile) && PAGE_DIMS[app.pageSize]) {
+    app.preview = null;
+    app.previewLoading = true;
+    void buildClientImagePreview(files);
     return;
   }
   void loadPreview();
@@ -216,6 +273,12 @@ export function removePreviewFile(index) {
     app.preview = null;
     return;
   }
+  if (app.preview?.client || app.previewFiles.every(isImageFile)) {
+    app.preview = null;
+    app.previewLoading = true;
+    void buildClientImagePreview(app.previewFiles);
+    return;
+  }
   void loadPreview();
 }
 
@@ -224,7 +287,7 @@ export async function loadPreview() {
   app.previewLoading = true;
   app.preview = null;
   try {
-    app.preview = await api.preview(app.previewFiles);
+    app.preview = await api.preview(app.previewFiles, app.pageSize);
   } catch (err) {
     app.preview = null;
     flash("error", err.message);
@@ -280,6 +343,7 @@ export async function generate(mode = "convert") {
     fields.image_settings = JSON.stringify(imageSettings(app.images));
   }
   if (mode === "palang" && app.spec.armed) {
+    fields.page = app.pageSize; // keep output page size in sync with the preview
     fields.palang = JSON.stringify(buildPalangSpec(app.spec));
   }
 
@@ -317,6 +381,7 @@ if (typeof window !== "undefined") {
     cropPreview,
     revertImage,
     updateSpec,
+    pickPreviewFiles,
     setConsent,
     setTheme,
     generate,

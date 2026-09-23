@@ -29,8 +29,10 @@ export async function upload(files, fields) {
 }
 
 /** POST files to /api/preview, returning rendered pages. */
-export async function preview(files) {
-  const res = await fetch(API + "/api/preview", { method: "POST", body: formFrom(files) });
+export async function preview(files, pageSize) {
+  const fd = formFrom(files);
+  if (pageSize) fd.append("page_size", pageSize);
+  const res = await fetch(API + "/api/preview", { method: "POST", body: fd });
   if (!res.ok) throw new Error(await detail(res));
   return res.json();
 }

@@ -18,7 +18,11 @@
   } from "../lib/store.svelte.js";
 
   const active = $derived(app.preview?.pages?.[app.activePage] ?? null);
-  const pageUrl = $derived(active ? "data:image/png;base64," + active.png_base64 : "");
+  const pageUrl = $derived(
+    active
+      ? active.url ?? "data:" + (active.mime || "image/jpeg") + ";base64," + active.png_base64
+      : ""
+  );
 
   const basketItems = $derived(
     app.previewFiles.map((f, i) => ({ id: "pf-" + i, name: f.name, icon: f.type?.startsWith("image/") ? "convert" : "file" }))
@@ -77,7 +81,11 @@
             onclick={() => setActivePage(i)}
             aria-label={"Page " + page.page}
           >
-            <img src={"data:image/png;base64," + page.png_base64} alt="" loading="lazy" />
+            <img
+              src={page.url ?? "data:" + (page.mime || "image/jpeg") + ";base64," + page.png_base64}
+              alt=""
+              loading="lazy"
+            />
           </button>
         {/each}
       </div>
@@ -96,6 +104,7 @@
               widthPt={active.width_pt}
               heightPt={active.height_pt}
               spec={app.spec}
+              fitContain={!!active.url}
               onChange={(patch) => updateSpec(patch)}
             />
           </Field>

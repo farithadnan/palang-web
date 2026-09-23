@@ -7,6 +7,13 @@ export const PAGE_SIZES = [
   { v: "fit", l: "Fit the image" },
 ];
 
+/* Point dimensions per page size (matches the server's paper sizes). */
+export const PAGE_DIMS = {
+  A4: { w: 595, h: 842 },
+  A5: { w: 419, h: 595 },
+  Letter: { w: 612, h: 792 },
+};
+
 export const BAND_THICKNESS = { thin: 32, normal: 48, thick: 72 };
 export const REGION_THICKNESS = { thin: 16, normal: 28, thick: 44 };
 export const REGION_WIDTH = { narrow: 120, normal: 180, wide: 260 };

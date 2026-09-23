@@ -8,7 +8,7 @@
   import { onMount } from "svelte";
   import { round1 } from "../../lib/domain.js";
 
-  let { url, widthPt, heightPt, spec, onChange, class: cls = "" } = $props();
+  let { url, widthPt, heightPt, spec, onChange, fitContain = false, class: cls = "" } = $props();
 
   let img;
   let wrap;
@@ -56,14 +56,34 @@
     zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12);
   }
 
+  function pageWidth() {
+    // Contain mode: the page box fills the frame, so measure the frame (the
+    // shrink-wrapped wrap has no width for a non-replaced element).
+    if (fitContain) return frame ? frame.clientWidth : 0;
+    return img ? img.clientWidth : 0;
+  }
+
   function resizeFit() {
-    if (!img || !widthPt) return;
-    fitScale = img.clientWidth / widthPt;
+    const w = pageWidth();
+    if (!w || !widthPt) return;
+    fitScale = w / widthPt;
+  }
+
+  function ensureFit() {
+    if (fitScale > 0) return;
+    const w = pageWidth();
+    if (w > 0) {
+      fit();
+      return;
+    }
+    // The frame may not have laid out yet; re-measure on the next frame.
+    requestAnimationFrame(ensureFit);
   }
 
   onMount(() => {
     window.addEventListener("resize", resizeFit);
     window.addEventListener("keydown", onWindowKey);
+    ensureFit();
     return () => {
       window.removeEventListener("resize", resizeFit);
       window.removeEventListener("keydown", onWindowKey);
@@ -98,7 +118,7 @@
   }
 
   function fit() {
-    const w = img.clientWidth;
+    const w = pageWidth();
     if (!w || !widthPt) return;
     fitScale = w / widthPt;
     box = defaultBox();
@@ -132,7 +152,7 @@
       onChange?.({ armed: true, topPt: null, leftPt: null });
       return;
     }
-    if (e.target === wrap || e.target === img) selected = false;
+    if (!e.target.closest(".overlay-box")) selected = false;
   }
 
   function drag(e) {
@@ -254,6 +274,14 @@
   );
   const borderW = $derived(lines ? Math.max(1, Math.round(1.2 * scale)) : 2);
   const imgWidth = $derived(fitScale > 0 ? fitScale * widthPt * zoom : "100%");
+  // fitContain: the page box is exactly the page shape and the photo is
+  // letterboxed inside it (object-fit: contain), mirroring the server's
+  // image->PDF placement so preview and output always agree.
+  const imgStyle = $derived(
+    fitContain
+      ? `width:${imgWidth}; height:${fitScale * heightPt * zoom}px; object-fit:contain; object-position:center; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:74vh;`
+      : `width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:74vh;`
+  );
   const boxStyle = $derived(
     [
       `left:${px.x}px`,
@@ -268,6 +296,9 @@
       .join("; ")
   );
   const labelStyle = $derived(lines ? `color:${spec.color}; font-size:${Math.round(18 * scale)}px` : "");
+  const pageBoxStyle = $derived(
+    `aspect-ratio:${widthPt}/${heightPt}; width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:74vh; margin:0 auto;`
+  );
 </script>
 
 <div class={cls}>
@@ -282,41 +313,65 @@
       onpointerup={emitUp}
       onpointercancel={emitUp}
     >
-      <img
-        bind:this={img}
-        src={url}
-        alt=""
-        draggable="false"
-        style="width:{imgWidth}; max-width:{zoom <= 1 ? '100%' : 'none'}; max-height:74vh"
-        onload={fit}
-        onpointerdown={(e) => e.preventDefault()}
-      />
-      {#if armed && geom && scale > 0}
+      {#snippet overlayBox()}
+        {#if armed && geom && scale > 0}
+          <div
+            bind:this={ov}
+            class="overlay-box"
+            class:overlay-lines={lines}
+            class:selected={showHandles}
+            style={boxStyle}
+            onpointerdown={(e) => begin(e, "move")}
+            onpointerup={emitUp}
+            onpointercancel={release}
+            role="application"
+            aria-label={lines ? "Palang line marking" : "Palang marking"}
+          >
+            {#if lines}
+              <span class="overlay-label" style={labelStyle}>{spec.text || ""}</span>
+            {/if}
+            {#if showHandles && !lines}
+              <div class="handle h-midb" role="button" tabindex="-1" aria-label="Resize marking height" onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>
+            {/if}
+            {#if showHandles && region}
+              <div class="handle h-nw" role="button" tabindex="-1" aria-label="Resize top-left" onpointerdown={(e) => { e.preventDefault(); begin(e, "nw"); }}></div>
+              <div class="handle h-ne" role="button" tabindex="-1" aria-label="Resize top-right" onpointerdown={(e) => { e.preventDefault(); begin(e, "ne"); }}></div>
+              <div class="handle h-sw" role="button" tabindex="-1" aria-label="Resize bottom-left" onpointerdown={(e) => { e.preventDefault(); begin(e, "sw"); }}></div>
+              <div class="handle h-se" role="button" tabindex="-1" aria-label="Resize bottom-right" onpointerdown={(e) => { e.preventDefault(); begin(e, "se"); }}></div>
+            {/if}
+          </div>
+        {/if}
+      {/snippet}
+
+      {#if fitContain}
         <div
-          bind:this={ov}
-          class="overlay-box"
-          class:overlay-lines={lines}
-          class:selected={showHandles}
-          style={boxStyle}
-          onpointerdown={(e) => begin(e, "move")}
-          onpointerup={emitUp}
-          onpointercancel={release}
+          class="page-box"
+          style={pageBoxStyle}
           role="application"
-          aria-label={lines ? "Palang line marking" : "Palang marking"}
+          aria-label="Page preview"
         >
-          {#if lines}
-            <span class="overlay-label" style={labelStyle}>{spec.text || ""}</span>
-          {/if}
-          {#if showHandles && !lines}
-            <div class="handle h-midb" role="button" tabindex="-1" aria-label="Resize marking height" onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>
-          {/if}
-          {#if showHandles && region}
-            <div class="handle h-nw" role="button" tabindex="-1" aria-label="Resize top-left" onpointerdown={(e) => { e.preventDefault(); begin(e, "nw"); }}></div>
-            <div class="handle h-ne" role="button" tabindex="-1" aria-label="Resize top-right" onpointerdown={(e) => { e.preventDefault(); begin(e, "ne"); }}></div>
-            <div class="handle h-sw" role="button" tabindex="-1" aria-label="Resize bottom-left" onpointerdown={(e) => { e.preventDefault(); begin(e, "sw"); }}></div>
-            <div class="handle h-se" role="button" tabindex="-1" aria-label="Resize bottom-right" onpointerdown={(e) => { e.preventDefault(); begin(e, "se"); }}></div>
-          {/if}
+          <img
+            bind:this={img}
+            src={url}
+            alt=""
+            draggable="false"
+            style="width:100%; height:100%; object-fit:contain; object-position:center;"
+            onload={fit}
+            onpointerdown={(e) => e.preventDefault()}
+          />
+          {@render overlayBox()}
         </div>
+      {:else}
+        <img
+          bind:this={img}
+          src={url}
+          alt=""
+          draggable="false"
+          style={imgStyle}
+          onload={fit}
+          onpointerdown={(e) => e.preventDefault()}
+        />
+        {@render overlayBox()}
       {/if}
     </div>
   </div>
