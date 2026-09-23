@@ -452,9 +452,15 @@ input[type="color"] {
   border-radius: 16px; box-shadow: var(--shadow);
   padding: 1.2rem;
 }
-.modal.modal-wide { max-width: 1000px; }
+.modal.modal-wide { max-width: 900px; }
 .modal h3 { margin: 0 0 0.2rem; font-size: 1.05rem; }
 .modal .modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1rem; }
+.modal .modal-actions-sticky {
+  position: sticky; bottom: -1.2rem;
+  background: var(--panel); margin: 1rem -1.2rem -1.2rem;
+  padding: 0.7rem 1.2rem 1.2rem;
+}
+.centerbox { text-align: center; }
 .modal .page-stepper {
   display: flex; align-items: center; justify-content: center; gap: 0.75rem;
   margin-bottom: 0.2rem;

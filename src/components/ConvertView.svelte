@@ -104,26 +104,23 @@
 </div>
 
 {#if editingImage}
-  <Modal title={editingImage.file.name} onClose={() => (editing = null)}>
+  <Modal title={editingImage.file.name} wide onClose={() => (editing = null)}>
     {#key editingImage.id + "-" + (editingImage.crop ? JSON.stringify(editingImage.crop) : "none")}
-      <Field
-        label="Crop"
-        hint="Draw a box to choose what to keep — the corners stick out for easy resizing. Press Apply & save and the photo updates."
-      >
+      <Checkbox
+        label="Improve quality"
+        hint="Sharpen and boost contrast, good for scans. The preview is approximate — the final enhance runs on the server when you convert."
+        checked={editingImage.enhance}
+        onChange={(v) => updateImage(editingImage.id, { enhance: v })}
+      />
+      <div class="centerbox">
         <CropBox
           url={editingImage.url}
           crop={editingImage.crop}
           filter={enhancePreview}
-          fitMaxH="48vh"
+          fitMaxH="55vh"
           onChange={(c) => updateImage(editingImage.id, { crop: c })}
         />
-      </Field>
-      <Checkbox
-        label="Improve quality"
-        hint="Sharpen and boost contrast, good for scans. The preview above is approximate — the final enhance runs on the server when you convert."
-        checked={editingImage.enhance}
-        onChange={(v) => updateImage(editingImage.id, { enhance: v })}
-      />
+      </div>
     {/key}
     <div class="actionrow">
       <button
@@ -139,6 +136,7 @@
         type="button"
         class="btn btn-sm btn-danger"
         onclick={() => {
+          if (!confirm("Remove this photo from the list? This cannot be undone.")) return;
           const id = editingImage.id;
           removeImage(id);
           editing = null;

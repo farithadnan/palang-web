@@ -12,6 +12,7 @@
     setActivePage,
     updateSpec,
     loadPreview,
+    flash,
     generate,
   } from "../lib/store.svelte.js";
 
@@ -148,9 +149,18 @@
     <div class="divider"></div>
     <PalangSpecFields spec={app.spec} onChange={(patch) => updateSpec(patch)} />
 
-    <div class="modal-actions">
+    <div class="modal-actions modal-actions-sticky">
       <button type="button" class="btn" onclick={() => (editing = false)}>Close</button>
-      <button type="button" class="btn btn-primary" onclick={() => (editing = false)}>Done</button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        onclick={() => {
+          editing = false;
+          flash("ok", "Marking ready — stamp the PDF when you're done.");
+        }}
+      >
+        Done
+      </button>
     </div>
   </Modal>
 {/if}

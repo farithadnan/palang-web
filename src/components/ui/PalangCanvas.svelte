@@ -377,8 +377,8 @@
   // image->PDF placement so preview and output always agree.
   const imgStyle = $derived(
     fitContain
-      ? `width:${imgWidth}; height:${fitScale * heightPt * zoom}px; object-fit:contain; object-position:center; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:74vh;`
-      : `width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:74vh;`
+      ? `width:${imgWidth}; height:${fitScale * heightPt * zoom}px; object-fit:contain; object-position:center; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:58vh;`
+      : `width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:58vh;`
   );
   const boxStyle = $derived(
     [
@@ -397,7 +397,7 @@
   const labelStyle = $derived(lines ? `color:${spec.color}; font-size:${Math.round(fontPt * scale)}px` : "");
   const rotation = $derived(((spec.rotationDeg ?? 0) % 360 + 360) % 360);
   const pageBoxStyle = $derived(
-    `aspect-ratio:${widthPt}/${heightPt}; width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:74vh; margin:0 auto;`
+    `aspect-ratio:${widthPt}/${heightPt}; width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:58vh; margin:0 auto;`
   );
 </script>
 
