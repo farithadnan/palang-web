@@ -121,7 +121,12 @@
       };
     }
     if (lines) {
-      return { x: spec.leftPt ?? (widthPt - lineLenPt) / 2, y: spec.topPt ?? (heightPt - blockHPt) / 2 };
+      // Clamp so the marking never starts (or recentres) outside the image,
+      // even when the text is wider than the page.
+      return {
+        x: Math.max(0, spec.leftPt ?? (widthPt - lineLenPt) / 2),
+        y: Math.max(0, spec.topPt ?? (heightPt - blockHPt) / 2),
+      };
     }
     // filled band: full width
     const hpt = spec.heightPt ?? 48;

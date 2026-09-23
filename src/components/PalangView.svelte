@@ -66,7 +66,11 @@
     icon="palang"
     items={basketItems}
     onRemove={(id) => removePreviewFile(Number(id.replace("pf-", "")))}
-    onItem={() => (editing = true)}
+    onItem={(id) => {
+      // Open the editor on the tapped file, not the first one.
+      setActivePage(Number(id.replace("pf-", "")));
+      editing = true;
+    }}
     onPick={pickPreviewFiles}
   />
 
@@ -150,7 +154,7 @@
     <PalangSpecFields spec={app.spec} onChange={(patch) => updateSpec(patch)} />
 
     <div class="modal-actions modal-actions-sticky">
-      <button type="button" class="btn" onclick={() => (editing = false)}>Close</button>
+      <button type="button" class="btn" onclick={() => (editing = false)}>Cancel</button>
       <button
         type="button"
         class="btn btn-primary"
@@ -159,7 +163,7 @@
           flash("ok", "Marking ready — stamp the PDF when you're done.");
         }}
       >
-        Done
+        Apply &amp; save
       </button>
     </div>
   </Modal>
