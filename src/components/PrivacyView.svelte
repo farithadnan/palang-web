@@ -4,28 +4,29 @@
 
 <div class="panel">
   <h2>How we handle your files</h2>
-  <p class="desc">Your document is processed and deleted right after. We never keep, read, or share it.</p>
+  <p class="desc">Your files are processed and permanently deleted as soon as the request finishes. We never store, read, or share them.</p>
 
   <div class="divider"></div>
 
   <h3>The short version</h3>
   <p class="prose">
-    When you press the big button, your files go to this server, get processed, and the finished
-    PDF comes back to your browser. The moment the request ends, the uploaded files are deleted.
-    That happens on every run, even when something goes wrong. Nothing is stored between visits.
+    When you upload a file, it is sent to our server, converted, and the finished PDF is
+    returned to your browser. The original file and any temporary data are deleted the moment
+    the request ends — including when an error occurs. Nothing is kept between visits.
   </p>
 
-  <h3>What we do not do</h3>
+  <h3>What we never do</h3>
   <ul class="prose">
-    <li>No accounts and no sign-ins — nothing to tie files to you.</li>
-    <li>We do not read, log, or analyse the content of your documents.</li>
-    <li>No third-party processing. No sharing. Nothing is sold.</li>
+    <li>No accounts or sign-ins</li>
+    <li>We do not read, log, or analyse the content of your documents</li>
+    <li>No third-party processing, sharing, or selling of your files</li>
   </ul>
 
   <h3>Run it yourself</h3>
   <p class="prose">
-    This is an open source project (MIT). Run it on your own machine or server and nothing
-    leaves your device at all. The versioned policy lives with the source:
+    This project is open source (MIT). You can run the entire stack on your own machine or
+    server so that nothing ever leaves your device. The full privacy policy lives in the
+    repository:
     <a href="https://github.com/farithadnan/palang/blob/main/PRIVACY.md" target="_blank" rel="noopener">PRIVACY.md</a>
   </p>
   <ul class="prose">
@@ -33,8 +34,14 @@
     <li>Web app: <a href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">github.com/farithadnan/palang-web</a></li>
   </ul>
 
+  <h3>Also true</h3>
+  <ul class="prose">
+    <li>All traffic is encrypted with TLS.</li>
+    <li>No analytics or tracking scripts run on the upload pages.</li>
+  </ul>
+
   <h3>Contact</h3>
   <p class="prose">
-    Questions about this page: <a href="mailto:dev@farithadnan.net">dev@farithadnan.net</a>
+    Questions about privacy: <a href="mailto:dev@farithadnan.net">dev@farithadnan.net</a>
   </p>
 </div>

@@ -49,7 +49,7 @@
   const blockHPt = $derived(lines ? 10 + fontPt * 1.75 + (hasSecond ? fontPt * 1.14 : 0) : 0);
 
   function clampZoom(z) {
-    return Math.min(4, Math.max(0.4, z));
+    return Math.min(6, Math.max(0.3, z));
   }
   function zoomBy(factor) {
     zoom = clampZoom(zoom * factor);
@@ -230,9 +230,10 @@
     } else if (mode === "midb" && !lines) {
       b.h = clampPt(bh + dy, 12, heightPt - by);
     } else if (mode === "scale" && lines) {
-      // Stretch the marking like the crop box: drag scales the text size,
-      // and the band (lines + text) grows with it.
-      const f = clampPt(sf0 + (dx + dy) * 0.25, 10, 44);
+      // Stretch the marking like the crop box: drag scales the text size
+      // exponentially (doubles roughly every 200px of drag), with no
+      // practical size ceiling — users decide how big the marking should be.
+      const f = clampPt(sf0 * Math.pow(1.0035, dx + dy), 6, 240);
       if (Math.abs(f - (spec.fontSize ?? 18)) > 0.1) onChange?.({ fontSize: round1(f) });
       return;
     }

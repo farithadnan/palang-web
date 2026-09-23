@@ -131,8 +131,6 @@
   <footer class="sitefoot">
     <div class="wrap">
       <button type="button" class="link" onclick={() => (view = "privacy")}>Privacy</button>
-      <a href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">Source (MIT)</a>
-      <span>Open source — run it yourself via Docker if you'd rather nothing leave your device.</span>
     </div>
   </footer>
 </div>
