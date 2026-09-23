@@ -177,15 +177,23 @@
     if (!e.target.closest(".overlay-box")) selected = false;
   }
 
+  /** The marking's centre in VIEWPORT coordinates (pointer space). The box
+   *  layout is wrap-relative, so any frame scroll or centring offset would
+   *  skew the atan2 angle unless translated here. */
+  function boxCenterScreen() {
+    const wr = wrap.getBoundingClientRect();
+    return { x: wr.left + px.x + px.w / 2, y: wr.top + px.y + px.h / 2 };
+  }
+
   function drag(e) {
     if (!mode || !box || !scale) return;
 
     if (mode === "rotate") {
-      const cx = px.x + px.w / 2;
-      const cy = px.y + px.h / 2;
-      let deg = ((Math.atan2(e.clientY - cy, e.clientX - cx) - rotBase) * 180) / Math.PI;
+      const c = boxCenterScreen();
+      let deg = ((Math.atan2(e.clientY - c.y, e.clientX - c.x) - rotBase) * 180) / Math.PI;
       deg = ((deg % 360) + 360) % 360;
       if (Math.abs(deg - (spec.rotationDeg ?? 0)) > 0.2) onChange?.({ rotationDeg: round1(deg) });
+      if (ov) ov.scrollIntoView({ block: "nearest", inline: "nearest" });
       return;
     }
 
@@ -230,9 +238,8 @@
 
   function beginRotate(e) {
     if (!box || !armed) return;
-    const cx = px.x + px.w / 2;
-    const cy = px.y + px.h / 2;
-    rotBase = Math.atan2(e.clientY - cy, e.clientX - cx) - ((spec.rotationDeg ?? 0) * Math.PI) / 180;
+    const c = boxCenterScreen();
+    rotBase = Math.atan2(e.clientY - c.y, e.clientX - c.x) - ((spec.rotationDeg ?? 0) * Math.PI) / 180;
     mode = "rotate";
     try {
       wrap.setPointerCapture(e.pointerId);

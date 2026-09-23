@@ -412,15 +412,16 @@ input[type="color"] {
 .overlay-box .h-midt { left: 50%; top: -11px; transform: translateX(-50%); cursor: ns-resize; }
 .overlay-box.selected { outline: 1.5px dashed color-mix(in srgb, var(--muted) 70%, transparent); outline-offset: 2px; }
 .rotate-handle {
-  position: absolute; left: 50%; top: -34px;
-  width: 15px; height: 15px; border-radius: 50%;
-  background: var(--accent); border: 2px solid #ffffff;
+  position: absolute; left: 50%; top: -38px;
+  width: 19px; height: 19px; border-radius: 50%;
+  background: var(--accent); border: 3px solid #ffffff;
   box-sizing: border-box; cursor: grab; transform: translateX(-50%);
   z-index: 3;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
 }
 .rotate-handle::after {
-  content: ""; position: absolute; left: 50%; top: 12px;
-  width: 2px; height: 12px;
+  content: ""; position: absolute; left: 50%; top: 14px;
+  width: 2.5px; height: 14px;
   background: color-mix(in srgb, var(--muted) 55%, transparent);
   transform: translateX(-50%);
 }

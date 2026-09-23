@@ -141,6 +141,9 @@
         onChange={(patch) => updateSpec(patch)}
       />
     {/key}
+    <p class="caption" style="text-align:center">
+      Drag the marking to move it · the knob above tilts it · the corner stretches it · wheel or pinch zooms
+    </p>
 
     <div class="divider"></div>
     <PalangSpecFields spec={app.spec} onChange={(patch) => updateSpec(patch)} />
