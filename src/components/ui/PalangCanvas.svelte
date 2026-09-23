@@ -10,6 +10,7 @@
 
   let img;
   let wrap;
+  let ov; // overlay element (for keeping it in view while dragging)
   let fitScale = $state(0); // px per pt at zoom 1 (fitted)
   let zoom = $state(1);
   let box = $state(null); // points; lines band keeps x/y only
@@ -109,6 +110,10 @@
       b.h = clampPt(bh + dy, 12, heightPt - by);
     }
     box = b;
+    // Keep the marking visible while dragging (the frame may be scrolled/zoomed).
+    if (ov && (mode === "move" || mode === "se" || mode === "midb")) {
+      ov.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
   }
 
   function release() {
@@ -157,6 +162,9 @@
     <span class="caption">{Math.round(zoom * 100)}%</span>
     <button type="button" class="btn btn-sm" aria-label="Zoom in" onclick={() => zoomBy(1.25)}>+</button>
     <button type="button" class="btn btn-sm" aria-label="Fit page" onclick={() => (zoom = 1)}>Fit</button>
+    <button type="button" class="btn btn-sm" aria-label="Reset placement" onclick={() => onChange?.({ topPt: null, leftPt: null })}>
+      Reset position
+    </button>
   </div>
 
   <div class="canvas-frame" onwheel={onWheel}>
@@ -180,6 +188,7 @@
       />
       {#if geom && scale > 0}
         <div
+          bind:this={ov}
           class="overlay-box"
           class:overlay-lines={lines}
           style={boxStyle}

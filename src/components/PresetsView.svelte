@@ -1,59 +1,42 @@
 <script>
-  /** Templates tab: create, edit and delete presets straight from the UI. */
+  /** Templates tab: read-only built-in markings (Use) plus device-local user
+   *  templates that survive a refresh. New templates are created from the
+   *  Palang tab ("Save marking as template"). */
   import { onMount } from "svelte";
   import Field from "./ui/Field.svelte";
   import PalangSpecFields from "./ui/PalangSpecFields.svelte";
-  import { app, savePreset, deletePreset, loadPresets, flash } from "../lib/store.svelte.js";
-  import { buildPalangSpec, presetDefaultSpec, presetSpecFromDoc } from "../lib/domain.js";
+  import {
+    app,
+    loadPresets,
+    applyPreset,
+    applyLocalTemplate,
+    deleteLocalTemplate,
+    saveLocalTemplate,
+    setView,
+    flash,
+  } from "../lib/store.svelte.js";
+  import { defaultSpec } from "../lib/domain.js";
 
-  let editingName = $state(null); // preset name being edited (null = closed)
-  let form = $state({ name: "", description: "", spec: presetDefaultSpec() });
+  let editingId = $state(null); // local template id being edited
+  let form = $state({ name: "", spec: defaultSpec() });
 
-  function openNew() {
-    editingName = "";
-    form = { name: "", description: "", spec: presetDefaultSpec() };
+  function openEdit(tpl) {
+    editingId = tpl.id;
+    form = { name: tpl.name, spec: { ...tpl.spec } };
   }
 
-  function openEdit(doc) {
-    editingName = doc.name;
-    form = {
-      name: doc.name,
-      description: doc.description || "",
-      spec: presetSpecFromDoc(doc),
-    };
+  function closeEdit() {
+    editingId = null;
   }
 
-  function close() {
-    editingName = null;
+  function saveEdit() {
+    if (saveLocalTemplate(form.name, "")) closeEdit();
   }
 
-  async function save() {
-    const name = form.name.trim();
-    if (!/^[a-z0-9_-]+$/.test(name)) {
-      flash("error", "Template names can only use letters, numbers, dashes and underscores.");
-      return;
-    }
-    try {
-      await savePreset({
-        name,
-        description: form.description.trim(),
-        palang: [buildPalangSpec(form.spec, true)],
-      });
-      flash("ok", editingName === "" || editingName === null ? "Template saved." : "Template updated.");
-      close();
-    } catch (err) {
-      flash("error", err.message);
-    }
-  }
-
-  async function remove(name) {
-    if (!confirm("Delete the template \"" + name + "\"? This cannot be undone.")) return;
-    try {
-      await deletePreset(name);
-      flash("ok", "Template deleted.");
-    } catch (err) {
-      flash("error", err.message);
-    }
+  function remove(id, name) {
+    if (!confirm('Delete the template "' + name + '"? This cannot be undone.')) return;
+    deleteLocalTemplate(id);
+    flash("ok", "Template deleted.");
   }
 
   onMount(() => {
@@ -63,46 +46,63 @@
 
 <div class="panel">
   <h2>Templates</h2>
-<p class="caption">
-  Templates (called presets in the documentation) are ready-made markings for common uses. Create your own here and they appear in one click anywhere on this site.
-</p>
+  <p class="desc">
+    Ready-made markings you can reuse. Built-in ones ship with the app. Your own templates are saved on this device, so they stay after a refresh — apply one and you land on the document with the marking loaded.
+  </p>
 
-<div class="actionrow">
-  <button type="button" class="btn btn-primary" onclick={openNew}>New template</button>
-</div>
-
-{#if editingName !== null}
-  <section class="divider">
-    <h3>{editingName ? "Edit template: " + editingName : "New template"}</h3>
+  {#if editingId !== null}
+    <div class="divider"></div>
+    <h3>Edit template</h3>
     <Field label="Name">
       <input type="text" value={form.name} oninput={(e) => (form.name = e.currentTarget.value)} placeholder="e.g. school, clinic" />
     </Field>
-    <Field label="Description">
-      <input type="text" value={form.description} oninput={(e) => (form.description = e.currentTarget.value)} placeholder="What is this template for?" />
-    </Field>
-    <PalangSpecFields spec={form.spec} showGeometry={true} onChange={(patch) => (form.spec = patch)} />
+    <PalangSpecFields spec={form.spec} showGeometry={false} onChange={(patch) => (form.spec = patch)} />
     <div class="actionrow">
-      <button type="button" class="btn btn-primary" onclick={save}>Save template</button>
-      <button type="button" class="btn" onclick={close}>Cancel</button>
+      <button type="button" class="btn btn-primary" onclick={saveEdit}>Save template</button>
+      <button type="button" class="btn" onclick={closeEdit}>Cancel</button>
     </div>
-  </section>
-{/if}
+  {:else}
+    <div class="actionrow">
+      <button type="button" class="btn btn-primary" onclick={() => setView("palang")}>
+        Create a template — set up a marking on the Palang tab, then tap “Save marking as template”
+      </button>
+    </div>
+  {/if}
 
-{#if app.presets.length}
-  <ul class="orderlist">
-    {#each app.presets as doc (doc.name)}
-      <li>
-        <span class="ol-label">
-          <strong>{doc.name}</strong>
-          {#if doc.description}<span class="ol-sub"> — {doc.description}</span>{/if}
-        </span>
-        <span class="chip chip-plain">{doc.palang.length} marking{doc.palang.length > 1 ? "s" : ""}</span>
-        <button type="button" onclick={() => openEdit(doc)}>Edit</button>
-        <button type="button" onclick={() => remove(doc.name)}>Delete</button>
-      </li>
-    {/each}
-  </ul>
-{:else}
-  <p class="caption">No templates yet. Create one to reuse your favourite markings.</p>
-{/if}
+  <div class="divider"></div>
+
+  <h3>My templates ({app.templates.length})</h3>
+  {#if app.templates.length}
+    <ul class="orderlist">
+      {#each app.templates as tpl (tpl.id)}
+        <li>
+          <span class="ol-label"><strong>{tpl.name}</strong></span>
+          <button type="button" onclick={() => applyLocalTemplate(tpl.id)}>Use</button>
+          <button type="button" onclick={() => openEdit(tpl)}>Edit</button>
+          <button type="button" onclick={() => remove(tpl.id, tpl.name)}>Delete</button>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p class="caption">None yet. Set up a marking on the Palang tab and tap “Save marking as template”.</p>
+  {/if}
+
+  <div class="divider"></div>
+
+  <h3>Built-in</h3>
+  {#if app.presets.length}
+    <ul class="orderlist">
+      {#each app.presets as doc (doc.name)}
+        <li>
+          <span class="ol-label">
+            <strong>{doc.name}</strong>
+            {#if doc.description}<span class="ol-sub"> — {doc.description}</span>{/if}
+          </span>
+          <button type="button" onclick={() => applyPreset(doc)}>Use</button>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p class="caption">Loading…</p>
+  {/if}
 </div>

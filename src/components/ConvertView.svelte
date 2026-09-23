@@ -1,6 +1,7 @@
 <script>
-  /** Convert tab: shared file basket + per-photo modal editor
-   *  (crop / enhance / replace / remove), bulk delete, bottom action bar. */
+  /** Convert tab: shared file basket + per-photo modal editor. Crop mode is
+   *  explicit: draw the box, press Apply & save, and the thumbnail becomes the
+   *  actual cropped photo. Undo restores the original. */
   import Field from "./ui/Field.svelte";
   import Select from "./ui/Select.svelte";
   import Checkbox from "./ui/Checkbox.svelte";
@@ -11,8 +12,8 @@
   import {
     app,
     addImages,
+    cropPreview,
     removeImage,
-    removeImages,
     revertImage,
     replaceImage,
     updateImage,
@@ -21,8 +22,6 @@
   } from "../lib/store.svelte.js";
 
   let editing = $state(null); // image id being edited (modal)
-  let selecting = $state(false);
-  let selectedIds = $state([]);
   let replaceInput = $state(null);
 
   const editingImage = $derived(app.images.find((im) => im.id === editing) ?? null);
@@ -36,44 +35,20 @@
     }))
   );
 
-  const selectedCount = $derived(selectedIds.length);
-
   // Live, approximate preview of the server-side enhancement (auto levels + sharpen).
   const enhancePreview = $derived(editingImage?.enhance ? "contrast(1.08) saturate(1.15)" : "none");
 
-  function toggleSelect(id) {
-    if (id === "__select__") {
-      selecting = true;
-      return;
-    }
-    if (id === "__clear__" || id === undefined) {
-      selectedIds = [];
-      selecting = false;
-      return;
-    }
-    if (selecting) {
-      selectedIds = selectedIds.includes(id)
-        ? selectedIds.filter((x) => x !== id)
-        : [...selectedIds, id];
-    }
-  }
-
-  function bulkDelete() {
-    if (!selectedIds.length) return;
-    if (!confirm("Delete " + selectedCount + " photo" + (selectedCount > 1 ? "s" : "") + "?")) return;
-    removeImages(selectedIds);
-    selectedIds = [];
-    selecting = false;
-  }
-
-  function openEditor(id) {
-    if (selecting) return;
-    editing = id;
-  }
-
   function applyEdit() {
+    if (!editingImage) return;
+    if (editingImage.crop) cropPreview(editingImage.id, editingImage.crop);
     editing = null;
-    flash("ok", "Saved — changes are marked on the photo.");
+    flash("ok", "Saved — the photo now shows what was applied.");
+  }
+
+  function undoEdit() {
+    if (!editingImage) return;
+    revertImage(editingImage.id);
+    flash("ok", "Undone — back to the original photo.");
   }
 
   function pickReplace(e) {
@@ -98,13 +73,9 @@
     sub="JPG, PNG, WEBP, BMP, TIFF · tap any photo to crop or enhance it"
     icon="convert"
     items={galleryItems}
-    selecting={selecting}
-    selected={selectedIds}
-    onToggleSelect={toggleSelect}
-    onDeleteSelected={bulkDelete}
     removable
     onRemove={removeImage}
-    onItem={openEditor}
+    onItem={(id) => (editing = id)}
     onPick={addImages}
   />
 
@@ -132,11 +103,15 @@
 {#if editingImage}
   <Modal title={editingImage.file.name} onClose={() => (editing = null)}>
     {#key editingImage.id + "-" + (editingImage.crop ? JSON.stringify(editingImage.crop) : "none")}
-      <Field label="Crop" hint="Drag inside the photo to choose what to keep, or drag the corners to resize.">
+      <Field
+        label="Crop"
+        hint="Draw a box to choose what to keep — the corners stick out for easy resizing. Press Apply & save and the photo updates."
+      >
         <CropBox
           url={editingImage.url}
           crop={editingImage.crop}
           filter={enhancePreview}
+          fitMaxH="48vh"
           onChange={(c) => updateImage(editingImage.id, { crop: c })}
         />
       </Field>
@@ -152,9 +127,9 @@
         type="button"
         class="btn btn-sm"
         disabled={!editingImage.crop && !editingImage.enhance}
-        onclick={() => revertImage(editingImage.id)}
+        onclick={undoEdit}
       >
-        Use full image
+        Undo
       </button>
       <button type="button" class="btn btn-sm" onclick={() => replaceInput?.click()}>Replace…</button>
       <button

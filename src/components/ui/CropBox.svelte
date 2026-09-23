@@ -1,11 +1,20 @@
 <script>
   /** Image crop surface: drag a rectangle on the preview to choose what to keep.
-   *  Presentational — emits crop fractions {l,t,r,b} (0..1) only on pointer release. */
+   *  Presentational — emits crop fractions {l,t,r,b} (0..1) only on pointer release.
+   *  fitMaxH (vh/px) fits the whole image inside the surface so no scrolling is
+   *  needed while editing. */
   import { clamp, round2 } from "../../lib/domain.js";
 
-  let { url, crop = null, onChange, filter = "none" } = $props();
+  let { url, crop = null, onChange, filter = "none", fitMaxH = "" } = $props();
 
   let wrap;
+  const wrapStyle = $derived(
+    fitMaxH ? "display:inline-block; max-width:100%;" : ""
+  );
+  const imgStyle = $derived(
+    `filter:${filter}; width:auto; height:auto; max-width:100%;` +
+      (fitMaxH ? ` max-height:${fitMaxH}; display:block; margin:0 auto;` : "")
+  );
   let box = $state(null); // displayed px {x,y,w,h}; null = full image
   let mode = $state(null); // null | "draw" | "move" | "nw" | "ne" | "sw" | "se"
   let sx = 0, sy = 0, bx = 0, by = 0, bw = 0, bh = 0;
@@ -114,6 +123,7 @@
 <div
   class="canvas-wrap"
   bind:this={wrap}
+  style={wrapStyle}
   role="application"
   aria-label="Crop area"
   onpointerdown={wrapDown}
@@ -125,7 +135,7 @@
     src={url}
     alt=""
     draggable="false"
-    style="filter:{filter}"
+    style={imgStyle}
     onload={initFromCrop}
     onpointerdown={(e) => e.preventDefault()}
   />

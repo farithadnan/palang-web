@@ -1,11 +1,21 @@
 <script>
   /** Palang tab: shared file basket, rendered page preview with zoom,
-   *  drag-to-place marking, marking fields, and a bottom action bar. */
+   *  drag-to-place marking (kept in view while dragging), marking fields,
+   *  save-current-marking-as-template, and a bottom action bar. */
   import Field from "./ui/Field.svelte";
   import FileBasket from "./ui/FileBasket.svelte";
   import PalangCanvas from "./ui/PalangCanvas.svelte";
   import PalangSpecFields from "./ui/PalangSpecFields.svelte";
-  import { app, pickPreviewFiles, removePreviewFile, setActivePage, updateSpec, generate } from "../lib/store.svelte.js";
+  import {
+    app,
+    pickPreviewFiles,
+    removePreviewFile,
+    setActivePage,
+    updateSpec,
+    saveLocalTemplate,
+    flash,
+    generate,
+  } from "../lib/store.svelte.js";
 
   const active = $derived(app.preview?.pages?.[app.activePage] ?? null);
   const pageUrl = $derived(active ? "data:image/png;base64," + active.png_base64 : "");
@@ -13,6 +23,9 @@
   const basketItems = $derived(
     app.previewFiles.map((f, i) => ({ id: "pf-" + i, name: f.name, icon: f.type?.startsWith("image/") ? "convert" : "file" }))
   );
+
+  let saving = $state(false);
+  let tplName = $state("");
 </script>
 
 <div class="panel">
@@ -57,12 +70,12 @@
       {#if app.preview.truncated}<p class="caption">Showing the first 20 pages.</p>{/if}
 
       {#if active}
-        {#key app.activePage + "-" + app.spec.mode + "-" + app.spec.style}
+        {#key app.activePage + "-" + app.spec.mode + "-" + app.spec.style + "-" + (app.spec.topPt ?? "c") + "-" + (app.spec.leftPt ?? "c")}
           <Field
             label={"Page " + active.page + " — drag the marking anywhere"}
             hint={app.spec.style === "lines"
-              ? "Transparent marking: the lines hug your text. Drag it to move it anywhere on the page."
-              : "Drag the marking to move it; drag its handles to resize."}
+              ? "Transparent marking: the lines hug your text. Drag it to move it anywhere on the page; it stays in view as you drag."
+              : "Drag the marking to move it; drag its handles to resize. Reset position brings it back to the middle."}
           >
             <PalangCanvas
               url={pageUrl}
@@ -90,6 +103,33 @@
           ? "Adjust the marking, then stamp"
           : "No document added yet"}
     </span>
+    {#if saving}
+      <span class="inline-save">
+        <input
+          type="text"
+          placeholder="Template name…"
+          aria-label="Template name"
+          bind:value={tplName}
+          onkeydown={(e) => {
+            if (e.key === "Enter") {
+              if (saveLocalTemplate(tplName, "")) saving = false;
+            }
+          }}
+        />
+        <button
+          type="button"
+          class="btn btn-sm btn-primary"
+          onclick={() => {
+            if (saveLocalTemplate(tplName, "")) saving = false;
+          }}
+        >
+          Save
+        </button>
+        <button type="button" class="btn btn-sm" onclick={() => (saving = false)}>Cancel</button>
+      </span>
+    {:else if app.previewFiles.length}
+      <button type="button" class="btn btn-sm" onclick={() => (saving = true)}>Save marking as template</button>
+    {/if}
     <button
       type="button"
       class="btn btn-primary"

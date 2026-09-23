@@ -164,6 +164,34 @@ export function imageSettings(images) {
   return images.map((im) => ({ enhance: im.enhance, crop: im.crop }));
 }
 
+/** Map a built-in preset's first marking into the canvas editor spec. */
+export function templateSpecFromPreset(doc) {
+  const s = doc?.palang?.[0];
+  const spec = defaultSpec();
+  if (!s) return spec;
+  spec.mode = s.mode === "region" ? "region" : "band";
+  spec.pages = s.pages === "odd" || s.pages === "even" || s.pages === "all" ? s.pages : "custom";
+  spec.pagesCustom = Array.isArray(s.pages) ? s.pages.join(", ") : String(s.pages);
+  spec.text = s.label?.text || "";
+  spec.second = s.label?.second_line || "";
+  spec.ref = s.label?.template_data?.ref || "";
+  spec.color = s.color || "#000000";
+  const opacity = s.opacity ?? 1;
+  spec.style =
+    s.mode === "region"
+      ? opacity >= 0.9
+        ? "solid"
+        : "see-through"
+      : s.band_style === "filled"
+        ? opacity >= 0.9
+          ? "solid"
+          : "see-through"
+        : "lines";
+  spec.heightPt = s.height_pt ?? (spec.mode === "region" ? 28 : 48);
+  spec.widthPt = s.width_pt ?? 180;
+  return spec;
+}
+
 /** Map a preset document's first marking back into the template editor state. */
 export function presetSpecFromDoc(doc) {
   if (!doc.palang || !doc.palang.length) return presetDefaultSpec();
