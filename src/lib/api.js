@@ -12,28 +12,6 @@ async function detail(res) {
   return "Something went wrong. Please check your files and try again.";
 }
 
-export async function getJSON(path) {
-  const res = await fetch(API + path);
-  if (!res.ok) throw new Error(await detail(res));
-  return res.json();
-}
-
-export async function postJSON(path, body) {
-  const res = await fetch(API + path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(await detail(res));
-  return res.json();
-}
-
-export async function del(path) {
-  const res = await fetch(API + path, { method: "DELETE" });
-  if (!res.ok) throw new Error(await detail(res));
-  return res.json();
-}
-
 function formFrom(files, fields) {
   const fd = new FormData();
   for (const file of files) fd.append("files", file, file.name);

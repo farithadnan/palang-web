@@ -102,6 +102,14 @@
       b.x = clamp(bx + dx, 0, bx + bw - 24);
       b.w = bw + (bx - b.x);
       b.h = clamp(bh + dy, 24, r.height - by);
+    } else if (mode === "midl") {
+      b.x = clamp(bx + dx, 0, bx + bw - 24);
+      b.w = bw + (bx - b.x);
+    } else if (mode === "midt") {
+      b.y = clamp(by + dy, 0, by + bh - 24);
+      b.h = bh + (by - b.y);
+    } else if (mode === "midr") {
+      b.w = clamp(bw + dx, 24, r.width - bx);
     }
     box = b;
   }
@@ -151,6 +159,9 @@
       <div class="handle h-ne" role="button" tabindex="-1" aria-label="Resize top-right" onpointerdown={(e) => { e.stopPropagation(); begin(e, "ne"); }}></div>
       <div class="handle h-sw" role="button" tabindex="-1" aria-label="Resize bottom-left" onpointerdown={(e) => { e.stopPropagation(); begin(e, "sw"); }}></div>
       <div class="handle h-se" role="button" tabindex="-1" aria-label="Resize bottom-right" onpointerdown={(e) => { e.stopPropagation(); begin(e, "se"); }}></div>
+      <div class="handle h-midl" role="button" tabindex="-1" aria-label="Resize left edge" onpointerdown={(e) => { e.stopPropagation(); begin(e, "midl"); }}></div>
+      <div class="handle h-midt" role="button" tabindex="-1" aria-label="Resize top edge" onpointerdown={(e) => { e.stopPropagation(); begin(e, "midt"); }}></div>
+      <div class="handle h-midr" role="button" tabindex="-1" aria-label="Resize right edge" onpointerdown={(e) => { e.stopPropagation(); begin(e, "midr"); }}></div>
     </div>
   {/if}
 </div>

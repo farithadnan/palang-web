@@ -6,7 +6,6 @@
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
-  import PresetsView from "./components/PresetsView.svelte";
   import PrivacyView from "./components/PrivacyView.svelte";
   import { app, setConsent, setTheme } from "./lib/store.svelte.js";
 
@@ -14,14 +13,12 @@
     { id: "convert", label: "Convert", icon: "convert" },
     { id: "palang", label: "Palang", icon: "palang" },
     { id: "merge", label: "Merge", icon: "merge" },
-    { id: "presets", label: "Templates", icon: "templates" },
   ];
   const HASH_TO_VIEW = {
     "": "convert",
     convert: "convert",
     palang: "palang",
     merge: "merge",
-    presets: "presets",
     privacy: "privacy",
   };
 
@@ -125,8 +122,6 @@
         <PalangView />
       {:else if view === "merge"}
         <MergeView />
-      {:else if view === "presets"}
-        <PresetsView />
       {:else if view === "privacy"}
         <PrivacyView />
       {/if}

@@ -1,7 +1,7 @@
 <script>
   /** Palang tab: shared file basket, rendered page preview with zoom,
    *  drag-to-place marking (kept in view while dragging), marking fields,
-   *  save-current-marking-as-template, and a bottom action bar. */
+   *  and a bottom action bar. */
   import Field from "./ui/Field.svelte";
   import FileBasket from "./ui/FileBasket.svelte";
   import PalangCanvas from "./ui/PalangCanvas.svelte";
@@ -12,7 +12,7 @@
     removePreviewFile,
     setActivePage,
     updateSpec,
-    saveLocalTemplate,
+    loadPreview,
     flash,
     generate,
   } from "../lib/store.svelte.js";
@@ -24,8 +24,20 @@
     app.previewFiles.map((f, i) => ({ id: "pf-" + i, name: f.name, icon: f.type?.startsWith("image/") ? "convert" : "file" }))
   );
 
-  let saving = $state(false);
-  let tplName = $state("");
+  // After ~5s of rendering, reassure the user the app is still working.
+  let slow = $state(false);
+  $effect(() => {
+    if (!app.previewLoading) {
+      slow = false;
+      return;
+    }
+    const t = setTimeout(() => (slow = true), 5000);
+    return () => clearTimeout(t);
+  });
+
+  function removeDocument() {
+    while (app.previewFiles.length) removePreviewFile(0);
+  }
 </script>
 
 <div class="panel">
@@ -50,7 +62,9 @@
   {#if app.previewFiles.length}
     {#if app.previewLoading}
       <div class="spinner" role="status" aria-label="Rendering pages"></div>
-      <p class="caption" style="text-align:center">Rendering pages…</p>
+      <p class="caption" style="text-align:center">
+        {slow ? "Still preparing your document… large files can take a little longer." : "Rendering pages…"}
+      </p>
     {:else if app.preview}
       <div class="pagethumbs" role="tablist" aria-label="Pages">
         {#each app.preview.pages as page, i (page.page)}
@@ -70,7 +84,7 @@
       {#if app.preview.truncated}<p class="caption">Showing the first 20 pages.</p>{/if}
 
       {#if active}
-        {#key app.activePage + "-" + app.spec.mode + "-" + app.spec.style + "-" + (app.spec.topPt ?? "c") + "-" + (app.spec.leftPt ?? "c")}
+        {#key app.activePage + "-" + app.spec.mode + "-" + app.spec.style + "-" + app.spec.armed}
           <Field
             label={"Page " + active.page + " — drag the marking anywhere"}
             hint={app.spec.style === "lines"
@@ -88,7 +102,13 @@
         {/key}
       {/if}
     {:else}
-      <p class="caption">Could not render this document. Try a different file.</p>
+      <div class="retrycard">
+        <p class="desc">Unable to prepare this document. It may be too large or unsupported.</p>
+        <div class="actionrow">
+          <button type="button" class="btn btn-primary btn-sm" onclick={() => void loadPreview()}>Try again</button>
+          <button type="button" class="btn btn-sm" onclick={removeDocument}>Choose another file</button>
+        </div>
+      </div>
     {/if}
 
     <div class="divider"></div>
@@ -100,36 +120,9 @@
       {app.spec.armed
         ? "Marking ready"
         : app.previewFiles.length
-          ? "Adjust the marking, then stamp"
+          ? "Tap anywhere on the page to add the marking"
           : "No document added yet"}
     </span>
-    {#if saving}
-      <span class="inline-save">
-        <input
-          type="text"
-          placeholder="Template name…"
-          aria-label="Template name"
-          bind:value={tplName}
-          onkeydown={(e) => {
-            if (e.key === "Enter") {
-              if (saveLocalTemplate(tplName, "")) saving = false;
-            }
-          }}
-        />
-        <button
-          type="button"
-          class="btn btn-sm btn-primary"
-          onclick={() => {
-            if (saveLocalTemplate(tplName, "")) saving = false;
-          }}
-        >
-          Save
-        </button>
-        <button type="button" class="btn btn-sm" onclick={() => (saving = false)}>Cancel</button>
-      </span>
-    {:else if app.previewFiles.length}
-      <button type="button" class="btn btn-sm" onclick={() => (saving = true)}>Save marking as template</button>
-    {/if}
     <button
       type="button"
       class="btn btn-primary"

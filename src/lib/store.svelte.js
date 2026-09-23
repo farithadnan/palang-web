@@ -2,28 +2,10 @@
    Views read/write `app.*`; components stay presentational. */
 
 import * as api from "./api.js";
-import { buildPalangSpec, defaultSpec, imageSettings, templateSpecFromPreset } from "./domain.js";
+import { buildPalangSpec, defaultSpec, imageSettings } from "./domain.js";
 
 const CONSENT_KEY = "palang-consent-v1";
 const THEME_KEY = "palang-theme";
-const TEMPLATES_KEY = "palang-templates-v1";
-
-function loadTemplates() {
-  try {
-    const raw = localStorage.getItem(TEMPLATES_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function persistTemplates() {
-  try {
-    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(app.templates));
-  } catch {
-    /* templates last for this session only */
-  }
-}
 
 function initialConsent() {
   try {
@@ -52,7 +34,6 @@ export const app = $state({
   images: [],
   pdfs: [],
   spec: defaultSpec(),
-  presets: [],
   preview: null, // { count, truncated, pages: [{page,width_pt,height_pt,png_base64}] }
   previewFiles: [],
   previewLoading: false,
@@ -60,7 +41,6 @@ export const app = $state({
   busy: false,
   message: null, // { kind: "ok" | "error", text }
   consented: initialConsent(),
-  templates: loadTemplates(), // device-local user templates (survive refresh)
 });
 
 export function setConsent(agreed) {
@@ -216,64 +196,6 @@ export function removePdf(id) {
   if (index >= 0) app.pdfs.splice(index, 1);
 }
 
-/* ---------- presets / templates ---------- */
-
-export async function loadPresets() {
-  try {
-    app.presets = await api.getJSON("/api/presets");
-  } catch {
-    app.presets = [];
-  }
-}
-
-export async function savePreset(doc) {
-  await api.postJSON("/api/presets", doc);
-  await loadPresets();
-}
-
-export async function deletePreset(name) {
-  await api.del("/api/presets/" + encodeURIComponent(name));
-  await loadPresets();
-}
-
-/* ---------- device-local templates ---------- */
-
-export function saveLocalTemplate(name, description) {
-  const trimmed = name.trim();
-  if (!trimmed) {
-    flash("error", "Give the template a name.");
-    return null;
-  }
-  const tpl = { id: "tpl-" + Date.now(), name: trimmed, description: description.trim(), spec: { ...app.spec } };
-  app.templates = [...app.templates.filter((t) => t.name !== trimmed), tpl];
-  persistTemplates();
-  flash("ok", "Template saved on this device.");
-  return tpl;
-}
-
-export function deleteLocalTemplate(id) {
-  app.templates = app.templates.filter((t) => t.id !== id);
-  persistTemplates();
-}
-
-/** Apply a local template: load its marking into the palang editor. */
-export function applyLocalTemplate(id) {
-  const tpl = app.templates.find((t) => t.id === id);
-  if (!tpl) return;
-  app.spec = { ...tpl.spec, armed: true };
-  setView("palang");
-  flash("ok", "Template applied — tweak it on the page, then stamp.");
-}
-
-/** Apply a built-in preset (from the server): map it into the editor's spec. */
-export function applyPreset(pack) {
-  const spec = templateSpecFromPreset(pack);
-  spec.armed = true;
-  app.spec = spec;
-  setView("palang");
-  flash("ok", "Template applied — tweak it on the page, then stamp.");
-}
-
 /* ---------- palang preview + spec ---------- */
 
 export function pickPreviewFiles(fileList) {
@@ -317,7 +239,9 @@ export function setActivePage(index) {
 
 export function updateSpec(patch) {
   Object.assign(app.spec, patch);
-  app.spec.armed = true;
+  // Field edits implicitly arm the marking; an explicit `armed` in the patch
+  // (delete, re-add) is honoured as-is.
+  if (!Object.prototype.hasOwnProperty.call(patch, "armed")) app.spec.armed = true;
 }
 
 export function resetSpec() {
@@ -392,12 +316,9 @@ if (typeof window !== "undefined") {
     removeImages,
     cropPreview,
     revertImage,
+    updateSpec,
     setConsent,
     setTheme,
-    applyLocalTemplate,
-    applyPreset,
-    saveLocalTemplate,
-    deleteLocalTemplate,
     generate,
   };
 }
