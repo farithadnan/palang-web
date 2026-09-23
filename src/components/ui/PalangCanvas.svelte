@@ -19,7 +19,7 @@
   let box = $state(null); // points; lines band keeps x/y only
   let mode = $state(null); // null | "move" | corners (region) | "midb" (band height)
   let selected = $state(true);
-  let sx = 0, sy = 0, bx = 0, by = 0, bw = 0, bh = 0;
+  let sx = 0, sy = 0, bx = 0, by = 0, bw = 0, bh = 0, sf0 = 18;
   let pointers = new Map(); // active background touches (pinch zoom)
 
   const region = $derived(spec.mode === "region");
@@ -28,8 +28,7 @@
   const scale = $derived(fitScale * zoom);
   const showHandles = $derived(armed && selected);
 
-  const LINES_LINE_H = 24.3; // ~18pt text line height
-  const LINES_SECOND_H = 16.2;
+  const fontPt = $derived(spec.fontSize ?? 18); // text size drives the whole lines band
   const MIN_SIDE = 24; // pt
 
   function textWidthPt(text, sizePt) {
@@ -39,11 +38,15 @@
     return Math.max(0, ctx.measureText(text).width / scale);
   }
 
-  // Lines band geometry follows the live text (recomputed without remounting).
+  // Lines band geometry follows the live text (recomputed without remounting),
+  // mirroring the server's measurements: font_size * 1.75 line box, second
+  // line at 60% size, 10pt outer padding.
+  const hasSecond = $derived(!!(spec.second ?? "").trim());
+  const secondW = $derived(hasSecond ? textWidthPt(spec.second, fontPt * 0.6) : 0);
   const lineLenPt = $derived(
-    lines ? Math.max(40, Math.max(textWidthPt(spec.text || "", 18), textWidthPt(spec.second || "", 18)) + 14) : 0
+    lines ? Math.max(40, Math.max(textWidthPt(spec.text || "", fontPt), secondW) + 14) : 0
   );
-  const blockHPt = $derived(lines ? 6 + LINES_LINE_H + (spec.second ? 4 + LINES_SECOND_H : 0) + 6 : 0);
+  const blockHPt = $derived(lines ? 10 + fontPt * 1.75 + (hasSecond ? fontPt * 1.14 : 0) : 0);
 
   function clampZoom(z) {
     return Math.min(4, Math.max(0.4, z));
@@ -136,6 +139,7 @@
     by = box.y;
     bw = box.w ?? 0;
     bh = box.h ?? 0;
+    sf0 = spec.fontSize ?? 18;
     mode = m;
     selected = true;
     wrap.setPointerCapture(e.pointerId);
@@ -184,6 +188,12 @@
       b.h = clampPt(bh + dy, MIN_SIDE, heightPt - by);
     } else if (mode === "midb" && !lines) {
       b.h = clampPt(bh + dy, 12, heightPt - by);
+    } else if (mode === "scale" && lines) {
+      // Stretch the marking like the crop box: drag scales the text size,
+      // and the band (lines + text) grows with it.
+      const f = clampPt(sf0 + (dx + dy) * 0.25, 10, 44);
+      if (Math.abs(f - (spec.fontSize ?? 18)) > 0.1) onChange?.({ fontSize: round1(f) });
+      return;
     }
     box = b;
     // Keep the marking visible while dragging (the frame may be scrolled/zoomed).
@@ -256,7 +266,11 @@
   }
 
   function centerReset() {
-    box = defaultBox();
+    // Recentre from scratch — never from stale spec coordinates, so the
+    // marking can't get stuck bottom-right after a previous drag.
+    box = lines
+      ? { x: Math.max(0, (widthPt - lineLenPt) / 2), y: Math.max(0, (heightPt - blockHPt) / 2) }
+      : defaultBox();
     onChange?.({ topPt: null, leftPt: null });
   }
 
@@ -303,11 +317,13 @@
       lines
         ? `border-top-width:${borderW}px; border-bottom-width:${borderW}px; border-top-style:solid; border-bottom-style:solid; border-color:${spec.color}`
         : "",
+      rotation ? `transform:rotate(${rotation}deg); transform-origin:center center;` : "",
     ]
       .filter(Boolean)
       .join("; ")
   );
-  const labelStyle = $derived(lines ? `color:${spec.color}; font-size:${Math.round(18 * scale)}px` : "");
+  const labelStyle = $derived(lines ? `color:${spec.color}; font-size:${Math.round(fontPt * scale)}px` : "");
+  const rotation = $derived(((spec.rotationDeg ?? 0) % 360 + 360) % 360);
   const pageBoxStyle = $derived(
     `aspect-ratio:${widthPt}/${heightPt}; width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:74vh; margin:0 auto;`
   );
@@ -344,6 +360,9 @@
             {/if}
             {#if showHandles && !lines}
               <div class="handle h-midb" role="button" tabindex="-1" aria-label="Resize marking height" onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>
+            {/if}
+            {#if showHandles && lines}
+              <div class="handle h-se" role="button" tabindex="-1" aria-label="Scale the marking" onpointerdown={(e) => { e.preventDefault(); begin(e, "scale"); }}></div>
             {/if}
             {#if showHandles && region}
               <div class="handle h-nw" role="button" tabindex="-1" aria-label="Resize top-left" onpointerdown={(e) => { e.preventDefault(); begin(e, "nw"); }}></div>
@@ -393,7 +412,6 @@
     <button type="button" class="btn btn-sm" aria-label="Zoom out" onclick={() => zoomBy(1 / 1.25)}>−</button>
     <span class="caption">{Math.round(zoom * 100)}%</span>
     <button type="button" class="btn btn-sm" aria-label="Zoom in" onclick={() => zoomBy(1.25)}>+</button>
-    <button type="button" class="btn btn-sm" aria-label="Fit page to the editing area" onclick={() => (zoom = 1)}>Fit</button>
     <button type="button" class="btn btn-sm" aria-label="Reset marking position to the middle" onclick={centerReset}>
       Reset position
     </button>

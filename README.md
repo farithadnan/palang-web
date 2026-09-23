@@ -62,9 +62,11 @@ Clean separation, mirroring the palang core's layering:
   (no server round-trip); the page geometry is computed with the same fit formula
   the server uses, so what you see is what the stamped PDF produces. PDFs are
   rendered server-side as 1x JPEGs via `/api/preview`.
-- The marking is **added by tapping the page**, then dragged/resized with handles;
-  arrow keys nudge it (Shift = 10 pt), Delete removes it, Esc deselects. Height and
-  width are also editable as numbers and stay in sync with the canvas.
+- The marking **appears centred automatically** when the document loads (lines
+  style: transparent, text + thin lines, nothing covered). Drag it anywhere; the
+  bottom-right handle stretches it like the crop box; arrow keys nudge it
+  (Shift = 10 pt); Delete removes it; Reset position recentres it. Rotation
+  (degrees) tilts the whole marking, matching the stamped output.
 - Photo crop is **visual and confirmable**: Apply & save re-crops the thumbnail so
   you see the result; Undo restores the original. Enhance preview is approximate —
   the real enhance runs server-side.

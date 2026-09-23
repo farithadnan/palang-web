@@ -241,7 +241,11 @@ async function buildClientImagePreview(files) {
 let previewSeq = 0;
 
 export function pickPreviewFiles(fileList) {
-  const files = [...fileList];
+  // "Add more" appends to the existing document instead of replacing it.
+  const incoming = [...fileList];
+  const known = new Set(app.previewFiles.map((f) => f.name));
+  const fresh = incoming.filter((f) => !known.has(f.name));
+  const files = fresh.length ? [...app.previewFiles, ...fresh] : app.previewFiles;
   app.previewFiles = files;
   app.activePage = 0;
   if (!files.length) {

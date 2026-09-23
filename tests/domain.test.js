@@ -84,6 +84,21 @@ describe("buildPalangSpec", () => {
     expect(out.position.top_pt).toBe(300);
   });
 
+  it("maps rotation and text size into the API spec", () => {
+    const spec = defaultSpec();
+    spec.text = "UNTUK KEGUNAAN";
+    spec.fontSize = 26;
+    spec.rotationDeg = 45;
+    const out = buildPalangSpec(spec, true);
+    expect(out.rotation_deg).toBe(45);
+    expect(out.label.font_size).toBe(26);
+  });
+
+  it("omits rotation when unset", () => {
+    const out = buildPalangSpec(defaultSpec(), true);
+    expect(out.rotation_deg).toBeUndefined();
+  });
+
   it("builds a region with left offset and no empty label", () => {
     const spec = defaultSpec();
     spec.mode = "region";

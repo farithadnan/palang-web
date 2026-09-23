@@ -95,7 +95,9 @@ export function defaultSpec() {
     leftPt: null, // null = centred horizontally (region)
     heightPt: 48,
     widthPt: 180,
-    armed: false,
+    fontSize: 18,
+    rotationDeg: 0,
+    armed: true, // the marking shows on the page as soon as a document loads
   };
 }
 
@@ -152,7 +154,7 @@ export function buildPalangSpec(spec, anchored = false) {
   }
 
   if (!region) {
-    return {
+    const out = {
       mode: "band",
       band_style: style === "lines" ? "lines" : "filled",
       pages,
@@ -162,6 +164,8 @@ export function buildPalangSpec(spec, anchored = false) {
       opacity,
       label,
     };
+    if (spec.rotationDeg) out.rotation_deg = round1(spec.rotationDeg);
+    return out;
   }
   return {
     mode: "region",
