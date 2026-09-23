@@ -17,8 +17,10 @@
 
   const styleHint = $derived(
     spec.style === "lines"
-      ? "The lines and the text use the colour you pick."
-      : "Text on the bar is always white."
+      ? "Lines only: transparent, nothing is covered — the colour is used for the lines and the text."
+      : spec.style === "solid"
+        ? "Solid: a dense bar that fully covers what's underneath, like a black marker line."
+        : "See-through: a shaded bar you can still read through."
   );
 
   const POSITION_OPTIONS = [

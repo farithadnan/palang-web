@@ -25,7 +25,8 @@
   <h3>Run it yourself</h3>
   <p class="prose">
     This is an open source project (MIT). Run it on your own machine or server and nothing
-    leaves your device at all.
+    leaves your device at all. The versioned policy lives with the source:
+    <a href="https://github.com/farithadnan/palang/blob/main/PRIVACY.md" target="_blank" rel="noopener">PRIVACY.md</a>
   </p>
   <ul class="prose">
     <li>Core engine + API: <a href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">github.com/farithadnan/palang</a></li>

@@ -121,6 +121,38 @@
     {/if}
 
     <div class="divider"></div>
+
+    {#if app.spec.armed && app.spec.style !== "lines"}
+      <div class="geo-row">
+        <Field label="Height (pt)" hint="Or drag the marking's bottom handle.">
+          <input
+            type="number"
+            min="8"
+            max="600"
+            value={app.spec.heightPt ?? 48}
+            oninput={(e) => {
+              const v = Number(e.currentTarget.value);
+              if (Number.isFinite(v) && v > 0) updateSpec({ heightPt: v });
+            }}
+          />
+        </Field>
+        {#if app.spec.mode === "region"}
+          <Field label="Width (pt)" hint="Or drag the marking's corner handles.">
+            <input
+              type="number"
+              min="20"
+              max="595"
+              value={app.spec.widthPt ?? 180}
+              oninput={(e) => {
+                const v = Number(e.currentTarget.value);
+                if (Number.isFinite(v) && v > 0) updateSpec({ widthPt: v });
+              }}
+            />
+          </Field>
+        {/if}
+      </div>
+    {/if}
+
     <PalangSpecFields spec={app.spec} showGeometry={false} onChange={(patch) => updateSpec(patch)} />
   {/if}
 

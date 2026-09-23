@@ -2,7 +2,7 @@
    Views read/write `app.*`; components stay presentational. */
 
 import * as api from "./api.js";
-import { buildPalangSpec, defaultSpec, imageSettings, PAGE_DIMS } from "./domain.js";
+import { buildPalangSpec, defaultSpec, fittedPageSize, imageSettings, PAGE_DIMS } from "./domain.js";
 
 const CONSENT_KEY = "palang-consent-v1";
 const THEME_KEY = "palang-theme";
@@ -210,16 +210,10 @@ function isImageFile(file) {
  * sized to the image fitted within the chosen page size (same formula as
  * PyMuPDF's _page_rect), so preview geometry and the stamped output agree.
  */
-function fittedRect(w, h) {
-  const size = PAGE_DIMS[app.pageSize] ?? PAGE_DIMS.A4;
-  const pageRatio = size.w / size.h;
-  if (w / h > pageRatio) return { w: size.w, h: size.w / (w / h) };
-  return { w: size.h * (w / h), h: size.h };
-}
-
 async function buildClientImagePreview(files) {
   const seq = ++previewSeq;
   const pages = [];
+  const size = PAGE_DIMS[app.pageSize] ?? PAGE_DIMS.A4;
   for (const f of files) {
     let w = 0;
     let h = 0;
@@ -236,7 +230,7 @@ async function buildClientImagePreview(files) {
     } catch {
       /* fall back to A4 for undecodable images */
     }
-    const rect = w && h ? fittedRect(w, h) : { w: PAGE_DIMS.A4.w, h: PAGE_DIMS.A4.h };
+    const rect = w && h ? fittedPageSize(w, h, size.w, size.h) : { w: size.w, h: size.h };
     pages.push({ page: pages.length + 1, width_pt: Math.round(rect.w), height_pt: Math.round(rect.h), url, mime: f.type || "image/jpeg" });
   }
   if (seq !== previewSeq || !files.every((f, i) => app.previewFiles[i] === f)) return;

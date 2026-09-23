@@ -260,6 +260,18 @@
     onChange?.({ topPt: null, leftPt: null });
   }
 
+  // Keep the canvas box in sync when geometry is edited in the number fields
+  // (height/width), without remounting the canvas or losing zoom/position.
+  $effect(() => {
+    if (!box || !armed || lines) return;
+    const h = spec.heightPt ?? 48;
+    if (Math.abs((box.h ?? h) - h) > 0.5) box = { ...box, h };
+    if (region) {
+      const w = spec.widthPt ?? 180;
+      if (Math.abs((box.w ?? w) - w) > 0.5) box = { ...box, w };
+    }
+  });
+
   const geom = $derived(
     box
       ? lines

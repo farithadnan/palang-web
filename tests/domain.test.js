@@ -2,10 +2,31 @@ import { describe, expect, it } from "vitest";
 import {
   buildPalangSpec,
   defaultSpec,
+  fittedPageSize,
   imageSettings,
   pagesValue,
   presetSpecFromDoc,
 } from "../src/lib/domain.js";
+
+describe("fittedPageSize", () => {
+  const A4 = { w: 595, h: 842 };
+  it("keeps a wide image's ratio on the page width", () => {
+    expect(fittedPageSize(2000, 1000, A4.w, A4.h)).toEqual({ w: 595, h: 297.5 });
+  });
+  it("keeps a tall image's ratio on the page height", () => {
+    expect(fittedPageSize(1000, 2000, A4.w, A4.h)).toEqual({ w: 421, h: 842 });
+  });
+  it("fits a square image to the shorter page edge", () => {
+    expect(fittedPageSize(1000, 1000, A4.w, A4.h)).toEqual({ w: 595, h: 595 });
+  });
+  it("exact-ratio images fill the page", () => {
+    expect(fittedPageSize(595, 842, A4.w, A4.h)).toEqual({ w: 595, h: 842 });
+  });
+  it("falls back to the page size for unknown dimensions", () => {
+    expect(fittedPageSize(0, 100, A4.w, A4.h)).toEqual(A4);
+    expect(fittedPageSize(null, null, A4.w, A4.h)).toEqual(A4);
+  });
+});
 
 describe("pagesValue", () => {
   it("passes through simple targets", () => {

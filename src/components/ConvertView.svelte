@@ -117,7 +117,7 @@
       </Field>
       <Checkbox
         label="Improve quality"
-        hint="Sharpen and boost contrast, good for scans. The preview above shows the effect."
+        hint="Sharpen and boost contrast, good for scans. The preview above is approximate — the final enhance runs on the server when you convert."
         checked={editingImage.enhance}
         onChange={(v) => updateImage(editingImage.id, { enhance: v })}
       />

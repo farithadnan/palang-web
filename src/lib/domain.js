@@ -14,6 +14,15 @@ export const PAGE_DIMS = {
   Letter: { w: 612, h: 792 },
 };
 
+/** Image->page fit rect, mirroring the server's _page_rect (margin 0). */
+export function fittedPageSize(imgW, imgH, pageW, pageH) {
+  if (!imgW || !imgH) return { w: pageW, h: pageH };
+  const pageRatio = pageW / pageH;
+  return imgW / imgH > pageRatio
+    ? { w: pageW, h: pageW / (imgW / imgH) }
+    : { w: pageH * (imgW / imgH), h: pageH };
+}
+
 export const BAND_THICKNESS = { thin: 32, normal: 48, thick: 72 };
 export const REGION_THICKNESS = { thin: 16, normal: 28, thick: 44 };
 export const REGION_WIDTH = { narrow: 120, normal: 180, wide: 260 };

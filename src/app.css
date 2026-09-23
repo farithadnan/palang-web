@@ -237,9 +237,13 @@ aside.side { display: none; width: 216px; flex: none; padding: 1.1rem 0.9rem 0 0
 
 /* ---------- forms ---------- */
 .field { margin-bottom: 1rem; }
+.geo-row { display: flex; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+.geo-row .field { margin-bottom: 0; }
+.geo-row input[type="number"] { width: 7rem; }
 .flabel { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.3rem; }
 .hint { font-size: 0.82rem; color: var(--muted); margin: 0.3rem 0 0; }
 input[type="text"],
+input[type="number"],
 select {
   width: 100%;
   padding: 0.55rem 0.7rem;
