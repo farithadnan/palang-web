@@ -28,22 +28,10 @@ export const REGION_THICKNESS = { thin: 16, normal: 28, thick: 44 };
 export const REGION_WIDTH = { narrow: 120, normal: 180, wide: 260 };
 export const REGION_LEFT_PT = { left: 20, center: 207, right: 395 };
 export const FONT_SIZE = 18;
-
-/** Band rendering styles: lines = transparent, text with a line above+below;
- *  solid / see-through = the classic filled bar at full / partial opacity. */
-export const BAND_STYLE_OPTIONS = [
-  { v: "lines", l: "Lines only (transparent, follows the text)" },
-  { v: "solid", l: "Filled bar, solid" },
-  { v: "see-through", l: "Filled bar, see-through" },
-];
 const FILLED_OPACITY = { solid: 1.0, "see-through": 0.6 };
 
 export function clamp(v, lo, hi) {
   return Math.min(hi, Math.max(lo, v));
-}
-
-export function clamp01(v) {
-  return clamp(v, 0, 1);
 }
 
 export function round1(v) {
@@ -61,23 +49,6 @@ export function pagesValue(select, custom) {
     return text || "all";
   }
   return select;
-}
-
-/** Nearest friendly value by point size (used when loading a template into the form). */
-export function nearest(values, target) {
-  let best = values[0];
-  for (const v of values) {
-    if (Math.abs(v - target) < Math.abs(best - target)) best = v;
-  }
-  return best;
-}
-
-export function keyOf(values, target) {
-  const value = nearest(Object.values(values), target);
-  for (const key of Object.keys(values)) {
-    if (values[key] === value) return key;
-  }
-  return "normal";
 }
 
 /** A fresh, untouched palang spec (absolute positioning mode, used by the canvas). */
@@ -98,24 +69,6 @@ export function defaultSpec() {
     fontSize: 18,
     rotationDeg: 0,
     armed: true, // the marking shows on the page as soon as a document loads
-  };
-}
-
-/** A fresh template-editor spec (anchor positioning mode, used by Templates). */
-export function presetDefaultSpec() {
-  return {
-    mode: "band",
-    anchor: "center",
-    horiz: "center",
-    thickness: "normal",
-    width: "normal",
-    text: "",
-    second: "",
-    ref: "",
-    color: "#000000",
-    style: "lines",
-    pages: "all",
-    pagesCustom: "",
   };
 }
 
@@ -184,65 +137,3 @@ export function imageSettings(images) {
   return images.map((im) => ({ enhance: im.enhance, crop: im.crop }));
 }
 
-/** Map a built-in preset's first marking into the canvas editor spec. */
-export function templateSpecFromPreset(doc) {
-  const s = doc?.palang?.[0];
-  const spec = defaultSpec();
-  if (!s) return spec;
-  spec.mode = s.mode === "region" ? "region" : "band";
-  spec.pages = s.pages === "odd" || s.pages === "even" || s.pages === "all" ? s.pages : "custom";
-  spec.pagesCustom = Array.isArray(s.pages) ? s.pages.join(", ") : String(s.pages);
-  spec.text = s.label?.text || "";
-  spec.second = s.label?.second_line || "";
-  spec.ref = s.label?.template_data?.ref || "";
-  spec.color = s.color || "#000000";
-  const opacity = s.opacity ?? 1;
-  spec.style =
-    s.mode === "region"
-      ? opacity >= 0.9
-        ? "solid"
-        : "see-through"
-      : s.band_style === "filled"
-        ? opacity >= 0.9
-          ? "solid"
-          : "see-through"
-        : "lines";
-  spec.heightPt = s.height_pt ?? (spec.mode === "region" ? 28 : 48);
-  spec.widthPt = s.width_pt ?? 180;
-  return spec;
-}
-
-/** Map a preset document's first marking back into the template editor state. */
-export function presetSpecFromDoc(doc) {
-  if (!doc.palang || !doc.palang.length) return presetDefaultSpec();
-  const s = doc.palang[0];
-  const spec = presetDefaultSpec();
-  spec.mode = s.mode === "region" ? "region" : "band";
-  spec.anchor = s.position?.anchor || "center";
-  if (s.position?.left_pt != null) spec.horiz = keyOf(REGION_LEFT_PT, s.position.left_pt);
-  if (spec.mode === "region") {
-    spec.thickness = keyOf(REGION_THICKNESS, s.height_pt);
-    spec.width = keyOf(REGION_WIDTH, s.width_pt);
-  } else {
-    spec.thickness = keyOf(BAND_THICKNESS, s.height_pt);
-  }
-  spec.text = s.label?.text || "";
-  spec.second = s.label?.second_line || "";
-  spec.ref = s.label?.template_data?.ref || "";
-  if (s.pages === "odd" || s.pages === "even" || s.pages === "all") {
-    spec.pages = s.pages;
-  } else {
-    spec.pages = "custom";
-    spec.pagesCustom = Array.isArray(s.pages) ? s.pages.join(", ") : String(s.pages);
-  }
-  spec.color = s.color || "#000000";
-  const isFilled = s.mode !== "region" && s.band_style === "filled";
-  if (isFilled) {
-    spec.style = (s.opacity ?? 1) >= 0.9 ? "solid" : "see-through";
-  } else if (s.mode === "region") {
-    spec.style = (s.opacity ?? 1) >= 0.9 ? "solid" : "see-through";
-  } else {
-    spec.style = "lines";
-  }
-  return spec;
-}

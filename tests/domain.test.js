@@ -5,7 +5,6 @@ import {
   fittedPageSize,
   imageSettings,
   pagesValue,
-  presetSpecFromDoc,
 } from "../src/lib/domain.js";
 
 describe("fittedPageSize", () => {
@@ -134,31 +133,5 @@ describe("imageSettings", () => {
       { enhance: true, crop: { l: 0, t: 0, r: 1, b: 0.5 } },
       { enhance: false, crop: null },
     ]);
-  });
-});
-
-describe("presetSpecFromDoc", () => {
-  it("round-trips a bank-style preset into the editor state", () => {
-    const spec = presetSpecFromDoc({
-      palang: [
-        {
-          mode: "band",
-          pages: "all",
-          position: { anchor: "center" },
-          height_pt: 48,
-          color: "#003366",
-          opacity: 0.8,
-          label: { text: "UNTUK KEGUNAAN BANK SAHAJA", second_line: "Dijana pada {date}" },
-        },
-      ],
-    });
-    expect(spec.mode).toBe("band");
-    expect(spec.anchor).toBe("center");
-    expect(spec.thickness).toBe("normal");
-    expect(spec.text).toBe("UNTUK KEGUNAAN BANK SAHAJA");
-    expect(spec.second).toBe("Dijana pada {date}");
-    expect(spec.color).toBe("#003366");
-    // No band_style in the preset: it renders with the new lines default.
-    expect(spec.style).toBe("lines");
   });
 });

@@ -134,9 +134,9 @@
       <span class="footdot">·</span>
       <span>MIT License</span>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">palang</a>
+      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">Core engine</a>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">web app</a>
+      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">Web app</a>
     </div>
   </footer>
 </div>

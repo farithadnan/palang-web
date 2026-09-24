@@ -397,22 +397,16 @@
   );
   const borderW = $derived(lines ? Math.max(1, Math.round(1.2 * scale)) : 2);
   let pageBoxEl; // plain let: bind:this on $state miscompiles in this child
-  // Apply the fit width imperatively. Read fitScale/zoom directly in the
-  // effect: reading them through a $derived intermediary does not re-run
-  // the effect (Svelte 5 runes miscompile in this child), while direct
-  // state reads do.
+  // Apply the fitted width imperatively (Svelte 5 template-style sizing is
+  // non-reactive in this child). Read fitScale/zoom directly in the effect:
+  // reading them through a $derived intermediary does not re-run it, while
+  // direct state reads do.
   $effect(() => {
-    if (!fitContain) return;
-    if (!pageBoxEl) return;
+    const el = fitContain ? pageBoxEl : img;
+    if (!el) return;
     const w = fitScale > 0 ? `${fitScale * widthPt * zoom}px` : "100%";
-    pageBoxEl.style.width = w;
-    pageBoxEl.style.maxWidth = zoom <= 1 ? "100%" : "none";
-  });
-  $effect(() => {
-    if (fitContain || !img) return;
-    const w = fitScale > 0 ? `${fitScale * widthPt * zoom}px` : "100%";
-    img.style.width = w;
-    img.style.maxWidth = zoom <= 1 ? "100%" : "none";
+    el.style.width = w;
+    el.style.maxWidth = zoom <= 1 ? "100%" : "none";
   });
   const boxStyle = $derived(
     [
