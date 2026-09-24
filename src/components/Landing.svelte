@@ -4,6 +4,8 @@
    *  section here is the single privacy destination (footers + app point
    *  at #privacy). Copy is i18n'd (en/ms). */
   import Topbar from "./ui/Topbar.svelte";
+  import Modal from "./ui/Modal.svelte";
+  import SampleDemo from "./SampleDemo.svelte";
   import Icon from "./ui/Icon.svelte";
   import { t } from "../lib/i18n.js";
 
@@ -45,6 +47,11 @@
     location.hash = "#/" + view;
   }
 
+  let startOpen = $state(false);
+  function openApp() {
+    startOpen = true;
+  }
+
   function jump(sel, e) {
     e?.preventDefault();
     document.querySelector(sel)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -70,7 +77,7 @@
 </svelte:head>
 
 <div class="landing">
-  <Topbar context="landing">
+  <Topbar context="landing" onOpenApp={openApp}>
     {#snippet children()}
       <a href="#features" onclick={(e) => jump("#features", e)}>{t("features")}</a>
       <a href="#how" onclick={(e) => jump("#how", e)}>{t("how")}</a>
@@ -90,9 +97,18 @@
     <h1>{t("title")}</h1>
     <p class="ld-lede">{t("lede")}</p>
     <div class="ld-cta">
-      <button type="button" class="btn btn-primary btn-lg" onclick={() => go("convert")}>{t("openWebApp")}</button>
+      <button type="button" class="btn btn-primary btn-lg" onclick={openApp}>{t("openWebApp")}</button>
       <a class="btn btn-ghost btn-lg" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("viewGitHub")}</a>
     </div>
+    <p class="ld-misuse">
+      <b>{t("misuseA")}</b> {t("misuseB")}
+    </p>
+  </section>
+
+  <section class="ld-section ld-sample" id="sample" data-reveal>
+    <h2>{t("seeItLive")}</h2>
+    <p class="ld-sub">{t("sampleHint")}</p>
+    <SampleDemo />
   </section>
 
   <section class="ld-section" id="platforms" data-reveal>
@@ -107,7 +123,7 @@
           </div>
           <p>{t(p.key + "Desc")}</p>
           {#if p.action}
-            <button type="button" class="btn btn-sm btn-primary" onclick={() => go(p.action)}>{t("open")}</button>
+            <button type="button" class="btn btn-sm btn-primary" onclick={openApp}>{t("open")}</button>
           {:else}
             <span class="ld-soon">{t("arrivesWithNative")}</span>
           {/if}
@@ -187,6 +203,42 @@
     </div>
   </footer>
 </div>
+
+{#if startOpen}
+  <Modal title={t("startTitle")} onClose={() => (startOpen = false)}>
+    <p class="desc">{t("startBody")}</p>
+    <div class="start-actions">
+      <button
+        type="button"
+        class="btn btn-primary"
+        onclick={() => {
+          startOpen = false;
+          go("convert");
+        }}
+      >
+        {t("openWebApp")}
+      </button>
+      <button type="button" class="link" onclick={() => jump("#privacy")}>
+        {t("privacy")}
+      </button>
+    </div>
+    <div class="divider"></div>
+    <ul class="start-list">
+      <li>
+        <b>{t("platformWebName")}</b>
+        <span class="ld-status">{t("liveNow")}</span>
+      </li>
+      <li>
+        <b>{t("platformApkName")}</b>
+        <span class="ld-status soon">{t("startSoon")}</span>
+      </li>
+      <li>
+        <b>{t("platformExeName")}</b>
+        <span class="ld-status soon">{t("startSoon")}</span>
+      </li>
+    </ul>
+  </Modal>
+{/if}
 
 <style>
   .landing {
@@ -270,6 +322,39 @@
     text-decoration: none;
   }
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .ld-misuse {
+    max-width: 560px;
+    margin: 1.6rem auto 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .ld-misuse b { color: var(--text); }
+
+  /* interactive sample */
+  .ld-sample .ld-sub { text-align: center; }
+  .start-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.6rem;
+  }
+  .start-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .start-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
 
   /* sections */
   .ld-section {

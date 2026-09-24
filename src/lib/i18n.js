@@ -88,6 +88,16 @@ const DICT = {
       "Open the app, process a document, and watch the network — either your browser's DevTools Network tab, or the built-in Network activity panel (link in the footer). The only request you will ever see is the small version check. No uploads, no analytics, no tracking.",
     verify: "Verify",
 
+    seeItLive: "See it live",
+    sampleHint: "Drag the palang band onto the sample document — this is exactly how the editor feels.",
+    misuseA: "A copy without a palang can be misused.",
+    misuseB: "Banks, government offices and companies routinely ask for stamped copies before anything is shared.",
+
+    startTitle: "Start using Palang",
+    startBody: "Free and open source — no accounts, no tokens, no limits. Your documents never leave your device.",
+    startFree: "Free forever",
+    startSoon: "Coming soon",
+
     questions: "Questions",
     faq1q: "Do my files get uploaded?",
     faq1a:
@@ -191,6 +201,16 @@ const DICT = {
     proveBody:
       "Buka app, proses satu dokumen, dan tengok rangkaian — sama ada tab Network dalam DevTools pelayar anda, atau panel Aktiviti rangkaian terbina dalam (pautan di kaki halaman). Satu-satunya permintaan yang anda akan lihat ialah semakan versi kecil. Tiada muat naik, tiada analitik, tiada penjejakan.",
     verify: "Semak",
+
+    seeItLive: "Cuba lihat sendiri",
+    sampleHint: "Seret jalur palang pada dokumen contoh — beginilah rasa editor sebenar.",
+    misuseA: "Salinan tanpa palang boleh disalahguna.",
+    misuseB: "Bank, pejabat kerajaan dan syarikat lazimnya minta salinan berpalang sebelum apa-apa dikongsi.",
+
+    startTitle: "Mula menggunakan Palang",
+    startBody: "Percuma dan sumber terbuka — tiada akaun, tiada token, tiada had. Dokumen anda tidak pernah meninggalkan peranti.",
+    startFree: "Percuma selamanya",
+    startSoon: "Menyusul",
 
     questions: "Soalan lazim",
     faq1q: "Adakah fail saya dimuat naik?",

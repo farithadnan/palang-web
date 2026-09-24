@@ -83,9 +83,9 @@ function initialLang() {
     const saved = localStorage.getItem(LANG_KEY);
     if (saved === "en" || saved === "ms") return saved;
   } catch {
-    /* fall through to English */
+    /* fall through */
   }
-  return "en";
+  return "ms"; // the product targets Malaysia — Malay-first, EN optional
 }
 
 export function setView(view) {
