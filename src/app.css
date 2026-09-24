@@ -363,7 +363,7 @@ input[type="color"] {
   align-items: center;
   overflow: auto;
   scrollbar-width: none; /* panning works; the bar stays hidden */
-  max-height: 72vh;
+  max-height: 46vh;
   background: color-mix(in srgb, var(--muted) 8%, transparent);
   border: 1px solid var(--line);
   border-radius: 12px;

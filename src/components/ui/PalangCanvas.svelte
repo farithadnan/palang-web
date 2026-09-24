@@ -59,32 +59,27 @@
     zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12);
   }
 
-  function pageWidth() {
-    // Contain mode: the page box fills the frame, so measure the frame (the
-    // shrink-wrapped wrap has no width for a non-replaced element).
-    if (fitContain) return frame ? frame.clientWidth : 0;
-    return img ? img.clientWidth : 0;
-  }
-
-  function resizeFit() {
-    const w = pageWidth();
+  /** Fit the page to BOTH frame dimensions, so at 100% the whole image is
+   *  visible, the marking is centred ON the image, and nothing needs
+   *  scrolling. The page box must always match the image rect exactly. */
+  function fitPage() {
+    const w = frame ? frame.clientWidth : 0;
+    const h = frame ? frame.clientHeight : 0;
     if (!w || !widthPt) return;
-    fitScale = w / widthPt;
+    fitScale = Math.min(w / widthPt, (h || w) / heightPt);
+    box = defaultBox();
   }
 
   function ensureFit() {
     if (fitScale > 0) return;
-    const w = pageWidth();
-    if (w > 0) {
-      fit();
-      return;
-    }
+    fitPage();
+    if (fitScale > 0) return;
     // The frame may not have laid out yet; re-measure on the next frame.
     requestAnimationFrame(ensureFit);
   }
 
   onMount(() => {
-    window.addEventListener("resize", resizeFit);
+    window.addEventListener("resize", fitPage);
     window.addEventListener("keydown", onWindowKey);
     window.addEventListener("pointerup", releaseHeld);
     window.addEventListener("pointercancel", releaseHeld);
@@ -92,7 +87,7 @@
     window.addEventListener("pointerdown", cancelStuck, true);
     ensureFit();
     return () => {
-      window.removeEventListener("resize", resizeFit);
+      window.removeEventListener("resize", fitPage);
       window.removeEventListener("keydown", onWindowKey);
       window.removeEventListener("pointerup", releaseHeld);
       window.removeEventListener("pointercancel", releaseHeld);
@@ -134,10 +129,7 @@
   }
 
   function fit() {
-    const w = pageWidth();
-    if (!w || !widthPt) return;
-    fitScale = w / widthPt;
-    box = defaultBox();
+    fitPage();
   }
 
   function clampPt(v, lo, hi) {
@@ -383,8 +375,8 @@
   // image->PDF placement so preview and output always agree.
   const imgStyle = $derived(
     fitContain
-      ? `width:${imgWidth}; height:${fitScale * heightPt * zoom}px; object-fit:contain; object-position:center; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:58vh;`
-      : `width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:58vh;`
+      ? `width:${imgWidth}; height:${fitScale * heightPt * zoom}px; object-fit:contain; object-position:center; max-width:${zoom <= 1 ? "100%" : "none"};`
+      : `width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"};`
   );
   const boxStyle = $derived(
     [
@@ -403,7 +395,7 @@
   const labelStyle = $derived(lines ? `color:${spec.color}; font-size:${Math.round(fontPt * scale)}px` : "");
   const rotation = $derived(((spec.rotationDeg ?? 0) % 360 + 360) % 360);
   const pageBoxStyle = $derived(
-    `aspect-ratio:${widthPt}/${heightPt}; width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; max-height:58vh; margin:0 auto;`
+    `aspect-ratio:${widthPt}/${heightPt}; width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; margin:0 auto;`
   );
 </script>
 
@@ -487,7 +479,6 @@
   </div>
 
   <div class="canvas-zoom">
-    <span class="caption">{Math.round(zoom * 100)}%</span>
     <button type="button" class="btn btn-sm" aria-label="Reset marking position to the middle" onclick={centerReset}>
       Reset position
     </button>

@@ -132,13 +132,11 @@
     <div class="wrap">
       <button type="button" class="link" onclick={() => (view = "privacy")}>Privacy</button>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">
-        MIT License — github.com/farithadnan/palang
-      </a>
+      <span>MIT License</span>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">
-        Web app source
-      </a>
+      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">palang</a>
+      <span class="footdot">·</span>
+      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">web app</a>
     </div>
   </footer>
 </div>
