@@ -9,9 +9,9 @@
     app,
     pickPreviewFiles,
     removePreviewFile,
+    retryPreview,
     setActivePage,
     updateSpec,
-    loadPreview,
     flash,
     generate,
   } from "../lib/store.svelte.js";
@@ -84,7 +84,7 @@
       <div class="retrycard">
         <p class="desc">Unable to prepare this document. It may be too large or unsupported.</p>
         <div class="actionrow">
-          <button type="button" class="btn btn-primary btn-sm" onclick={() => void loadPreview()}>Try again</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick={() => void retryPreview()}>Try again</button>
           <button type="button" class="btn btn-sm" onclick={removeDocument}>Choose another file</button>
         </div>
       </div>

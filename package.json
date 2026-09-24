@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/make-version.mjs && vite build && node scripts/write-manifest.mjs",
+    "build": "node scripts/make-version.mjs && vite build && node scripts/copy-static.mjs && node scripts/write-manifest.mjs",
     "preview": "vite preview",
     "test": "vitest run"
   },
@@ -20,6 +20,6 @@
   },
   "dependencies": {
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^6.3.289"
+    "pdfjs-dist": "^4.10.38"
   }
 }

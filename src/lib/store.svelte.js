@@ -1,10 +1,10 @@
 /* Module-mode runes store: the single owner of app state and side effects.
    Views read/write `app.*`; components stay presentational. */
 
-import * as api from "./api.js";
 import { processOffline } from "./local-engine.js";
+import { renderPdfPreviews } from "./pdf-preview.js";
 import { APP_VERSION } from "./version.js";
-import { buildPalangSpec, defaultSpec, fittedPageSize, imageSettings, PAGE_DIMS } from "./domain.js";
+import { defaultSpec, fittedPageSize, PAGE_DIMS } from "./domain.js";
 
 const CONSENT_KEY = "palang-consent-v1";
 const THEME_KEY = "palang-theme";
@@ -42,7 +42,6 @@ export const app = $state({
   activePage: 0,
   busy: false,
   message: null, // { kind: "ok" | "error", text }
-  local: true, // process on the device; no uploads
   update: null, // { version } when a newer version.json is published
   consented: initialConsent(),
 });
@@ -209,36 +208,52 @@ function isImageFile(file) {
 }
 
 /**
- * Preview pages for a pure-image document, built in the browser with no server
- * round-trip. Mirrors the server's image->PDF placement exactly: each page is
- * sized to the image fitted within the chosen page size (same formula as
- * PyMuPDF's _page_rect), so preview geometry and the stamped output agree.
+ * Preview pages for ANY document (images, PDFs, mixed), built in the browser
+ * with no server round-trip. Mirrors the server's image->PDF placement
+ * exactly: each page is sized to the image fitted within the chosen page
+ * size (same formula as PyMuPDF's _page_rect); PDF pages render via pdf.js.
  */
-async function buildClientImagePreview(files) {
+async function buildClientPreview(files) {
   const seq = ++previewSeq;
   const pages = [];
   const size = PAGE_DIMS[app.pageSize] ?? PAGE_DIMS.A4;
-  for (const f of files) {
-    let w = 0;
-    let h = 0;
-    const url = URL.createObjectURL(f);
-    try {
-      const img = await new Promise((resolve, reject) => {
-        const i = new Image();
-        i.onload = () => resolve(i);
-        i.onerror = () => reject(new Error("decode"));
-        i.src = url;
-      });
-      w = img.naturalWidth;
-      h = img.naturalHeight;
-    } catch {
-      /* fall back to A4 for undecodable images */
+  try {
+    for (const f of files) {
+      if (!isImageFile(f)) {
+        const rendered = await renderPdfPreviews(f);
+        pages.push(...rendered.pages);
+        continue;
+      }
+      let w = 0;
+      let h = 0;
+      const url = URL.createObjectURL(f);
+      try {
+        const img = await new Promise((resolve, reject) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = () => reject(new Error("decode"));
+          i.src = url;
+        });
+        w = img.naturalWidth;
+        h = img.naturalHeight;
+      } catch {
+        /* fall back to A4 for undecodable images */
+      }
+      const rect = w && h ? fittedPageSize(w, h, size.w, size.h) : { w: size.w, h: size.h };
+      pages.push({ page: pages.length + 1, width_pt: Math.round(rect.w), height_pt: Math.round(rect.h), url, mime: f.type || "image/jpeg" });
     }
-    const rect = w && h ? fittedPageSize(w, h, size.w, size.h) : { w: size.w, h: size.h };
-    pages.push({ page: pages.length + 1, width_pt: Math.round(rect.w), height_pt: Math.round(rect.h), url, mime: f.type || "image/jpeg" });
+  } catch (err) {
+    // Surface failures (unsupported/corrupt files, render timeouts) into the
+    // retry card instead of leaving the spinner forever.
+    if (seq === previewSeq) {
+      app.preview = null;
+      app.previewLoading = false;
+      console.error("preview failed:", err);
+    }
+    return;
   }
   if (seq !== previewSeq || !files.every((f, i) => app.previewFiles[i] === f)) return;
-  app.preview = { count: files.length, truncated: false, client: true, pages };
+  app.preview = { count: pages.length, truncated: files.length > pages.length || pages.length >= 20, client: true, pages };
   app.previewLoading = false;
 }
 
@@ -256,15 +271,11 @@ export function pickPreviewFiles(fileList) {
     app.preview = null;
     return;
   }
-  // Images can be shown instantly from the browser; only PDFs (or "fit"
-  // pages) need the server to render them.
-  if (files.every(isImageFile) && PAGE_DIMS[app.pageSize]) {
-    app.preview = null;
-    app.previewLoading = true;
-    void buildClientImagePreview(files);
-    return;
-  }
-  void loadPreview();
+  // Everything renders on-device now: images directly from the browser,
+  // PDF pages via pdf.js.
+  app.preview = null;
+  app.previewLoading = true;
+  void buildClientPreview(files);
 }
 
 export function removePreviewFile(index) {
@@ -275,31 +286,21 @@ export function removePreviewFile(index) {
     app.preview = null;
     return;
   }
-  if (app.preview?.client || app.previewFiles.every(isImageFile)) {
-    app.preview = null;
-    app.previewLoading = true;
-    void buildClientImagePreview(app.previewFiles);
-    return;
-  }
-  void loadPreview();
-}
-
-export async function loadPreview() {
-  if (!app.previewFiles.length) return;
-  app.previewLoading = true;
   app.preview = null;
-  try {
-    app.preview = await api.preview(app.previewFiles, app.pageSize);
-  } catch (err) {
-    app.preview = null;
-    flash("error", err.message);
-  } finally {
-    app.previewLoading = false;
-  }
+  app.previewLoading = true;
+  void buildClientPreview(app.previewFiles);
 }
 
 export function setActivePage(index) {
   app.activePage = index;
+}
+
+/** Rebuild the on-device preview (the retry path after a failed render). */
+export function retryPreview() {
+  if (!app.previewFiles.length) return;
+  app.preview = null;
+  app.previewLoading = true;
+  void buildClientPreview(app.previewFiles);
 }
 
 export function updateSpec(patch) {
@@ -387,10 +388,7 @@ export async function generate(mode = "convert") {
   const filename = mode === "merge" ? "merged.pdf" : mode === "palang" ? "stamped.pdf" : "converted.pdf";
   app.busy = true;
   try {
-    const blob =
-      app.local && mode !== "merge"
-        ? await offlineBlob(mode, files)
-        : await serverBlob(mode, files);
+    const blob = await offlineBlob(mode, files);
     downloadBlob(blob, filename);
     flash("ok", "Done. Your file is downloading.");
   } catch (err) {
@@ -398,19 +396,6 @@ export async function generate(mode = "convert") {
   } finally {
     app.busy = false;
   }
-}
-
-async function serverBlob(mode, files) {
-  const fields = { merge: "true", page_size: app.pageSize };
-  if (mode === "convert" && app.images.length) {
-    fields.page = app.pageSize;
-    fields.image_settings = JSON.stringify(imageSettings(app.images));
-  }
-  if (mode === "palang" && app.spec.armed) {
-    fields.page = app.pageSize; // keep output page size in sync with the preview
-    fields.palang = JSON.stringify(buildPalangSpec(app.spec));
-  }
-  return api.upload(files, fields);
 }
 
 async function offlineBlob(mode, files) {
