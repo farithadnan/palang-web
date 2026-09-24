@@ -6,7 +6,7 @@
    *  server. Selection: the marking shows handles while selected; Delete/Esc
    *  remove/deselect it; tap the page to re-add it after deleting. */
   import { onMount } from "svelte";
-  import { round1 } from "../../lib/domain.js";
+  import { fittedPageSize, round1 } from "../../lib/domain.js";
 
   let { url, widthPt, heightPt, spec, onChange, fitContain = false, class: cls = "" } = $props();
 
@@ -27,6 +27,20 @@
   const armed = $derived(!!spec.armed);
   const scale = $derived(fitScale * zoom);
   const showHandles = $derived(armed && selected);
+
+  // The visible image is letterboxed inside the page box (the server page
+  // at margin 0), so the marking must interact in IMAGE space: the clamps,
+  // the overlay offset and the emitted points all shift by the letterbox
+  // margin. PDF pages fill the box, so their offsets are zero.
+  const imgDims = $derived(
+    fitContain && img && img.naturalWidth > 0
+      ? fittedPageSize(img.naturalWidth, img.naturalHeight, widthPt, heightPt)
+      : null
+  );
+  const viewW = $derived(imgDims ? imgDims.w : widthPt); // interaction space (pt)
+  const viewH = $derived(imgDims ? imgDims.h : heightPt);
+  const imgOffX = $derived((widthPt - viewW) / 2); // letterbox margin (pt)
+  const imgOffY = $derived((heightPt - viewH) / 2);
 
   const fontPt = $derived(spec.fontSize ?? 18); // text size drives the whole lines band
   const MIN_SIDE = 24; // pt
@@ -132,13 +146,17 @@
   }
 
   function defaultBox() {
+    // Spec points are page-space; the canvas works in image space (the
+    // letterboxed photo), so convert before use. Null points mean centred.
+    const specL = spec.leftPt != null ? spec.leftPt - imgOffX : null;
+    const specT = spec.topPt != null ? spec.topPt - imgOffY : null;
     if (region) {
       const wpt = spec.widthPt ?? 180;
       const hpt = spec.heightPt ?? (region ? 28 : 48);
       return {
-        x: spec.leftPt ?? (widthPt - wpt) / 2,
-        y: spec.topPt ?? (heightPt - hpt) / 2,
-        w: wpt,
+        x: specL ?? (viewW - wpt) / 2,
+        y: specT ?? (viewH - hpt) / 2,
+        w: Math.min(wpt, viewW),
         h: hpt,
       };
     }
@@ -146,13 +164,13 @@
       // Clamp so the marking never starts (or recentres) outside the image,
       // even when the text is wider than the page.
       return {
-        x: Math.max(0, spec.leftPt ?? (widthPt - lineLenPt) / 2),
-        y: Math.max(0, spec.topPt ?? (heightPt - blockHPt) / 2),
+        x: Math.max(0, specL ?? (viewW - lineLenPt) / 2),
+        y: Math.max(0, specT ?? (viewH - blockHPt) / 2),
       };
     }
-    // filled band: full width
+    // filled band: full width of the image
     const hpt = spec.heightPt ?? 48;
-    return { x: 0, y: spec.topPt ?? (heightPt - hpt) / 2, w: widthPt, h: hpt };
+    return { x: 0, y: specT ?? (viewH - hpt) / 2, w: viewW, h: hpt };
   }
 
   function fit() {
@@ -230,33 +248,33 @@
     if (mode === "move") {
       if (lines || region) {
         // The marking may overhang the left/right edges when it is wider
-        // than the page (stretch it to fill every pixel); at least 32 pt of
+        // than the image (stretch it to fill every pixel); at least 32 pt of
         // it always stays on the image so it can never be lost. Markings
         // that fit stay fully inside, as before.
-        const over = w > widthPt;
+        const over = w > viewW;
         const lo = over ? -(w - 32) : 0;
-        const hi = over ? widthPt - 32 : Math.max(0, widthPt - w);
+        const hi = over ? viewW - 32 : Math.max(0, viewW - w);
         b.x = clampPt(bx + dx, lo, hi);
       }
-      b.y = clampPt(by + dy, 0, Math.max(0, heightPt - h));
+      b.y = clampPt(by + dy, 0, Math.max(0, viewH - h));
     } else if (region && mode === "se") {
-      b.w = clampPt(bw + dx, MIN_SIDE, widthPt - bx);
-      b.h = clampPt(bh + dy, MIN_SIDE, heightPt - by);
+      b.w = clampPt(bw + dx, MIN_SIDE, viewW - bx);
+      b.h = clampPt(bh + dy, MIN_SIDE, viewH - by);
     } else if (region && mode === "nw") {
       b.x = clampPt(bx + dx, 0, bx + bw - MIN_SIDE);
       b.y = clampPt(by + dy, 0, by + bh - MIN_SIDE);
       b.w = bw + (bx - b.x);
       b.h = bh + (by - b.y);
     } else if (region && mode === "ne") {
-      b.w = clampPt(bw + dx, MIN_SIDE, widthPt - bx);
+      b.w = clampPt(bw + dx, MIN_SIDE, viewW - bx);
       b.y = clampPt(by + dy, 0, by + bh - MIN_SIDE);
       b.h = bh + (by - b.y);
     } else if (region && mode === "sw") {
       b.x = clampPt(bx + dx, 0, bx + bw - MIN_SIDE);
       b.w = bw + (bx - b.x);
-      b.h = clampPt(bh + dy, MIN_SIDE, heightPt - by);
+      b.h = clampPt(bh + dy, MIN_SIDE, viewH - by);
     } else if (mode === "midb" && !lines) {
-      b.h = clampPt(bh + dy, 12, heightPt - by);
+      b.h = clampPt(bh + dy, 12, viewH - by);
     } else if (mode === "scale" && lines) {
       // Stretch the marking like the crop box: drag scales the text size
       // exponentially (doubles roughly every 200px of drag), with no
@@ -312,8 +330,8 @@
     } catch {
       /* pointer already released */
     }
-    const patch = { topPt: round1(box.y), heightPt: round1(box.h ?? blockHPt) };
-    if (lines || region) patch.leftPt = round1(box.x);
+    const patch = { topPt: round1(imgOffY + box.y), heightPt: round1(box.h ?? blockHPt) };
+    if (lines || region) patch.leftPt = round1(imgOffX + box.x);
     if (region) patch.widthPt = round1(box.w);
     onChange?.(patch);
   }
@@ -363,8 +381,8 @@
 
     e.preventDefault();
     box = b;
-    const patch = { topPt: round1(b.y), heightPt: round1(b.h ?? blockHPt) };
-    if (lines || region) patch.leftPt = round1(b.x);
+    const patch = { topPt: round1(imgOffY + b.y), heightPt: round1(b.h ?? blockHPt) };
+    if (lines || region) patch.leftPt = round1(imgOffX + b.x);
     if (region) patch.widthPt = round1(b.w);
     onChange?.(patch);
   }
@@ -373,7 +391,7 @@
     // Recentre from scratch — never from stale spec coordinates, so the
     // marking can't get stuck bottom-right after a previous drag.
     box = lines
-      ? { x: Math.max(0, (widthPt - lineLenPt) / 2), y: Math.max(0, (heightPt - blockHPt) / 2) }
+      ? { x: Math.max(0, (viewW - lineLenPt) / 2), y: Math.max(0, (viewH - blockHPt) / 2) }
       : defaultBox();
     onChange?.({ topPt: null, leftPt: null });
     // Un-scroll the frame so the recentred marking is actually in view.
@@ -401,7 +419,12 @@
   );
   const px = $derived(
     geom
-      ? { x: geom.x * scale, y: geom.y * scale, w: geom.w * scale, h: geom.h * scale }
+      ? {
+          x: (imgOffX + geom.x) * scale,
+          y: (imgOffY + geom.y) * scale,
+          w: geom.w * scale,
+          h: geom.h * scale,
+        }
       : { x: 0, y: 0, w: 0, h: 0 }
   );
   const borderW = $derived(lines ? Math.max(1, Math.round(1.2 * scale)) : 2);
