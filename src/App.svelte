@@ -7,7 +7,7 @@
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
   import PrivacyView from "./components/PrivacyView.svelte";
-  import { app, setConsent, setTheme } from "./lib/store.svelte.js";
+  import { app, checkForUpdate, applyUpdate, dismissUpdate, setConsent, setTheme } from "./lib/store.svelte.js";
 
   const TOOLS = [
     { id: "convert", label: "Convert", icon: "convert" },
@@ -43,10 +43,25 @@
       const v = readHash();
       if (v !== view) view = v;
     });
+    void checkForUpdate();
+    // Re-check when the tab regains focus, so a published update surfaces
+    // without a manual refresh.
+    const onShow = () => void checkForUpdate();
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
   });
 </script>
 
 <div class="app">
+  {#if app.update}
+    <div class="update-banner" role="status">
+      <span>A new version (v{app.update.version}) is available.</span>
+      <div class="update-banner-actions">
+        <button type="button" class="btn btn-sm btn-primary" onclick={applyUpdate}>Update now</button>
+        <button type="button" class="btn btn-sm" onclick={dismissUpdate}>Later</button>
+      </div>
+    </div>
+  {/if}
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">

@@ -3,6 +3,7 @@
 
 import * as api from "./api.js";
 import { processOffline } from "./local-engine.js";
+import { APP_VERSION } from "./version.js";
 import { buildPalangSpec, defaultSpec, fittedPageSize, imageSettings, PAGE_DIMS } from "./domain.js";
 
 const CONSENT_KEY = "palang-consent-v1";
@@ -42,6 +43,7 @@ export const app = $state({
   busy: false,
   message: null, // { kind: "ok" | "error", text }
   local: true, // process on the device; no uploads
+  update: null, // { version } when a newer version.json is published
   consented: initialConsent(),
 });
 
@@ -309,6 +311,51 @@ export function updateSpec(patch) {
 
 export function resetSpec() {
   app.spec = defaultSpec();
+}
+
+/* ---------- updates ---------- */
+
+const UPDATE_KEY = "palang-update-dismissed";
+
+export async function checkForUpdate() {
+  try {
+    const res = await fetch(`version.json?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) return;
+    const manifest = await res.json();
+    const remote = String(manifest.version ?? "");
+    const local = APP_VERSION;
+    if (!remote || remote === local) {
+      app.update = null;
+      return;
+    }
+    let dismissed = {};
+    try {
+      dismissed = JSON.parse(localStorage.getItem(UPDATE_KEY) || "{}");
+    } catch {
+      /* storage unavailable */
+    }
+    app.update = dismissed[remote] ? null : { version: remote };
+  } catch {
+    /* offline or static host unreachable: updates are best-effort */
+  }
+}
+
+export function applyUpdate() {
+  // Web/PWA: refresh pulls the new static bundle. The native APK/EXE
+  // updaters will point at the download page instead.
+  location.reload();
+}
+
+export function dismissUpdate() {
+  if (!app.update) return;
+  try {
+    const stored = JSON.parse(localStorage.getItem(UPDATE_KEY) || "{}");
+    stored[app.update.version] = true;
+    localStorage.setItem(UPDATE_KEY, JSON.stringify(stored));
+  } catch {
+    /* storage unavailable */
+  }
+  app.update = null;
 }
 
 /* ---------- generate ---------- */
