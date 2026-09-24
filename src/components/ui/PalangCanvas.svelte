@@ -71,14 +71,27 @@
   }
 
   function ensureFit() {
-    if (fitScale > 0) return;
+    if (zoom > 1) return;
     fitPage();
-    if (fitScale > 0) return;
-    // The frame may not have laid out yet; re-measure on the next frame.
-    requestAnimationFrame(ensureFit);
+    // Self-correcting: if the page still overflows the frame at 100%
+    // (a first fit may have read the frame height before layout), keep
+    // re-fitting until the whole image is visible. Idempotent, so this
+    // converges and stops.
+    if (frame && frame.scrollHeight > frame.clientHeight + 1) {
+      requestAnimationFrame(ensureFit);
+    }
   }
 
   onMount(() => {
+    // Re-fit whenever the frame's layout changes (modal fade-in, image
+    // decode, font swap, first paint) so the whole image always stays
+    // visible at 100% — a stale one-shot fit is what made the marking
+    // land on a hidden part of the page.
+    let ro = null;
+    if (typeof ResizeObserver !== "undefined" && frame) {
+      ro = new ResizeObserver(fitPage);
+      ro.observe(frame);
+    }
     window.addEventListener("resize", fitPage);
     window.addEventListener("keydown", onWindowKey);
     window.addEventListener("pointerup", releaseHeld);
@@ -87,6 +100,7 @@
     window.addEventListener("pointerdown", cancelStuck, true);
     ensureFit();
     return () => {
+      ro?.disconnect();
       window.removeEventListener("resize", fitPage);
       window.removeEventListener("keydown", onWindowKey);
       window.removeEventListener("pointerup", releaseHeld);
@@ -369,15 +383,24 @@
       : { x: 0, y: 0, w: 0, h: 0 }
   );
   const borderW = $derived(lines ? Math.max(1, Math.round(1.2 * scale)) : 2);
-  const imgWidth = $derived(fitScale > 0 ? fitScale * widthPt * zoom : "100%");
-  // fitContain: the page box is exactly the page shape and the photo is
-  // letterboxed inside it (object-fit: contain), mirroring the server's
-  // image->PDF placement so preview and output always agree.
-  const imgStyle = $derived(
-    fitContain
-      ? `width:${imgWidth}; height:${fitScale * heightPt * zoom}px; object-fit:contain; object-position:center; max-width:${zoom <= 1 ? "100%" : "none"};`
-      : `width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"};`
-  );
+  let pageBoxEl; // plain let: bind:this on $state miscompiles in this child
+  // Apply the fit width imperatively. Read fitScale/zoom directly in the
+  // effect: reading them through a $derived intermediary does not re-run
+  // the effect (Svelte 5 runes miscompile in this child), while direct
+  // state reads do.
+  $effect(() => {
+    if (!fitContain) return;
+    if (!pageBoxEl) return;
+    const w = fitScale > 0 ? `${fitScale * widthPt * zoom}px` : "100%";
+    pageBoxEl.style.width = w;
+    pageBoxEl.style.maxWidth = zoom <= 1 ? "100%" : "none";
+  });
+  $effect(() => {
+    if (fitContain || !img) return;
+    const w = fitScale > 0 ? `${fitScale * widthPt * zoom}px` : "100%";
+    img.style.width = w;
+    img.style.maxWidth = zoom <= 1 ? "100%" : "none";
+  });
   const boxStyle = $derived(
     [
       `left:${px.x}px`,
@@ -394,9 +417,6 @@
   );
   const labelStyle = $derived(lines ? `color:${spec.color}; font-size:${Math.round(fontPt * scale)}px` : "");
   const rotation = $derived(((spec.rotationDeg ?? 0) % 360 + 360) % 360);
-  const pageBoxStyle = $derived(
-    `aspect-ratio:${widthPt}/${heightPt}; width:${imgWidth}; max-width:${zoom <= 1 ? "100%" : "none"}; margin:0 auto;`
-  );
 </script>
 
 <div class={cls}>
@@ -447,8 +467,10 @@
 
       {#if fitContain}
         <div
+          bind:this={pageBoxEl}
           class="page-box"
-          style={pageBoxStyle}
+          style:aspect-ratio={`${widthPt} / ${heightPt}`}
+          style:margin="0 auto"
           role="application"
           aria-label="Page preview"
         >
@@ -469,7 +491,6 @@
           src={url}
           alt=""
           draggable="false"
-          style={imgStyle}
           onload={fit}
           onpointerdown={(e) => e.preventDefault()}
         />
