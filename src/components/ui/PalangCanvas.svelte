@@ -44,6 +44,14 @@
 
   const fontPt = $derived(spec.fontSize ?? 18); // text size drives the whole lines band
   const MIN_SIDE = 24; // pt
+  let labelEl; // plain let: bind:this on $state miscompiles in this child
+  // The real rendered text width (pt), measured at the current scale. The
+  // clamp must use what the user actually SEES — the estimated line length
+  // can differ from the browser's glyph metrics, and rotation doubles the
+  // error via cos/sin — which is the "invisible wall" on rotated markings.
+  const realLineLenPt = $derived(
+    lines && labelEl && labelEl.offsetWidth > 0 ? labelEl.offsetWidth / Math.max(scale, 1e-6) : 0
+  );
 
   function textWidthPt(text, sizePt) {
     if (!text) return 0;
@@ -242,21 +250,35 @@
     const dx = (e.clientX - sx) / scale;
     const dy = (e.clientY - sy) / scale;
     const b = { ...box };
-    const w = lines ? lineLenPt : bw;
+    const w = lines ? realLineLenPt || lineLenPt : bw;
     const h = lines ? blockHPt : bh;
 
     if (mode === "move") {
-      if (lines || region) {
-        // The marking may overhang the left/right edges when it is wider
-        // than the image (stretch it to fill every pixel); at least 32 pt of
-        // it always stays on the image so it can never be lost. Markings
-        // that fit stay fully inside, as before.
-        const over = w > viewW;
-        const lo = over ? -(w - 32) : 0;
-        const hi = over ? viewW - 32 : Math.max(0, viewW - w);
-        b.x = clampPt(bx + dx, lo, hi);
-      }
-      b.y = clampPt(by + dy, 0, Math.max(0, viewH - h));
+      // Rotation-aware clamp: the marking's VISUAL bounds (rotation expands
+      // the box) drive the wall, not the unrotated size, so a tilted
+      // marking can be brought flush with — or hung over — any edge.
+      // Markings that fit stay fully inside; larger ones may overhang
+      // left/right/top/bottom with at least 32 pt still on the image.
+      const rad = (((spec.rotationDeg ?? 0) % 360) * Math.PI) / 180;
+      const cos = Math.abs(Math.cos(rad));
+      const sin = Math.abs(Math.sin(rad));
+      const rx = (w * cos + h * sin) / 2; // visual half-extent x
+      const ry = (w * sin + h * cos) / 2; // visual half-extent y
+      const KEEP = 32; // pt of the marking that must stay on the image
+      const fitsX = 2 * rx <= viewW;
+      const fitsY = 2 * ry <= viewH;
+      const cx = clampPt(
+        bx + w / 2 + dx,
+        fitsX ? rx : KEEP - rx,
+        fitsX ? viewW - rx : viewW - KEEP + rx
+      );
+      const cy = clampPt(
+        by + h / 2 + dy,
+        fitsY ? ry : KEEP - ry,
+        fitsY ? viewH - ry : viewH - KEEP + ry
+      );
+      b.x = cx - w / 2;
+      b.y = cy - h / 2;
     } else if (region && mode === "se") {
       b.w = clampPt(bw + dx, MIN_SIDE, viewW - bx);
       b.h = clampPt(bh + dy, MIN_SIDE, viewH - by);
@@ -485,7 +507,7 @@
             aria-label={lines ? "Palang line marking" : "Palang marking"}
           >
             {#if lines}
-              <span class="overlay-label" style={labelStyle}>{spec.text || ""}</span>
+              <span bind:this={labelEl} class="overlay-label" style={labelStyle}>{spec.text || ""}</span>
             {/if}
             {#if showHandles && !lines}
               <div class="handle h-midb" role="button" tabindex="-1" aria-label="Resize marking height" onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>
