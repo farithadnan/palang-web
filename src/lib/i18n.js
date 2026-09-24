@@ -53,7 +53,7 @@ const DICT = {
       "Photos into a single PDF — per-image crop and light enhance, your choice of page size, previewed instantly.",
     featurePalang: "Palang",
     featurePalangBody:
-      "The bank-purpose band. Drag, rotate and scale it like a real stamp — transparent lines that follow the text, live on the page.",
+      "The official-use band — 'palang' to Malaysians: banks, government offices, companies and more. Drag, rotate and scale it like a real stamp — transparent lines that follow the text, live on the page.",
     featureMerge: "Merge",
     featureMergeBody: "Join PDFs in the order you want, straight from your device.",
     featurePrivate: "Private by construction",
@@ -78,6 +78,15 @@ const DICT = {
     private3b: "The entire pipeline is public under MIT — read it, run it, trust it because you can verify it.",
     private4a: "Update checks only.",
     private4b: "The sole network request is a small version manifest.",
+    private5a: "PDPA-aware by design.",
+    private5b:
+      "Malaysia's PDPA 2010 governs how those who collect personal data must handle it. We don't collect it: nothing is stored, nothing is uploaded — so there is nothing to protect, leak, or lose.",
+
+    proveIt: "Prove it yourself",
+    proveSub: "Claims are easy to make; checking is easy too.",
+    proveBody:
+      "Open the app, process a document, and watch the network — either your browser's DevTools Network tab, or the built-in Network activity panel (link in the footer). The only request you will ever see is the small version check. No uploads, no analytics, no tracking.",
+    verify: "Verify",
 
     questions: "Questions",
     faq1q: "Do my files get uploaded?",
@@ -93,6 +102,9 @@ const DICT = {
     mitLicense: "MIT License",
     coreEngine: "Core engine",
     webApp: "Web app",
+    networkActivity: "Network activity",
+    noRequestsYet: "No network requests yet — everything runs on your device.",
+    networkIntro: "Requests the app has made this session (the privacy proof):",
     updateAvailable: "A new version (v{version}) is available.",
     updateNow: "Update now",
     later: "Later",
@@ -145,7 +157,7 @@ const DICT = {
       "Foto menjadi satu PDF — potong dan cerahkan setiap imej, pilih saiz halaman, pratonton serta-merta.",
     featurePalang: "Palang",
     featurePalangBody:
-      "Jalur tujuan bank. Seret, putar dan saiz seperti setem sebenar — garisan lut sinar yang mengikuti teks, terus pada halaman.",
+      "Jalur kegunaan rasmi — 'palang' bagi rakyat Malaysia: bank, pejabat kerajaan, syarikat dan banyak lagi. Seret, putar dan saiz seperti setem sebenar — garisan lut sinar yang mengikuti teks, terus pada halaman.",
     featureMerge: "Gabung",
     featureMergeBody: "Gabungkan PDF mengikut urutan yang anda mahu, terus dari peranti anda.",
     featurePrivate: "Privasi terjamin",
@@ -170,6 +182,15 @@ const DICT = {
     private3b: "Keseluruhan saluran paip adalah awam di bawah MIT — baca, jalankan, percaya kerana anda boleh menyemaknya.",
     private4a: "Semakan kemas kini sahaja.",
     private4b: "Satu-satunya permintaan rangkaian ialah fail manifest versi yang kecil.",
+    private5a: "Sedar PDPA.",
+    private5b:
+      "Akta Perlindungan Data Peribadi 2010 (PDPA) mengawal cara data peribadi dikendalikan oleh pihak yang mengumpulnya. Kami tidak mengumpul: tiada yang disimpan, tiada yang dimuat naik — jadi tiada apa untuk dilindungi, dibocorkan, atau hilang.",
+
+    proveIt: "Buktikan sendiri",
+    proveSub: "Mudah untuk berkata; mudah juga untuk menyemak.",
+    proveBody:
+      "Buka app, proses satu dokumen, dan tengok rangkaian — sama ada tab Network dalam DevTools pelayar anda, atau panel Aktiviti rangkaian terbina dalam (pautan di kaki halaman). Satu-satunya permintaan yang anda akan lihat ialah semakan versi kecil. Tiada muat naik, tiada analitik, tiada penjejakan.",
+    verify: "Semak",
 
     questions: "Soalan lazim",
     faq1q: "Adakah fail saya dimuat naik?",
@@ -185,6 +206,9 @@ const DICT = {
     mitLicense: "Lesen MIT",
     coreEngine: "Enjin teras",
     webApp: "App web",
+    networkActivity: "Aktiviti rangkaian",
+    noRequestsYet: "Belum ada permintaan rangkaian — semuanya berjalan pada peranti anda.",
+    networkIntro: "Permintaan yang dibuat oleh app dalam sesi ini (bukti privasi):",
     updateAvailable: "Terdapat versi baharu (v{version}).",
     updateNow: "Kemas kini sekarang",
     later: "Nanti",

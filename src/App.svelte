@@ -11,6 +11,7 @@
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
   import { app, applyUpdate, checkForUpdate, dismissUpdate, setConsent } from "./lib/store.svelte.js";
+  import { installNetworkLog } from "./lib/network-log.js";
   import { t } from "./lib/i18n.js";
 
   const TOOLS = [
@@ -34,6 +35,7 @@
   }
 
   let view = $state(readHash());
+  let netOpen = $state(false);
 
   $effect(() => {
     app.view = view;
@@ -43,6 +45,13 @@
   $effect(() => {
     document.documentElement.dataset.theme = app.theme;
     document.documentElement.lang = app.lang;
+  });
+
+  // The privacy proof: every request the app makes is recorded and visible
+  // in the Network activity panel — processing documents adds nothing.
+  installNetworkLog((entry) => {
+    entry.seq = (app.network.at(-1)?.seq ?? 0) + 1;
+    app.network.push(entry);
   });
 
   function goHomePrivacy() {
@@ -145,6 +154,10 @@
 
   <footer class="sitefoot">
     <div class="wrap">
+      <button type="button" class="link" onclick={() => (netOpen = !netOpen)} aria-expanded={netOpen}>
+        {t("networkActivity")}
+      </button>
+      <span class="footdot">·</span>
       <button type="button" class="link" onclick={goHomePrivacy}>{t("privacy")}</button>
       <span class="footdot">·</span>
       <span>{t("mitLicense")}</span>
@@ -172,6 +185,36 @@
     </button>
   {/each}
 </div>
+{/if}
+
+{#if netOpen}
+  <aside class="netpanel" role="region" aria-label={t("networkActivity")}>
+    <div class="netpanel-head">
+      <b>{t("networkActivity")}</b>
+      <button
+        type="button"
+        class="iconbtn"
+        aria-label="Close"
+        onclick={() => (netOpen = false)}
+      >
+        <Icon name="x" size={16} />
+      </button>
+    </div>
+    <p class="caption">{t("networkIntro")}</p>
+    {#if !app.network.length}
+      <p class="net-empty">{t("noRequestsYet")}</p>
+    {:else}
+      <ul class="net-list">
+        {#each app.network as e (e.seq)}
+          <li>
+            <span class="net-method">{e.method}</span>
+            <span class="net-url">{e.url}</span>
+            <span class="net-status" class:err={e.error}>{e.status === 0 ? "ERR" : e.status}</span>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </aside>
 {/if}
 
 {#if app.message}

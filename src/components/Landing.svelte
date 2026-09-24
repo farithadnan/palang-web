@@ -31,6 +31,7 @@
     { strong: "private2a", rest: "private2b" },
     { strong: "private3a", rest: "private3b" },
     { strong: "private4a", rest: "private4b" },
+    { strong: "private5a", rest: "private5b" },
   ];
 
   const FAQS = [
@@ -74,6 +75,7 @@
       <a href="#features" onclick={(e) => jump("#features", e)}>{t("features")}</a>
       <a href="#how" onclick={(e) => jump("#how", e)}>{t("how")}</a>
       <a href="#privacy" onclick={(e) => jump("#privacy", e)}>{t("privacy")}</a>
+      <a href="#verify" onclick={(e) => jump("#verify", e)}>{t("verify")}</a>
       <a href="#faq" onclick={(e) => jump("#faq", e)}>{t("faq")}</a>
     {/snippet}
   </Topbar>
@@ -82,7 +84,7 @@
     <p class="ld-badge">{t("badge")}</p>
     <span class="ld-hero-mark" aria-hidden="true">
       <span class="ld-mark-line"></span>
-      <span class="ld-mark-text">BANK&nbsp;SAHAJA</span>
+      <span class="ld-mark-text">UNTUK&nbsp;KEGUNAAN&nbsp;RASMI</span>
       <span class="ld-mark-line"></span>
     </span>
     <h1>{t("title")}</h1>
@@ -153,6 +155,12 @@
         <li><strong>{t(p.strong)}</strong> {t(p.rest)}</li>
       {/each}
     </ul>
+  </section>
+
+  <section class="ld-section ld-verify" id="verify" data-reveal>
+    <h2>{t("proveIt")}</h2>
+    <p class="ld-sub">{t("proveSub")}</p>
+    <p class="ld-prove-body">{t("proveBody")}</p>
   </section>
 
   <section class="ld-section" id="faq" data-reveal>
@@ -408,6 +416,15 @@
   }
   .ld-plain li { line-height: 1.55; color: var(--muted); }
   .ld-plain strong { color: var(--text); }
+  .ld-prove-body {
+    color: var(--muted);
+    line-height: 1.65;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    padding: 1.1rem 1.3rem;
+    margin: 0;
+  }
   .ld-faq li { border-top: 1px solid var(--line); padding-top: 0.95rem; }
   .ld-faq h3 { margin: 0 0 0.3rem; font-size: 1rem; }
   .ld-faq p { margin: 0; color: var(--muted); line-height: 1.55; }

@@ -45,6 +45,7 @@ export const app = $state({
   message: null, // { kind: "ok" | "error", text }
   update: null, // { version } when a newer version.json is published
   lang: initialLang(), // ui language (en | ms)
+  network: [], // requests the app has made this session (privacy proof panel)
   consented: initialConsent(),
 });
 
