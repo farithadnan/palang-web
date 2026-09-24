@@ -3,6 +3,7 @@
    *  view switching with hash routes, toast, consent and footer. */
   import { onMount } from "svelte";
   import Icon from "./components/ui/Icon.svelte";
+  import Landing from "./components/Landing.svelte";
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
@@ -15,7 +16,8 @@
     { id: "merge", label: "Merge", icon: "merge" },
   ];
   const HASH_TO_VIEW = {
-    "": "convert",
+    "": "home",
+    home: "home",
     convert: "convert",
     palang: "palang",
     merge: "merge",
@@ -24,7 +26,7 @@
 
   function readHash() {
     const hash = (typeof location !== "undefined" ? location.hash : "").replace(/^#\/?/, "");
-    return HASH_TO_VIEW[hash] ?? "convert";
+    return HASH_TO_VIEW[hash] ?? "home";
   }
 
   let view = $state(readHash());
@@ -62,6 +64,9 @@
       </div>
     </div>
   {/if}
+  {#if view === "home"}
+    <Landing />
+  {:else}
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
@@ -120,8 +125,8 @@
       {#if view !== "privacy" && !app.consented}
         <section class="consent">
           <p>
-            <strong>Before you upload:</strong> your document is sent to this server, processed, and
-            deleted right after. It is not stored, logged or shared.{" "}
+            <strong>Before you start:</strong> your documents are processed on this device and
+            never leave it — no uploads, no accounts.{" "}
             <button type="button" class="link" onclick={() => (view = "privacy")}>How we handle your files</button>
           </p>
           <label class="checkline">
@@ -154,8 +159,10 @@
       <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">Web app</a>
     </div>
   </footer>
+  {/if}
 </div>
 
+{#if view !== "home"}
 <div class="tabs tabs-bottom" aria-label="Tools">
   {#each TOOLS as tool (tool.id)}
     <button
@@ -170,6 +177,7 @@
     </button>
   {/each}
 </div>
+{/if}
 
 {#if app.message}
   <div class="toast" class:error={app.message.kind === "error"} role="status">
