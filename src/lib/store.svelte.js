@@ -2,6 +2,7 @@
    Views read/write `app.*`; components stay presentational. */
 
 import * as api from "./api.js";
+import { processOffline } from "./local-engine.js";
 import { buildPalangSpec, defaultSpec, fittedPageSize, imageSettings, PAGE_DIMS } from "./domain.js";
 
 const CONSENT_KEY = "palang-consent-v1";
@@ -40,6 +41,7 @@ export const app = $state({
   activePage: 0,
   busy: false,
   message: null, // { kind: "ok" | "error", text }
+  local: true, // process on the device; no uploads
   consented: initialConsent(),
 });
 
@@ -327,7 +329,7 @@ export async function generate(mode = "convert") {
     return;
   }
   if (!app.consented) {
-    flash("error", "Tick the agreement first: your files are processed on this server and deleted right after.");
+    flash("error", "Tick the agreement first: your files are processed on this device and never leave it.");
     return;
   }
   if (mode === "palang" && app.spec.armed && app.spec.mode === "band" && !(app.spec.text || "").trim()) {
@@ -335,7 +337,24 @@ export async function generate(mode = "convert") {
     return;
   }
 
-  const fields = { merge: "true" };
+  const filename = mode === "merge" ? "merged.pdf" : mode === "palang" ? "stamped.pdf" : "converted.pdf";
+  app.busy = true;
+  try {
+    const blob =
+      app.local && mode !== "merge"
+        ? await offlineBlob(mode, files)
+        : await serverBlob(mode, files);
+    downloadBlob(blob, filename);
+    flash("ok", "Done. Your file is downloading.");
+  } catch (err) {
+    flash("error", err.message);
+  } finally {
+    app.busy = false;
+  }
+}
+
+async function serverBlob(mode, files) {
+  const fields = { merge: "true", page_size: app.pageSize };
   if (mode === "convert" && app.images.length) {
     fields.page = app.pageSize;
     fields.image_settings = JSON.stringify(imageSettings(app.images));
@@ -344,18 +363,33 @@ export async function generate(mode = "convert") {
     fields.page = app.pageSize; // keep output page size in sync with the preview
     fields.palang = JSON.stringify(buildPalangSpec(app.spec));
   }
+  return api.upload(files, fields);
+}
 
-  const filename = mode === "merge" ? "merged.pdf" : mode === "palang" ? "stamped.pdf" : "converted.pdf";
-  app.busy = true;
-  try {
-    const blob = await api.upload(files, fields);
-    downloadBlob(blob, filename);
-    flash("ok", "Done. Your file is downloading.");
-  } catch (err) {
-    flash("error", err.message);
-  } finally {
-    app.busy = false;
-  }
+async function offlineBlob(mode, files) {
+  // Everything on-device: images are cropped/enhanced/stamped in the
+  // browser; nothing is uploaded anywhere.
+  const setup = await Promise.all(
+    files.map(async (f) => {
+      const bytes = await f.arrayBuffer();
+      const mime = f.type || "image/jpeg";
+      const im = app.images.find((x) => x.file === f);
+      const pdf = app.pdfs.find((x) => x.file === f);
+      return {
+        bytes: () => Promise.resolve(bytes),
+        mime,
+        setting: im ? { enhance: im.enhance, crop: im.crop } : null,
+        isPdf: !!pdf,
+      };
+    })
+  );
+  const out = await processOffline({
+    images: setup.filter((s) => !s.isPdf),
+    pdfs: setup.filter((s) => s.isPdf),
+    pageSize: app.pageSize,
+    spec: mode === "palang" ? app.spec : { armed: false },
+  });
+  return new Blob([out], { type: "application/pdf" });
 }
 
 function downloadBlob(blob, filename) {
