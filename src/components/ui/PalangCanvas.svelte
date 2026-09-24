@@ -228,7 +228,16 @@
     const h = lines ? blockHPt : bh;
 
     if (mode === "move") {
-      if (lines || region) b.x = clampPt(bx + dx, 0, Math.max(0, widthPt - w));
+      if (lines || region) {
+        // The marking may overhang the left/right edges when it is wider
+        // than the page (stretch it to fill every pixel); at least 32 pt of
+        // it always stays on the image so it can never be lost. Markings
+        // that fit stay fully inside, as before.
+        const over = w > widthPt;
+        const lo = over ? -(w - 32) : 0;
+        const hi = over ? widthPt - 32 : Math.max(0, widthPt - w);
+        b.x = clampPt(bx + dx, lo, hi);
+      }
       b.y = clampPt(by + dy, 0, Math.max(0, heightPt - h));
     } else if (region && mode === "se") {
       b.w = clampPt(bw + dx, MIN_SIDE, widthPt - bx);
