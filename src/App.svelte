@@ -131,6 +131,14 @@
   <footer class="sitefoot">
     <div class="wrap">
       <button type="button" class="link" onclick={() => (view = "privacy")}>Privacy</button>
+      <span class="footdot">·</span>
+      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">
+        MIT License — github.com/farithadnan/palang
+      </a>
+      <span class="footdot">·</span>
+      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">
+        Web app source
+      </a>
     </div>
   </footer>
 </div>
