@@ -361,9 +361,15 @@ input[type="color"] {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   overflow: auto;
   scrollbar-width: none; /* panning works; the bar stays hidden */
-  max-height: 46vh;
+  /* A stable working area: never collapses when zoomed out (that made the
+     fit re-fit against a shrinking frame and "closed" the whole editor),
+     and never steals the modal (fit height keeps the image comfortably
+     sized). */
+  min-height: 42vh;
+  max-height: 56vh;
   background: color-mix(in srgb, var(--muted) 8%, transparent);
   border: 1px solid var(--line);
   border-radius: 12px;

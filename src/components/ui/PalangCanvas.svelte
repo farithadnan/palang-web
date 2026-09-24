@@ -67,7 +67,16 @@
     const h = frame ? frame.clientHeight : 0;
     if (!w || !widthPt) return;
     fitScale = Math.min(w / widthPt, (h || w) / heightPt);
-    box = defaultBox();
+    // Re-centre only at fit (zoom 1): while zoomed, keep the marking where
+    // the user put it and never chase a moving frame.
+    if (zoom === 1) box = defaultBox();
+  }
+
+  function fitView() {
+    // Industrial-standard recovery: whole image visible, marking centred.
+    zoom = 1;
+    fitPage();
+    if (frame) frame.scrollTop = 0;
   }
 
   function ensureFit() {
@@ -89,7 +98,11 @@
     // land on a hidden part of the page.
     let ro = null;
     if (typeof ResizeObserver !== "undefined" && frame) {
-      ro = new ResizeObserver(fitPage);
+      ro = new ResizeObserver(() => {
+        // Re-fit only at fit zoom: while zoomed, the frame may resize from
+        // overflow/scrollbar changes and must not fight the user's zoom.
+        if (zoom === 1) fitPage();
+      });
       ro.observe(frame);
     }
     window.addEventListener("resize", fitPage);
@@ -500,6 +513,9 @@
   </div>
 
   <div class="canvas-zoom">
+    <button type="button" class="btn btn-sm" aria-label="Show the whole image" onclick={fitView}>
+      Fit view
+    </button>
     <button type="button" class="btn btn-sm" aria-label="Reset marking position to the middle" onclick={centerReset}>
       Reset position
     </button>
