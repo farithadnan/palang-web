@@ -1,50 +1,43 @@
 <script>
   /** Landing page: what Palang is, why offline, how to get it, who makes it.
-   *  Full-screen marketing view (no app chrome); the app opens via CTAs.
-   *  Animations: hero mark rhythm, scroll-reveal sections (IntersectionObserver,
-   *  respects prefers-reduced-motion). */
+   *  Full-screen view (no app chrome) with the SHARED top bar; the privacy
+   *  section here is the single privacy destination (footers + app point
+   *  at #privacy). Copy is i18n'd (en/ms). */
+  import Topbar from "./ui/Topbar.svelte";
   import Icon from "./ui/Icon.svelte";
+  import { t } from "../lib/i18n.js";
 
   const PLATFORMS = [
-    { name: "Web app", status: "Live now", desc: "Works in any browser — it's this app, on this page.", action: "convert" },
-    { name: "Android APK", status: "Soon", desc: "Installable app, same on-device engine.", action: null },
-    { name: "Desktop (EXE)", status: "Soon", desc: "Windows desktop build from the same codebase.", action: null },
+    { key: "platformWeb", status: "liveNow", action: "convert" },
+    { key: "platformApk", status: "soon", action: null },
+    { key: "platformExe", status: "soon", action: null },
   ];
 
   const FEATURES = [
-    {
-      icon: "convert",
-      title: "Convert",
-      body: "Photos into a single PDF — per-image crop and light enhance, your choice of page size, previewed instantly.",
-    },
-    {
-      icon: "palang",
-      title: "Palang",
-      body: "The bank-purpose band. Drag, rotate and scale it like a real stamp — transparent lines that follow the text, live on the page.",
-    },
-    {
-      icon: "merge",
-      title: "Merge",
-      body: "Join PDFs in the order you want, straight from your device.",
-    },
-    {
-      icon: "shield",
-      title: "Private by construction",
-      body: "No accounts, no uploads, no tracking. Every step runs in your browser — your documents never leave your machine.",
-    },
+    { icon: "convert", title: "featureConvert", body: "featureConvertBody" },
+    { icon: "palang", title: "featurePalang", body: "featurePalangBody" },
+    { icon: "merge", title: "featureMerge", body: "featureMergeBody" },
+    { icon: "shield", title: "featurePrivate", body: "featurePrivateBody" },
   ];
 
   const STEPS = [
-    { n: "1", title: "Add your files", body: "Photos or PDFs from your device." },
-    { n: "2", title: "Arrange the marking", body: "Drag the band where it belongs — rotate it, size it, watch it live." },
-    { n: "3", title: "Download the PDF", body: "One file ready to share. Nothing was sent anywhere." },
+    { n: "1", title: "step1", body: "step1B" },
+    { n: "2", title: "step2", body: "step2B" },
+    { n: "3", title: "step3", body: "step3B" },
+  ];
+
+  const PRIVATE = [
+    { strong: "private1a", rest: "private1b" },
+    { strong: "private2a", rest: "private2b" },
+    { strong: "private3a", rest: "private3b" },
+    { strong: "private4a", rest: "private4b" },
   ];
 
   const FAQS = [
-    { q: "Do my files get uploaded?", a: "No. The whole pipeline — conversion, stamping, merging — runs inside your browser. The only network request is a small version check for updates." },
-    { q: "Is the output a real, valid PDF?", a: "Yes. Files are produced locally as standard PDFs, openable by any reader." },
-    { q: "Is it really open source?", a: "MIT licensed. The web app and the reference engine are both public on GitHub — audit them or run them yourself." },
-    { q: "How do updates work?", a: "The app compares a version manifest when it opens and offers to update. The native builds will use the same check." },
+    { q: "faq1q", a: "faq1a" },
+    { q: "faq2q", a: "faq2a" },
+    { q: "faq3q", a: "faq3a" },
+    { q: "faq4q", a: "faq4a" },
   ];
 
   function go(view) {
@@ -71,62 +64,50 @@
 </script>
 
 <svelte:head>
-  <title>Palang — prepare documents for sharing, on your device</title>
-  <meta
-    name="description"
-    content="Palang converts photos to PDF, stamps the bank-purpose band, and merges documents — fully offline, open source, MIT licensed."
-  />
+  <title>Palang — {t("title")}</title>
+  <meta name="description" content={t("lede")} />
 </svelte:head>
 
 <div class="landing">
-  <header class="ld-nav">
-    <a class="ld-brand" href="#home" onclick={(e) => jump("#home", e)}>
-      <span class="ld-brand-mark" aria-hidden="true"></span>
-      <b>Palang</b>
-    </a>
-    <nav class="ld-links" aria-label="Sections">
-      <a href="#features" onclick={(e) => jump("#features", e)}>Features</a>
-      <a href="#how" onclick={(e) => jump("#how", e)}>How it works</a>
-      <a href="#privacy" onclick={(e) => jump("#privacy", e)}>Privacy</a>
-      <a href="#faq" onclick={(e) => jump("#faq", e)}>FAQ</a>
-    </nav>
-    <button type="button" class="btn btn-sm btn-primary" onclick={() => go("convert")}>Open app</button>
-  </header>
+  <Topbar context="landing">
+    {#snippet children()}
+      <a href="#features" onclick={(e) => jump("#features", e)}>{t("features")}</a>
+      <a href="#how" onclick={(e) => jump("#how", e)}>{t("how")}</a>
+      <a href="#privacy" onclick={(e) => jump("#privacy", e)}>{t("privacy")}</a>
+      <a href="#faq" onclick={(e) => jump("#faq", e)}>{t("faq")}</a>
+    {/snippet}
+  </Topbar>
 
   <section class="ld-hero" id="home">
-    <p class="ld-badge">Offline · Open source · MIT</p>
+    <p class="ld-badge">{t("badge")}</p>
     <span class="ld-hero-mark" aria-hidden="true">
       <span class="ld-mark-line"></span>
       <span class="ld-mark-text">BANK&nbsp;SAHAJA</span>
       <span class="ld-mark-line"></span>
     </span>
-    <h1>Prepare documents for sharing</h1>
-    <p class="ld-lede">
-      Palang turns your photos and PDFs into ready-to-share documents —
-      convert, stamp the bank-purpose band, merge — all on your device.
-      Nothing is uploaded. Ever.
-    </p>
+    <h1>{t("title")}</h1>
+    <p class="ld-lede">{t("lede")}</p>
     <div class="ld-cta">
-      <button type="button" class="btn btn-primary btn-lg" onclick={() => go("convert")}>Open the web app</button>
-      <a class="btn btn-ghost btn-lg" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">View on GitHub</a>
+      <button type="button" class="btn btn-primary btn-lg" onclick={() => go("convert")}>{t("openWebApp")}</button>
+      <a class="btn btn-ghost btn-lg" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("viewGitHub")}</a>
     </div>
   </section>
 
   <section class="ld-section" id="platforms" data-reveal>
-    <h2>Get it on anything</h2>
-    <p class="ld-sub">One engine, every surface. Processing stays on your device.</p>
+    <h2>{t("getItOnAnything")}</h2>
+    <p class="ld-sub">{t("platformsSub")}</p>
     <ul class="ld-platforms">
-      {#each PLATFORMS as p (p.name)}
+      {#each PLATFORMS as p (p.key)}
         <li>
           <div class="ld-pname">
-            <b>{p.name}</b>
-            <span class="ld-status" class:soon={p.status !== "Live now"}>{p.status}</span>
+            <b>{t(p.key + "Name")}</b>
+            <span class="ld-status" class:soon={p.status === "soon"}>{t(p.status)}</span>
           </div>
-          <p>{p.desc}</p>
+          <p>{t(p.key + "Desc")}</p>
           {#if p.action}
-            <button type="button" class="btn btn-sm btn-primary" onclick={() => go(p.action)}>Open</button>
+            <button type="button" class="btn btn-sm btn-primary" onclick={() => go(p.action)}>{t("open")}</button>
           {:else}
-            <span class="ld-soon">Arrives with the native build</span>
+            <span class="ld-soon">{t("arrivesWithNative")}</span>
           {/if}
         </li>
       {/each}
@@ -134,15 +115,15 @@
   </section>
 
   <section class="ld-section" id="features" data-reveal>
-    <h2>What it does</h2>
-    <p class="ld-sub">Four things, one clean flow — no clutter, no accounts.</p>
+    <h2>{t("whatItDoes")}</h2>
+    <p class="ld-sub">{t("featuresSub")}</p>
     <ul class="ld-features">
       {#each FEATURES as f (f.title)}
         <li>
           <span class="ld-feature-icon"><Icon name={f.icon} size={20} /></span>
           <div>
-            <h3>{f.title}</h3>
-            <p>{f.body}</p>
+            <h3>{t(f.title)}</h3>
+            <p>{t(f.body)}</p>
           </div>
         </li>
       {/each}
@@ -150,14 +131,15 @@
   </section>
 
   <section class="ld-section" id="how" data-reveal>
-    <h2>How it works</h2>
+    <h2>{t("howWorks")}</h2>
+    <p class="ld-sub">{t("stepsSub")}</p>
     <ol class="ld-steps">
       {#each STEPS as s (s.n)}
         <li>
           <span class="ld-step-n">{s.n}</span>
           <div>
-            <h3>{s.title}</h3>
-            <p>{s.body}</p>
+            <h3>{t(s.title)}</h3>
+            <p>{t(s.body)}</p>
           </div>
         </li>
       {/each}
@@ -165,22 +147,21 @@
   </section>
 
   <section class="ld-section ld-privacy" id="privacy" data-reveal>
-    <h2>Private by construction</h2>
+    <h2>{t("privateByConstruction")}</h2>
     <ul class="ld-plain">
-      <li><strong>On-device processing.</strong> Conversion, stamping and merging all run in your browser.</li>
-      <li><strong>No accounts, no sign-ins, no tracking.</strong> There is nothing to profile.</li>
-      <li><strong>Open source.</strong> The entire pipeline is public under MIT — read it, run it, trust it because you can verify it.</li>
-      <li><strong>Update checks only.</strong> The sole network request is a small version manifest.</li>
+      {#each PRIVATE as p (p.strong)}
+        <li><strong>{t(p.strong)}</strong> {t(p.rest)}</li>
+      {/each}
     </ul>
   </section>
 
   <section class="ld-section" id="faq" data-reveal>
-    <h2>Questions</h2>
+    <h2>{t("questions")}</h2>
     <ul class="ld-faq">
       {#each FAQS as f (f.q)}
         <li>
-          <h3>{f.q}</h3>
-          <p>{f.a}</p>
+          <h3>{t(f.q)}</h3>
+          <p>{t(f.a)}</p>
         </li>
       {/each}
     </ul>
@@ -188,13 +169,13 @@
 
   <footer class="ld-foot">
     <div class="ld-footrow">
-      <button type="button" class="link" onclick={() => go("privacy")}>Privacy</button>
+      <button type="button" class="link" onclick={(e) => jump("#privacy", e)}>{t("privacy")}</button>
       <span class="footdot">·</span>
-      <span>MIT License</span>
+      <span>{t("mitLicense")}</span>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">Core engine</a>
+      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("coreEngine")}</a>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">Web app</a>
+      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">{t("webApp")}</a>
     </div>
   </footer>
 </div>
@@ -204,57 +185,6 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-  }
-
-  /* nav */
-  .ld-nav {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-    padding: 0.8rem 1.4rem;
-    backdrop-filter: blur(10px);
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    border-bottom: 1px solid var(--line);
-  }
-  .ld-brand {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.05rem;
-    text-decoration: none;
-    color: var(--text);
-  }
-  .ld-brand-mark {
-    width: 22px;
-    height: 16px;
-    background:
-      linear-gradient(var(--accent), var(--accent)) 0 1px / 22px 2px no-repeat,
-      linear-gradient(var(--accent), var(--accent)) 0 13px / 22px 2px no-repeat;
-    border-radius: 2px;
-    animation: mark-pulse 3.2s ease-in-out infinite;
-  }
-  @keyframes mark-pulse {
-    0%, 100% { opacity: 1; transform: scaleX(1); }
-    50% { opacity: 0.55; transform: scaleX(0.92); }
-  }
-  .ld-links {
-    display: flex;
-    gap: 1.1rem;
-    margin-left: auto;
-  }
-  .ld-links a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 0.92rem;
-    font-weight: 600;
-  }
-  .ld-links a:hover { color: var(--text); }
-  @media (max-width: 640px) {
-    .ld-links { display: none; }
-    .ld-nav { padding: 0.7rem 1rem; }
   }
 
   /* hero */
@@ -362,7 +292,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     [data-reveal] { opacity: 1; transform: none; transition: none; }
-    .ld-hero-mark, .ld-brand-mark { animation: none; }
+    .ld-hero-mark, .brand-mark { animation: none; }
   }
 
   /* platforms */
@@ -433,7 +363,6 @@
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
-    counter-reset: none;
   }
   .ld-steps li {
     display: flex;
@@ -462,6 +391,13 @@
     background: var(--panel);
     margin-top: clamp(2.6rem, 7vh, 4.5rem);
     margin-bottom: clamp(2.6rem, 7vh, 4.5rem);
+  }
+  @media (max-width: 640px) {
+    /* keep the privacy panel off the screen edges on mobile */
+    .ld-privacy {
+      padding-left: 1.2rem;
+      padding-right: 1.2rem;
+    }
   }
   .ld-privacy ul, .ld-faq {
     list-style: none;

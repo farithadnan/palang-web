@@ -8,6 +8,7 @@ import { defaultSpec, fittedPageSize, PAGE_DIMS } from "./domain.js";
 
 const CONSENT_KEY = "palang-consent-v1";
 const THEME_KEY = "palang-theme";
+const LANG_KEY = "palang-lang";
 
 function initialConsent() {
   try {
@@ -43,6 +44,7 @@ export const app = $state({
   busy: false,
   message: null, // { kind: "ok" | "error", text }
   update: null, // { version } when a newer version.json is published
+  lang: initialLang(), // ui language (en | ms)
   consented: initialConsent(),
 });
 
@@ -63,6 +65,26 @@ export function setTheme(theme) {
   } catch {
     /* theme lasts for this session only */
   }
+}
+
+export function setLang(lang) {
+  if (lang !== "en" && lang !== "ms") return;
+  app.lang = lang;
+  try {
+    localStorage.setItem(LANG_KEY, lang);
+  } catch {
+    /* language lasts for this session only */
+  }
+}
+
+function initialLang() {
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved === "en" || saved === "ms") return saved;
+  } catch {
+    /* fall through to English */
+  }
+  return "en";
 }
 
 export function setView(view) {
@@ -448,6 +470,7 @@ if (typeof window !== "undefined") {
     pickPreviewFiles,
     setConsent,
     setTheme,
+    setLang,
     generate,
   };
 }

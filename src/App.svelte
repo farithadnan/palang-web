@@ -1,19 +1,22 @@
 <script>
-  /** App shell: header (brand + theme toggle), sidebar (desktop) / tabs (mobile),
-   *  view switching with hash routes, toast, consent and footer. */
+  /** App shell: shared top bar (home <-> app, language, theme), sidebar
+   *  (desktop) / tabs (mobile), view switching with hash routes, toast,
+   *  consent and footer. The landing page owns the home view; the privacy
+   *  section lives on the landing (single source, no separate view). */
   import { onMount } from "svelte";
   import Icon from "./components/ui/Icon.svelte";
+  import Topbar from "./components/ui/Topbar.svelte";
   import Landing from "./components/Landing.svelte";
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
-  import PrivacyView from "./components/PrivacyView.svelte";
-  import { app, checkForUpdate, applyUpdate, dismissUpdate, setConsent, setTheme } from "./lib/store.svelte.js";
+  import { app, applyUpdate, checkForUpdate, dismissUpdate, setConsent } from "./lib/store.svelte.js";
+  import { t } from "./lib/i18n.js";
 
   const TOOLS = [
-    { id: "convert", label: "Convert", icon: "convert" },
-    { id: "palang", label: "Palang", icon: "palang" },
-    { id: "merge", label: "Merge", icon: "merge" },
+    { id: "convert", label: () => t("convert"), icon: "convert" },
+    { id: "palang", label: () => t("palang"), icon: "palang" },
+    { id: "merge", label: () => t("merge"), icon: "merge" },
   ];
   const HASH_TO_VIEW = {
     "": "home",
@@ -21,7 +24,8 @@
     convert: "convert",
     palang: "palang",
     merge: "merge",
-    privacy: "privacy",
+    // The standalone privacy view was folded into the landing section.
+    privacy: "home",
   };
 
   function readHash() {
@@ -38,7 +42,16 @@
 
   $effect(() => {
     document.documentElement.dataset.theme = app.theme;
+    document.documentElement.lang = app.lang;
   });
+
+  function goHomePrivacy() {
+    location.hash = "#/home";
+    // Wait for the landing to render, then bring the privacy section in.
+    setTimeout(() => {
+      document.querySelector(".landing #privacy")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+  }
 
   onMount(() => {
     window.addEventListener("hashchange", () => {
@@ -46,8 +59,6 @@
       if (v !== view) view = v;
     });
     void checkForUpdate();
-    // Re-check when the tab regains focus, so a published update surfaces
-    // without a manual refresh.
     const onShow = () => void checkForUpdate();
     document.addEventListener("visibilitychange", onShow);
     return () => document.removeEventListener("visibilitychange", onShow);
@@ -57,36 +68,21 @@
 <div class="app">
   {#if app.update}
     <div class="update-banner" role="status">
-      <span>A new version (v{app.update.version}) is available.</span>
+      <span>{t("updateAvailable", { version: app.update.version })}</span>
       <div class="update-banner-actions">
-        <button type="button" class="btn btn-sm btn-primary" onclick={applyUpdate}>Update now</button>
-        <button type="button" class="btn btn-sm" onclick={dismissUpdate}>Later</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick={applyUpdate}>{t("updateNow")}</button>
+        <button type="button" class="btn btn-sm" onclick={dismissUpdate}>{t("later")}</button>
       </div>
     </div>
   {/if}
   {#if view === "home"}
     <Landing />
   {:else}
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <b>Palang</b>
-        <span>prepare documents for sharing</span>
-      </div>
-      <button
-        type="button"
-        class="iconbtn"
-        aria-label={app.theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-        onclick={() => setTheme(app.theme === "dark" ? "light" : "dark")}
-      >
-        <Icon name={app.theme === "dark" ? "sun" : "moon"} size={20} />
-      </button>
-    </div>
-  </header>
+  <Topbar context="app" />
 
   <div class="app-main">
     <aside class="side">
-      <nav aria-label="Tools">
+      <nav aria-label={t("menu")}>
         {#each TOOLS as tool (tool.id)}
           <button
             type="button"
@@ -95,13 +91,13 @@
             onclick={() => (view = tool.id)}
           >
             <Icon name={tool.icon} size={19} />
-            {tool.label}
+            {tool.label()}
           </button>
         {/each}
         <div class="sidegroup">
-          <button type="button" class="sidefoot" onclick={() => (view = "privacy")}>
-            <Icon name="info" size={17} />
-            Privacy
+          <button type="button" class="sidefoot" onclick={goHomePrivacy}>
+            <Icon name="shield" size={17} />
+            {t("privacy")}
           </button>
         </div>
       </nav>
@@ -117,21 +113,22 @@
             onclick={() => (view = tool.id)}
           >
             <Icon name={tool.icon} size={18} />
-            {tool.label}
+            {tool.label()}
           </button>
         {/each}
       </div>
 
-      {#if view !== "privacy" && !app.consented}
+      {#if !app.consented}
         <section class="consent">
           <p>
-            <strong>Before you start:</strong> your documents are processed on this device and
-            never leave it — no uploads, no accounts.{" "}
-            <button type="button" class="link" onclick={() => (view = "privacy")}>How we handle your files</button>
+            <strong>{t("consentBefore")}</strong> {t("consentBody")}{" "}
+            <button type="button" class="link" onclick={goHomePrivacy}>
+              {t("privacy")}
+            </button>
           </p>
           <label class="checkline">
             <input type="checkbox" onchange={(e) => setConsent(e.currentTarget.checked)} />
-            <span>I understand and agree</span>
+            <span>{t("consentAgree")}</span>
           </label>
         </section>
       {/if}
@@ -142,28 +139,26 @@
         <PalangView />
       {:else if view === "merge"}
         <MergeView />
-      {:else if view === "privacy"}
-        <PrivacyView />
       {/if}
     </div>
   </div>
 
   <footer class="sitefoot">
     <div class="wrap">
-      <button type="button" class="link" onclick={() => (view = "privacy")}>Privacy</button>
+      <button type="button" class="link" onclick={goHomePrivacy}>{t("privacy")}</button>
       <span class="footdot">·</span>
-      <span>MIT License</span>
+      <span>{t("mitLicense")}</span>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">Core engine</a>
+      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("coreEngine")}</a>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">Web app</a>
+      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">{t("webApp")}</a>
     </div>
   </footer>
   {/if}
 </div>
 
 {#if view !== "home"}
-<div class="tabs tabs-bottom" aria-label="Tools">
+<div class="tabs tabs-bottom" aria-label={t("menu")}>
   {#each TOOLS as tool (tool.id)}
     <button
       type="button"
@@ -173,7 +168,7 @@
       onclick={() => (view = tool.id)}
     >
       <Icon name={tool.icon} size={20} />
-      {tool.label}
+      {tool.label()}
     </button>
   {/each}
 </div>
