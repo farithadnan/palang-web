@@ -1,8 +1,10 @@
 <script>
-  /** Merge tab: dropzone + ordered PDF list + bottom action bar. */
+  /** Merge tab: dropzone + ordered PDF list (tap a row to preview) + an
+   *  embedded preview editor at the bottom — one page rendered at a time,
+   *  so a 1000-page document never triggers bulk work. */
   import Dropzone from "./ui/Dropzone.svelte";
   import OrderedList from "./ui/OrderedList.svelte";
-  import { app, addPdfs, movePdf, removePdf, generate } from "../lib/store.svelte.js";
+  import { app, addPdfs, movePdf, removePdf, selectPdfFile, stepPdfFile, generate } from "../lib/store.svelte.js";
 
   let mergeInput;
 
@@ -15,11 +17,16 @@
       last: i === app.pdfs.length - 1,
     }))
   );
+
+  const previewPdf = $derived(app.pdfs.find((p) => p.id === app.activePdfId) ?? null);
+  const countLabel = $derived(
+    previewPdf ? (previewPdf.count ?? "…") + " page" + (previewPdf.count === 1 ? "" : "s") : ""
+  );
 </script>
 
 <div class="panel">
   <h2>Merge PDFs</h2>
-  <p class="desc">Combine several PDFs into one, in the order you choose.</p>
+  <p class="desc">Combine several PDFs into one, in the order you choose. Tap a file in the list to preview it.</p>
 
   {#if !app.pdfs.length}
     <Dropzone
@@ -32,34 +39,53 @@
       onPick={addPdfs}
     />
   {:else}
-    <OrderedList items={items} onMove={movePdf} onRemove={removePdf} empty="" />
-    <div class="mrg-preview" aria-label="Merged output preview">
-      {#each app.pdfs as p (p.id)}
-        {#if p.pages.length}
-          {#each p.pages as url, pi (p.id + "-" + pi)}
-            <figure class="mrg-page">
-              <img src={url} alt="" loading="lazy" />
-              <figcaption>
-                {p.file.name} · {pi + 1}
-              </figcaption>
-            </figure>
-          {/each}
-        {:else if p.thumbErr}
-          <figure class="mrg-page mrg-err">
-            <span>pdf</span>
-            <figcaption>{p.file.name} · preview unavailable</figcaption>
-          </figure>
-        {:else}
-          <figure class="mrg-page">
-            <span class="mrg-loading"></span>
-            <figcaption>{p.file.name} · …</figcaption>
-          </figure>
-        {/if}
-      {/each}
-    </div>
+    <OrderedList
+      items={items}
+      onSelect={selectPdfFile}
+      onMove={movePdf}
+      onRemove={removePdf}
+      empty=""
+    />
     <div class="actionrow">
       <button type="button" class="btn btn-sm" onclick={() => mergeInput?.click()}>Add more PDFs</button>
     </div>
+
+    {#if previewPdf}
+      <div class="mrg-editor">
+        <div class="mrg-frame">
+          {#if previewPdf.img}
+            <img src={previewPdf.img} alt={"Page " + previewPdf.cur + " of " + previewPdf.file.name} />
+          {:else if previewPdf.loading}
+            <div class="spinner" role="status" aria-label="Rendering page"></div>
+          {:else}
+            <p class="caption">This PDF can&apos;t be previewed — it will still be merged as-is.</p>
+          {/if}
+        </div>
+        <div class="page-stepper">
+          <button
+            type="button"
+            class="btn btn-sm"
+            aria-label="Previous page"
+            disabled={!previewPdf.count || previewPdf.cur <= 1}
+            onclick={() => stepPdfFile(previewPdf.id, -1)}
+          >
+            ←
+          </button>
+          <span class="caption">
+            {previewPdf.file.name} · Page {previewPdf.count ? previewPdf.cur : "…"} of {countLabel}
+          </span>
+          <button
+            type="button"
+            class="btn btn-sm"
+            aria-label="Next page"
+            disabled={!previewPdf.count || previewPdf.cur >= previewPdf.count}
+            onclick={() => stepPdfFile(previewPdf.id, 1)}
+          >
+            →
+          </button>
+        </div>
+      </div>
+    {/if}
     <input
       bind:this={mergeInput}
       class="hidden-input"

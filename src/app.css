@@ -61,62 +61,75 @@ h1, h2, h3, h4 { font-weight: 650; letter-spacing: -0.01em; }
 .app-body { flex: 1; min-width: 0; padding: 1.1rem 0 2rem; max-width: 880px; }
 aside.side { display: none; width: 216px; flex: none; padding: 1.1rem 0.9rem 0 0; }
 
-/* merge preview strip: the merged output in order, on-device pages */
-.mrg-preview {
-  display: flex;
-  gap: 0.7rem;
-  overflow-x: auto;
-  padding: 0.9rem 0.1rem 0.2rem;
-  margin-top: 0.6rem;
-}
-.mrg-page {
-  margin: 0;
-  flex: 0 0 auto;
-  width: 96px;
+/* merge embedded preview editor — one page at a time, like the palang editor */
+.mrg-editor {
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.7rem;
 }
-.mrg-page img {
-  width: 96px;
-  height: 128px;
-  object-fit: cover;
-  border: 1px solid var(--line);
-  border-radius: 7px;
+.mrg-frame {
+  min-height: 170px;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 0.6rem;
+}
+.mrg-frame img {
+  max-width: 100%;
+  max-height: 46vh;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.10);
   background: #fff;
 }
-.mrg-page figcaption {
-  font-size: 0.68rem;
-  color: var(--muted);
+.mrg-editor .page-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+}
+.mrg-editor .page-stepper .caption {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 96px;
+  max-width: 70%;
 }
-.mrg-page .mrg-loading {
-  width: 96px;
-  height: 128px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  display: block;
-  background: linear-gradient(100deg, var(--panel) 40%, var(--bg) 50%, var(--panel) 60%);
-  background-size: 200% 100%;
-  animation: mrg-shimmer 1.2s linear infinite;
-}
-@keyframes mrg-shimmer { to { background-position: -200% 0; } }
-.mrg-err span {
-  width: 96px;
-  height: 128px;
+
+/* palang editor: pages whose image isn't rendered yet */
+.pv-loading {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
   border: 1px dashed var(--line);
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--muted);
-  background: var(--panel);
+  border-radius: 14px;
+  background: var(--bg);
+  padding: 1.2rem;
+  text-align: center;
 }
+
+/* ordered list: the label is a row-wide pick button */
+.ol-pick {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  padding: 0.15rem 0.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ol-pick:hover { color: var(--accent); }
 @media (min-width: 900px) { aside.side { display: block; } }
 .side .tool,
 .side .sidefoot {

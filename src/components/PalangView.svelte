@@ -17,11 +17,8 @@
   } from "../lib/store.svelte.js";
 
   const active = $derived(app.preview?.pages?.[app.activePage] ?? null);
-  const pageUrl = $derived(
-    active
-      ? active.url ?? "data:" + (active.mime || "image/jpeg") + ";base64," + active.png_base64
-      : ""
-  );
+  const pageUrl = $derived(active ? active.url ?? "" : "");
+  const pageReady = $derived(!!(active?.w && active?.h));
 
   const basketItems = $derived(
     app.previewFiles.map((f, i) => ({
@@ -137,14 +134,26 @@
     {/if}
 
     {#key app.activePage + "-" + app.spec.mode + "-" + app.spec.style + "-" + app.spec.armed}
-      <PalangCanvas
-        url={pageUrl}
-        widthPt={active.width_pt}
-        heightPt={active.height_pt}
-        spec={app.spec}
-        fitContain={!!active.url}
-        onChange={(patch) => updateSpec(patch)}
-      />
+      {#if pageUrl && pageReady}
+        <PalangCanvas
+          url={pageUrl}
+          widthPt={active.w}
+          heightPt={active.h}
+          spec={app.spec}
+          fitContain={!!active.url}
+          onChange={(patch) => updateSpec(patch)}
+        />
+      {:else if active?.loading}
+        <div class="pv-loading" role="status">
+          <div class="spinner"></div>
+          <p class="caption">Rendering page {active.page}…</p>
+        </div>
+      {:else}
+        <div class="pv-loading">
+          <p class="caption">This page can&apos;t be previewed — the marking is still placed at its true size.</p>
+          <button type="button" class="btn btn-sm" onclick={() => void retryPreview()}>Try again</button>
+        </div>
+      {/if}
     {/key}
     <p class="caption" style="text-align:center">
       Drag the marking to move it · the knob above tilts it · the corner stretches it · wheel or pinch zooms

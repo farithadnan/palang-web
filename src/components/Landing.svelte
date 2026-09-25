@@ -426,7 +426,11 @@ docker compose up --build   # engine server (or: docker build -t palang . && doc
     font-size: 0.85rem;
     line-height: 1.6;
     overflow-x: auto;
+    margin: 0.4rem 0 0.9rem;
   }
+  /* each numbered developer step needs breathing room on top */
+  #dev h3 { margin-top: 2rem; }
+  #dev h3:first-of-type { margin-top: 0.2rem; }
   .ld-plain-note {
     color: var(--muted);
     line-height: 1.6;
