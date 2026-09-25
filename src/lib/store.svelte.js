@@ -1,7 +1,7 @@
 /* Module-mode runes store: the single owner of app state and side effects.
    Views read/write `app.*`; components stay presentational. */
 
-import { processOffline } from "./local-engine.js";
+import { processOffline, compileStampedImage } from "./local-engine.js";
 import { openPdf, renderPdfPage } from "./pdf-preview.js";
 import { LIMITS, loadLimits } from "./config.js";
 import { APP_VERSION } from "./version.js";
@@ -49,6 +49,7 @@ export const app = $state({
   lang: initialLang(), // ui language (en | ms)
   network: [], // requests the app has made this session (privacy proof panel)
   consented: initialConsent(),
+  compiledFiles: new Map(), // file -> Blob with the palang baked in ("second temp")
 });
 
 export function setConsent(agreed) {
@@ -430,6 +431,7 @@ function isImageFile(file) {
 
  export function removePreviewFile(index) {
    if (index < 0 || index >= app.previewFiles.length) return;
+   app.compiledFiles.delete(app.previewFiles[index]);
    app.previewFiles.splice(index, 1);
    app.activePage = 0;
    if (!app.previewFiles.length) {
@@ -459,10 +461,43 @@ export function updateSpec(patch) {
   // Field edits implicitly arm the marking; an explicit `armed` in the patch
   // (delete, re-add) is honoured as-is.
   if (!Object.prototype.hasOwnProperty.call(patch, "armed")) app.spec.armed = true;
+  // The compiled ("second temp") images are bound to the spec — any change
+  // invalidates them so Stamp can never use a stale bake.
+  app.compiledFiles.clear();
 }
 
 export function resetSpec() {
   app.spec = defaultSpec();
+  app.compiledFiles.clear();
+}
+
+/* ---------- compiled ("second temp") images ---------- */
+
+/** Bake the CURRENT spec into every photo in the palang basket (Apply &
+ *  save). The editor keeps showing the originals for re-editing; Stamp uses
+ *  the compiled blobs — keyed by File — so the A4 fit can never shift the
+ *  marking relative to the photo. With onlyMissing it recompiles just the
+ *  stale ones (e.g. after re-editing or adding a photo). */
+export async function applyCompiled({ onlyMissing = false } = {}) {
+  if (!app.spec.armed) {
+    app.compiledFiles.clear();
+    return;
+  }
+  for (const f of app.previewFiles) {
+    if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) continue;
+    if (onlyMissing && app.compiledFiles.has(f)) continue;
+    try {
+      const out = await compileStampedImage(
+        { bytes: () => f.arrayBuffer(), mime: f.type, setting: null },
+        app.pageSize,
+        app.spec
+      );
+      app.compiledFiles.set(f, new Blob([out.bytes], { type: "image/png" }));
+    } catch (err) {
+      console.warn("compile failed:", err);
+      app.compiledFiles.delete(f);
+    }
+  }
 }
 
 /* ---------- updates ---------- */
@@ -545,6 +580,12 @@ export async function generate(mode = "convert") {
         : `palang-converted-${stamp}.pdf`;
   app.busy = true;
   try {
+    if (mode === "palang" && app.spec.armed) {
+      // The two-temp contract: Stamp uses the compiled images; anything not
+      // yet compiled (add/change after the last Apply) is compiled now so a
+      // stale bake is impossible.
+      await applyCompiled({ onlyMissing: true });
+    }
     const blob = await offlineBlob(mode, files);
     downloadBlob(blob, filename);
     flash("ok", "Done. Your file is downloading.");
@@ -562,11 +603,22 @@ async function offlineBlob(mode, files) {
     files.map(async (f) => {
       const bytes = await f.arrayBuffer();
       const mime = f.type || "image/jpeg";
-      const im = app.images.find((x) => x.file === f);
       // PDFs come from the merge basket OR the palang basket (previewFiles
       // can be a mix of images and PDFs) — both must copy pages, never be
       // fed to the image embedder (the reported PDF break).
       const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+      const compiled = app.compiledFiles.get(f);
+      if (compiled && !isPdf) {
+        // The photo already carries the baked palang ("second temp") — the
+        // engine must NOT stamp it again.
+        return {
+          bytes: () => compiled.arrayBuffer(),
+          mime: "image/png",
+          setting: null,
+          isPdf: false,
+          stamped: true,
+        };
+      }
       return {
         bytes: () => Promise.resolve(bytes),
         mime,
@@ -610,6 +662,7 @@ if (typeof window !== "undefined") {
     selectMergeFile,
     stepMerge,
     setActivePage,
+    applyCompiled,
     setConsent,
     setTheme,
     setLang,

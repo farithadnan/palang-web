@@ -12,6 +12,7 @@
     retryPreview,
     setActivePage,
     updateSpec,
+    applyCompiled,
     flash,
     generate,
   } from "../lib/store.svelte.js";
@@ -168,8 +169,11 @@
         type="button"
         class="btn btn-primary"
         onclick={() => {
+          // Apply & save: compile the photos with the marking baked in ("the
+          // second temp") — the editor keeps the originals for re-editing,
+          // and Stamp will use the compiled images.
           editing = false;
-          flash("ok", "Marking ready — stamp the PDF when you're done.");
+          void applyCompiled().then(() => flash("ok", "Marking ready — stamp the PDF when you're done."));
         }}
       >
         Apply &amp; save

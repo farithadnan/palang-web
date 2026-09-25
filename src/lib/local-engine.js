@@ -89,10 +89,16 @@ async function renderPalang(spec, pageSize) {
   const color = api.label?.color ?? spec.color;
   const rotation = ((spec.rotationDeg ?? 0) % 360 + 360) % 360;
   const pad = 7; // pt padding around the text, mirrors the lines band
-  const textW = textWidthApprox(text, fontPt);
+  const size = 4; // canvas oversample for crisp text
+  // Measure the REAL rendered width (canvas measureText — same font engine
+  // the browser preview uses). The old len*0.84 estimate differed from the
+  // visible band, so a centre-anchored marking drifted by half the gap.
+  const probe = document.createElement("canvas").getContext("2d");
+  probe.font = `bold ${Math.round(fontPt * size)}px Inter, system-ui, sans-serif`;
+  const measured = text ? probe.measureText(text).width : 0;
+  const textW = (measured > 0 ? measured : textWidthApprox(text, fontPt)) / size;
   const wPt = textW + pad * 2;
   const hPt = 10 + fontPt * 1.75;
-  const size = 4; // canvas oversample for crisp text
   const rad = (rotation * Math.PI) / 180;
   const cos = Math.abs(Math.cos(rad));
   const sin = Math.abs(Math.sin(rad));
@@ -157,6 +163,53 @@ export function palangDrawRect(pageW, pageH, pageRot, leftPt, topPt, w, h) {
   return { x: pageW - topPt - h, y: pageH - leftPt - w, width: h, height: w }; // 270
 }
 
+/** Where the band (rotated box w×h, centred at page-space point cx,cy)
+ *  lands on the IMAGE bitmap, in image pixels. The user's two-temp flow:
+ *  Apply & save COMPILES the photo with the palang baked on (see
+ *  compileStampedImage); Stamp then uses that compiled image, so the fit to
+ *  A4 can never shift the marking relative to the photo. Pure + exported
+ *  for tests. */
+export function imageStampRect(imageW, imageH, pageW, pageH, w, h, cx, cy) {
+  const fitted = fittedPageSize(imageW, imageH, pageW, pageH);
+  const s = imageW / fitted.w; // uniform image-space scale, pt → px
+  const offX = (pageW - fitted.w) / 2;
+  const offY = (pageH - fitted.h) / 2;
+  return {
+    x: (cx - offX) * s - (w * s) / 2,
+    y: (cy - offY) * s - (h * s) / 2,
+    w: w * s,
+    h: h * s,
+  };
+}
+
+/** Draw the stamped image: photo (+crop/enhance, EXIF-normalised) with the
+ *  palang baked on at the preview's exact position, returned as PNG bytes. */
+async function bakePalang(img, palang, palangImg, page, spec) {
+  const c = document.createElement("canvas");
+  c.width = img.width;
+  c.height = img.height;
+  const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  const cx = (spec.leftPt ?? (page.w - palang.w) / 2) + palang.w / 2;
+  const cy = (spec.topPt ?? (page.h - palang.h) / 2) + palang.h / 2;
+  const r = imageStampRect(img.width, img.height, page.w, page.h, palang.rw, palang.rh, cx, cy);
+  ctx.drawImage(palangImg, r.x, r.y, r.w, r.h);
+  return new Uint8Array(await outToBytes(c, "image/png"));
+}
+
+/** Compile ONE photo into its stamped form (the "second temp": the palang
+ *  is baked in and can no longer move). The editor keeps showing the
+ *  original photo for re-editing. */
+export async function compileStampedImage(input, pageSize, spec) {
+  const bytes = new Uint8Array(await input.bytes());
+  const processed = await processImage(bytes, input.mime, input.setting);
+  const img = await decodeImage(processed); // EXIF-baked dims = what the preview shows
+  const page = PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
+  const palang = await renderPalang(spec, page);
+  const palangImg = await decodeImage(palang.bytes);
+  return { bytes: await bakePalang(img, palang, palangImg, page, spec), mime: "image/png" };
+}
+
 function textWidthApprox(text, fontPt) {
   if (!text) return fontPt * 2;
   return text.length * fontPt * 0.84;
@@ -169,6 +222,7 @@ function textWidthApprox(text, fontPt) {
 export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
   const page = PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
   const doc = await PDFDocument.create();
+  const imagePages = new Set(); // pre-stamped (compiled) pages skip the stamp loop
 
   for (const f of images) {
     const bytes = new Uint8Array(await f.bytes());
@@ -178,6 +232,7 @@ export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
       f.mime === "image/jpeg" ? await doc.embedJpg(processed) : await doc.embedPng(processed);
     const { w, h } = fittedPageSize(image.width, image.height, page.w, page.h);
     p.drawImage(image, { x: (page.w - w) / 2, y: (page.h - h) / 2, width: w, height: h });
+    if (f.stamped) imagePages.add(p); // the palang is already baked in
   }
 
   for (const f of pdfs) {
@@ -192,6 +247,7 @@ export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
     const w = palang.rw;
     const h = palang.rh;
     for (const p of doc.getPages()) {
+      if (imagePages.has(p)) continue; // compiled image: palang already baked in
       // Each page has its OWN size: image pages are the chosen page size,
       // but pages copied from a source PDF keep their native geometry
       // (Letter, landscape, photo-size…).
