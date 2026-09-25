@@ -32,12 +32,6 @@ const DICT = {
     merge: "Merge",
 
     consentBefore: "Before you start:",
-    consentHosted:
-      "You are on the official instance ({url}). The app is served from a server, but every document you add is processed on this device — the server never sees it. The network panel will show only the version check and app files.",
-    consentThird:
-      "You are on a copy hosted by a third party. The app is served from a server, but every document you add is processed on this device — the server never sees it. The network panel will show only the version check and app files.",
-    consentSelf:
-      "You are running your own copy — locally, on your own server, or as an installed app. Every document is processed on this device and nothing is ever sent anywhere.",
     consentAgree: "I understand and agree",
 
     badge: "Offline · Open source · MIT",
@@ -281,7 +275,6 @@ const DICT = {
     faq4a: "The app compares a version manifest when it opens and offers to update. The native builds will use the same check.",
 
     mitLicense: "MIT License",
-    webApp: "Web app",
     networkActivity: "Network activity",
     noRequestsYet: "No network requests yet — everything runs on your device.",
     networkIntro: "Requests the app has made this session (the privacy proof):",
@@ -306,12 +299,6 @@ const DICT = {
     merge: "Gabung",
 
     consentBefore: "Sebelum anda mula:",
-    consentHosted:
-      "Anda berada di instance rasmi ({url}). App dihidangkan dari pelayan, tetapi setiap dokumen yang anda tambah diproses pada peranti ini — pelayan tidak pernah melihatnya. Panel rangkaian hanya akan menunjukkan semakan versi dan fail app.",
-    consentThird:
-      "Anda berada di salinan yang dihoskan oleh pihak ketiga. App dihidangkan dari pelayan, tetapi setiap dokumen yang anda tambah diproses pada peranti ini — pelayan tidak pernah melihatnya. Panel rangkaian hanya akan menunjukkan semakan versi dan fail app.",
-    consentSelf:
-      "Anda menjalankan salinan anda sendiri — secara tempatan, di pelayan anda sendiri, atau sebagai app yang dipasang. Setiap dokumen diproses pada peranti ini dan tiada apa-apa yang dihantar ke mana-mana.",
     consentAgree: "Saya faham dan bersetuju",
 
     badge: "Luar talian · Sumber terbuka · MIT",
@@ -556,7 +543,6 @@ const DICT = {
     faq4a: "App membandingkan manifest versi apabila dibuka dan menawarkan kemas kini. Binaan asli akan menggunakan semakan yang sama.",
 
     mitLicense: "Lesen MIT",
-    webApp: "App web",
     networkActivity: "Aktiviti rangkaian",
     noRequestsYet: "Belum ada permintaan rangkaian — semuanya berjalan pada peranti anda.",
     networkIntro: "Permintaan yang dibuat oleh app dalam sesi ini (bukti privasi):",

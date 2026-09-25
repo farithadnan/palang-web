@@ -4,11 +4,10 @@
    *  section here is the single privacy destination (footers + app point
    *  at #privacy). Copy is i18n'd (en/ms). */
   import Topbar from "./ui/Topbar.svelte";
-  import Modal from "./ui/Modal.svelte";
   import SampleDemo from "./SampleDemo.svelte";
   import Icon from "./ui/Icon.svelte";
-  import { t, deployKind, hostUrl } from "../lib/i18n.js";
-  import { app, setConsent } from "../lib/store.svelte.js";
+  import { t, deployKind } from "../lib/i18n.js";
+  import { app } from "../lib/store.svelte.js";
 
   const PLATFORMS = [
     { key: "platformWeb", status: "liveNow", action: "convert" },
@@ -39,11 +38,11 @@
 
   // Honest wording per deployment: the official instance, a third-party host,
   // or the user's own copy. privateHostedNote is URL-agnostic, so it is shared
-  // by "hosted" and "third"; only the consent/prove copy differs.
+  // by "hosted" and "third".
   const DEPLOY_KEY = {
-    hosted: { priv: "privateHostedNote", prove: "proveHosted", consent: "consentHosted" },
-    third: { priv: "privateHostedNote", prove: "proveThird", consent: "consentThird" },
-    self: { priv: "privateSelfNote", prove: "proveSelf", consent: "consentSelf" },
+    hosted: { priv: "privateHostedNote", prove: "proveHosted" },
+    third: { priv: "privateHostedNote", prove: "proveThird" },
+    self: { priv: "privateSelfNote", prove: "proveSelf" },
   }[deployKind];
 
   const FAQS = [
@@ -58,47 +57,16 @@
     location.hash = "#/" + view;
   }
 
-  let startOpen = $state(false);
   function openApp() {
-    if (!app.consented) {
-      startOpen = true; // first-time visitors see the disclaimer before use
-    } else {
-      go("convert");
-    }
-  }
-  function enterApp() {
-    setConsent(true);
-    startOpen = false;
+    // Straight into the tool. The app shell's own consent bar covers the
+    // first-use notice, so an entry modal here is redundant.
     go("convert");
   }
-
-  // Show the disclaimer on page access (not just on the button) for visitors
-  // who have not agreed yet — the pre-use notice the product brief asks for.
-  $effect(() => {
-    if (app.consented) return;
-    const t = setTimeout(() => {
-      startOpen = true;
-    }, 900);
-    return () => clearTimeout(t);
-  });
 
   function jump(sel, e) {
     e?.preventDefault();
     document.querySelector(sel)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-
-  $effect(() => {
-    if (typeof IntersectionObserver === "undefined") return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) if (entry.isIntersecting) entry.target.classList.add("in");
-      },
-      { threshold: 0.12 }
-    );
-    const els = document.querySelectorAll("[data-reveal]");
-    els.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  });
 </script>
 
 <svelte:head>
@@ -242,32 +210,13 @@
       <span class="footdot">·</span>
       <span>{t("mitLicense")}</span>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">{t("webApp")}</a>
+      <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:0.35rem">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1.17-.02-2.12-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+        Palang
+      </a>
     </div>
   </footer>
 </div>
-
-{#if startOpen}
-  <Modal title={t("consentBefore")} wide onClose={() => (startOpen = false)}>
-    <div class="disclaimer-scroll">
-      <p class="desc">{t(DEPLOY_KEY.consent, { url: hostUrl })}</p>
-      <ul class="disclaimer-list">
-        {#each PRIVATE as p (p.strong)}
-          <li><strong>{t(p.strong)}</strong> <span>{t(p.rest)}</span></li>
-        {/each}
-      </ul>
-      <p class="desc">{t(DEPLOY_KEY.prove)}</p>
-    </div>
-    <div class="start-actions">
-      <button type="button" class="btn btn-primary" onclick={enterApp}>
-        {t("consentAgree")}
-      </button>
-      <button type="button" class="link" onclick={() => jump("#privacy")}>
-        {t("privacy")}
-      </button>
-    </div>
-  </Modal>
-{/if}
 
 <style>
   .landing {
@@ -478,11 +427,7 @@
   }
 
   [data-reveal] {
-    opacity: 0;
-    transform: translateY(18px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
-  [data-reveal].in {
+    /* Always visible. Content is never gated on a scroll effect. */
     opacity: 1;
     transform: none;
   }
