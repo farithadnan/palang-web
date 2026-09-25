@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
-import { processOffline, rotatedPalangBox, palangDrawRect } from "../src/lib/local-engine.js";
+import { processOffline, rotatedPalangBox, palangDrawRect, imageStampRect } from "../src/lib/local-engine.js";
 
 const PNG = new Uint8Array(Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -67,6 +67,27 @@ describe("palangDrawRect — visual space → user space, per-page sizes", () =>
   });
   it("normalises rotation past 360", () => {
     expect(palangDrawRect(595, 842, 450, 100, 200, 300, 60)).toEqual(palangDrawRect(595, 842, 90, 100, 200, 300, 60));
+  });
+});
+
+describe("imageStampRect — image-space baking (preview-identical by construction)", () => {
+  const page = { w: 595.28, h: 841.89 };
+  it("centred spec lands the band on the image centre (landscape photo)", () => {
+    const r = imageStampRect(1600, 1200, page.w, page.h, 300, 60, page.w / 2, page.h / 2);
+    expect(r.x + r.w / 2).toBeCloseTo(800, 0);
+    expect(r.y + r.h / 2).toBeCloseTo(600, 0);
+  });
+  it("an offset spec shifts by the image-space scale", () => {
+    const r0 = imageStampRect(1600, 1200, page.w, page.h, 300, 60, page.w / 2, page.h / 2);
+    const r1 = imageStampRect(1600, 1200, page.w, page.h, 300, 60, page.w / 2 + 90, page.h / 2);
+    const s = 1600 / 595.28; // width-constrained fit: fitted.w === page.w
+    expect(r1.x - r0.x).toBeCloseTo(90 * s, 1);
+    expect(r1.y - r0.y).toBeCloseTo(0, 1);
+  });
+  it("portrait photo letterbox is included in the pixel offset", () => {
+    const r = imageStampRect(900, 1600, page.w, page.h, 300, 60, page.w / 2, page.h / 2);
+    expect(r.x + r.w / 2).toBeCloseTo(450, 0); // image centre, not page centre
+    expect(r.y + r.h / 2).toBeCloseTo(800, 0);
   });
 });
 

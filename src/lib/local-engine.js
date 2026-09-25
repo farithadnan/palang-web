@@ -62,8 +62,9 @@ function outToBytes(canvas, type) {
  *  transparent PNG, so the PDF output matches the canvas preview exactly
  *  (same text rendering, same rotation). The canvas is sized to the ROTATED
  *  bounding box so a tilted band never clips at the edges — the preview
- *  never clips, so the output must not either. Returns { bytes, w, h } in pt
- *  (w/h are the rotated box the PDF must draw at). */
+ *  never clips, so the output must not either. Returns { bytes, w, h, rw, rh }
+ *  in pt — w/h is the unrotated frame (the editor's coordinate space),
+ *  rw/rh the rotated bounding box the PDF must draw. */
 async function renderPalang(spec, pageSize) {
   const api = buildPalangSpec(spec);
   const text = api.label?.text || "";
@@ -139,25 +140,75 @@ export function palangDrawRect(pageW, pageH, pageRot, leftPt, topPt, w, h) {
   return { x: pageW - topPt - h, y: pageH - leftPt - w, width: h, height: w }; // 270
 }
 
+/** Where the band (rotated box w×h, centred at page-space point cx,cy)
+ *  lands on the IMAGE bitmap, in image pixels. Images are stamped in image
+ *  space FIRST, then fitted onto the chosen page — so the output matches the
+ *  preview exactly by construction (the preview also draws the band on the
+ *  photo). Pure + exported for tests. */
+export function imageStampRect(imageW, imageH, pageW, pageH, w, h, cx, cy) {
+  const fitted = fittedPageSize(imageW, imageH, pageW, pageH);
+  const s = imageW / fitted.w; // uniform image-space scale, pt → px
+  const offX = (pageW - fitted.w) / 2;
+  const offY = (pageH - fitted.h) / 2;
+  return {
+    x: (cx - offX) * s - (w * s) / 2,
+    y: (cy - offY) * s - (h * s) / 2,
+    w: w * s,
+    h: h * s,
+  };
+}
+
+/** Draw the stamped image: photo (+crop/enhance) with the palang baked on at
+ *  the preview's exact position, returned as PNG bytes. */
+async function bakePalang(img, palang, palangImg, page, spec) {
+  const c = document.createElement("canvas");
+  c.width = img.width;
+  c.height = img.height;
+  const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  const cx = (spec.leftPt ?? (page.w - palang.w) / 2) + palang.w / 2;
+  const cy = (spec.topPt ?? (page.h - palang.h) / 2) + palang.h / 2;
+  const r = imageStampRect(img.width, img.height, page.w, page.h, palang.rw, palang.rh, cx, cy);
+  ctx.drawImage(palangImg, r.x, r.y, r.w, r.h);
+  return new Uint8Array(await outToBytes(c, "image/png"));
+}
+
 function textWidthApprox(text, fontPt) {
   if (!text) return fontPt * 2;
   return text.length * fontPt * 0.84;
 }
 
 /** The full offline pipeline: images (+optional pdfs) → one PDF with the
- *  palang marking stamped, exactly like /api/process with merge=true. */
+ *  palang marking stamped, exactly like /api/process with merge=true.
+ *
+ *  Images are stamped IN IMAGE SPACE before being fitted onto the page
+ *  (the palang rides the photo, so the output is pixel-identical to the
+ *  preview by construction). PDF pages are stamped in page space with
+ *  per-native-size + /Rotate-aware placement. */
 export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
   const page = PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
   const doc = await PDFDocument.create();
+  const imagePages = new Set(); // these carry the baked stamp — skip page-space stamping
+
+  // One palang render + decode for the whole job (all pages share it).
+  const palang = spec?.armed ? await renderPalang(spec, page) : null;
+  const palangImg = palang ? await decodeImage(palang.bytes) : null;
 
   for (const f of images) {
     const bytes = new Uint8Array(await f.bytes());
     const processed = await processImage(bytes, f.mime, f.setting);
+    let finalBytes = processed;
+    let mime = f.mime === "image/jpeg" ? "image/jpeg" : "image/png";
+    if (palang && palangImg) {
+      const img = await decodeImage(processed);
+      finalBytes = await bakePalang(img, palang, palangImg, page, spec);
+      mime = "image/png";
+    }
     const p = doc.addPage([page.w, page.h]);
-    const image =
-      f.mime === "image/jpeg" ? await doc.embedJpg(processed) : await doc.embedPng(processed);
+    const image = mime === "image/jpeg" ? await doc.embedJpg(finalBytes) : await doc.embedPng(finalBytes);
     const { w, h } = fittedPageSize(image.width, image.height, page.w, page.h);
     p.drawImage(image, { x: (page.w - w) / 2, y: (page.h - h) / 2, width: w, height: h });
+    imagePages.add(p);
   }
 
   for (const f of pdfs) {
@@ -166,16 +217,14 @@ export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
     for (const pg of pages) doc.addPage(pg);
   }
 
-  if (spec?.armed && images.length + pdfs.length > 0) {
-    const palang = await renderPalang(spec, page);
+  if (palang && palangImg && images.length + pdfs.length > 0) {
     const png = await doc.embedPng(palang.bytes);
     const w = palang.rw;
     const h = palang.rh;
     for (const p of doc.getPages()) {
-      // Each page has its OWN size: image pages were fitted to the chosen
-      // page size, but pages copied from a source PDF keep their native
-      // geometry (Letter, landscape, photo-size…) — stamp coordinates must
-      // use the actual page, or the marking drifts (the reported bug).
+      if (imagePages.has(p)) continue; // already baked into the photo
+      // Each page has its OWN size: pages copied from a source PDF keep
+      // their native geometry (Letter, landscape, photo-size…).
       const { width: pw, height: ph } = p.getSize();
       const cx = (spec.leftPt ?? (pw - palang.w) / 2) + palang.w / 2;
       const cy = (spec.topPt ?? (ph - palang.h) / 2) + palang.h / 2;
