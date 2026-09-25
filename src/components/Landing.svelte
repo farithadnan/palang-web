@@ -128,7 +128,7 @@
     <p class="ld-lede">{t("lede")}</p>
     <div class="ld-cta">
       <button type="button" class="btn btn-primary btn-lg" onclick={openApp}>{t("openWebApp")}</button>
-      <a class="btn btn-ghost btn-lg" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("viewGitHub")}</a>
+      <a class="btn btn-ghost btn-lg" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">{t("viewGitHub")}</a>
     </div>
     <ul class="ld-chips" aria-label="Capabilities">
       <li><Icon name="convert" size={16} /> {t("featureConvert")}</li>
@@ -228,9 +228,6 @@
     <h2>{t("devTitle")}</h2>
     <p class="ld-sub">{t("devSlim")}</p>
 
-    <h3><a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("devEngineLink")}</a></h3>
-    <p class="ld-plain-note">{t("devEngineBody")}</p>
-
     <h3><a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">{t("devWebLink")}</a></h3>
     <p class="ld-plain-note">{t("devWebBody")}</p>
 
@@ -244,8 +241,6 @@
       <button type="button" class="link" onclick={(e) => jump("#privacy", e)}>{t("privacy")}</button>
       <span class="footdot">·</span>
       <span>{t("mitLicense")}</span>
-      <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("coreEngine")}</a>
       <span class="footdot">·</span>
       <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">{t("webApp")}</a>
     </div>

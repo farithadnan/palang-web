@@ -114,11 +114,8 @@ const DICT = {
       "Palang places each page onto the page size you chose (A4 by default) and fits the image inside it — the same way banks and offices expect copies. The preview shows exactly this. To fill the page instead, crop the photo or pick a smaller page size.",
 
     devTitle: "For developers",
-    devEngineLink:
-      "1 · palang — reference engine (Python)",
-    devEngineBody: "The Python reference implementation and the documented REST contract.",
     devWebLink:
-      "2 · palang-web — the app (Svelte 5)",
+      "1 · palang-web — the app (Svelte 5)",
     devWebBody:
       "The Svelte 5 app. Its engine (pdf-lib) runs in the browser, so development needs no server. npm run build:app builds the tools without the landing page.",
 
@@ -220,12 +217,11 @@ const DICT = {
     msgPurpose: "Add the purpose text for the bar.",
 
     // ---- Developer guide page (route #/docs) + slim landing dev section ----
-    devSlim: "Two repositories: the reference engine (Python) and the web app (in-browser engine).",
+    devSlim: "One repository — the app (Svelte 5). Its engine runs in the browser; nothing else ships.",
     devCTA: "Open the developer guide",
     docTitle: "Developer guide",
-    docRepos: "Repositories",
-    docRepoEngine: "reference engine (Python) — REST contract + the static server for hosted deploys",
-    docRepoWeb: "the app (Svelte 5) — everything runs in the browser",
+    docRepos: "Repository",
+    docRepo: "the app (Svelte 5) — the whole product; its engine (pdf-lib) runs in the browser",
     docDev: "Local development",
     docVariants: "Build variants",
     docRun: "Run",
@@ -237,17 +233,18 @@ const DICT = {
       "One dotenv source: .env.production holds the committed defaults, .env.local (gitignored) holds your overrides (e.g. a staging domain).",
     docMode: "?mode=hosted|third|self on any page previews the deployment wording.",
     docLimits: "Runtime operator caps live in public/limits.json — adjustable without a rebuild.",
-    docEngine: "How the engine and the UI combine",
+    docEngine: "Engine",
     docEngineA:
-      "The web app is fully offline: its engine (pdf-lib) runs in the browser, so the UI never calls the Python engine.",
+      "Everything runs on the device: the PDF engine (pdf-lib) executes in the browser. Convert, stamp and merge never leave it.",
     docEngineB:
-      "The Python palang core is the reference implementation + documented REST contract. It can also serve the built UI — the model used by the Docker image and the live site (PALANG_WEB_DIST=…/dist uv run palang-server).",
-    docEngineC: "EXE / APK embed only the browser engine — no Python ships inside them.",
+      "The same bundle powers the website, Docker, the EXE and the APK — one engine, identical output everywhere.",
+    docEngineC:
+      "Servers never do the work: static hosts and the Docker image only serve files; processing is always on the visitor's device.",
     docDocker: "Docker",
     docDockerBody:
-      "One image: the app-only build served by the engine. The core repo is private today — build with a read token (CORE_READ_TOKEN), zero-config once it is public.",
+      "One image: nginx serving the app-only build. Only needed when you want to run it yourself — any static host is a free alternative.",
     docDockerLimits:
-      "Override limits.json without rebuilding: docker run -p 8000:8000 -v ./limits.json:/app/dist/limits.json:ro palang-web",
+      "Override limits.json without rebuilding: docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro palang-web",
     docHosting: "Hosting",
     docHostingBody:
       "Both variants are plain static files — they run free on Vercel, Cloudflare Pages or any static host, because all processing happens in the visitor's browser.",
@@ -279,12 +276,11 @@ const DICT = {
     faq2q: "Is the output a real, valid PDF?",
     faq2a: "Yes. Files are produced locally as standard PDFs, openable by any reader.",
     faq3q: "Is it really open source?",
-    faq3a: "MIT licensed. The web app and the reference engine are both public on GitHub — audit them or run them yourself.",
+    faq3a: "MIT licensed. The web app is public on GitHub — audit the code or run it yourself.",
     faq4q: "How do updates work?",
     faq4a: "The app compares a version manifest when it opens and offers to update. The native builds will use the same check.",
 
     mitLicense: "MIT License",
-    coreEngine: "Core engine",
     webApp: "Web app",
     networkActivity: "Network activity",
     noRequestsYet: "No network requests yet — everything runs on your device.",
@@ -392,11 +388,8 @@ const DICT = {
       "Palang meletakkan setiap halaman pada saiz halaman yang anda pilih (A4 secara lalai) dan memuatkan imej di dalamnya — sama seperti yang bank dan pejabat jangkakan. Pratonton menunjukkan perkara ini dengan tepat. Untuk memenuhi halaman, potong foto atau pilih saiz halaman yang lebih kecil.",
 
     devTitle: "Untuk pembangun",
-    devEngineLink:
-      "1 · palang — enjin rujukan (Python)",
-    devEngineBody: "Implementasi rujukan Python dan kontrak REST yang didokumenkan.",
     devWebLink:
-      "2 · palang-web — app (Svelte 5)",
+      "1 · palang-web — app (Svelte 5)",
     devWebBody:
       "App Svelte 5. Enjinnya (pdf-lib) berjalan dalam pelayar, jadi pembangunan tidak memerlukan pelayan. npm run build:app membina alatan tanpa laman landing.",
 
@@ -500,12 +493,11 @@ const DICT = {
     seeItLive: "Cuba lihat sendiri",
 
     // ---- Halaman panduan pembangun (laluan #/docs) + bahagian dev yang ringkas ----
-    devSlim: "Dua repositori: enjin rujukan (Python) dan app web (enjin dalam pelayar).",
+    devSlim: "Satu repositori — app (Svelte 5). Enjinnya berjalan dalam pelayar; tiada apa-apa lagi yang dihantar.",
     devCTA: "Buka panduan pembangun",
     docTitle: "Panduan pembangun",
     docRepos: "Repositori",
-    docRepoEngine: "enjin rujukan (Python) — kontrak REST + pelayan statik untuk pengehosan",
-    docRepoWeb: "app (Svelte 5) — semua berjalan dalam pelayar",
+    docRepo: "app (Svelte 5) — keseluruhan produk; enjinnya (pdf-lib) berjalan dalam pelayar",
     docDev: "Pembangunan tempatan",
     docVariants: "Varian binaan",
     docRun: "Jalankan",
@@ -517,17 +509,18 @@ const DICT = {
       "Satu sumber dotenv: .env.production menyimpan lalai yang dikomit, .env.local (tidak dalam git) untuk overriding anda (cth. domain pentas).",
     docMode: "?mode=hosted|third|self pada mana-mana halaman mempratonton teks pengehosan.",
     docLimits: "Had pengendali masa jalan ada dalam public/limits.json — boleh ubah tanpa binaan semula.",
-    docEngine: "Cara enjin dan UI digabungkan",
+    docEngine: "Enjin",
     docEngineA:
-      "App web berfungsi sepenuhnya luar talian: enjinnya (pdf-lib) berjalan dalam pelayar, jadi UI tidak pernah memanggil enjin Python.",
+      "Semua berjalan pada peranti: enjin PDF (pdf-lib) berjalan dalam pelayar. Tukar, cap dan gabung tidak pernah meninggalkannya.",
     docEngineB:
-      "Teras palang Python ialah implementasi rujukan + kontrak REST yang didokumenkan. Ia juga boleh menyajikan UI yang dibina — model yang digunakan oleh imej Docker dan laman live (PALANG_WEB_DIST=…/dist uv run palang-server).",
-    docEngineC: "EXE / APK hanya membenam enjin pelayar — tiada Python di dalamnya.",
+      "Bundle yang sama menggerakkan laman web, Docker, EXE dan APK — satu enjin, output yang sama di mana-mana.",
+    docEngineC:
+      "Pelayan tidak pernah melakukan kerja: hos statik dan imej Docker hanya menyajikan fail; pemprosesan sentiasa pada peranti pelawat.",
     docDocker: "Docker",
     docDockerBody:
-      "Satu imej: binaan app sahaja disajikan oleh enjin. Repo teras bersifat peribadi buat masa ini — bina dengan token baca (CORE_READ_TOKEN), tanpa konfigurasi bila ia umum.",
+      "Satu imej: nginx menyajikan binaan app sahaja. Hanya diperlukan jika anda mahu menjalankan sendiri — mana-mana hos statik adalah alternatif percuma.",
     docDockerLimits:
-      "Ubah limits.json tanpa binaan semula: docker run -p 8000:8000 -v ./limits.json:/app/dist/limits.json:ro palang-web",
+      "Ubah limits.json tanpa binaan semula: docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro palang-web",
     docHosting: "Pengehosan",
     docHostingBody:
       "Kedua-dua varian ialah fail statik biasa — berjalan percuma di Vercel, Cloudflare Pages atau mana-mana hos statik, kerana semua pemprosesan berlaku dalam pelayar pelawat.",
@@ -558,12 +551,11 @@ const DICT = {
     faq2q: "Adakah output fail PDF yang sah?",
     faq2a: "Ya. Fail dihasilkan secara setempat sebagai PDF piawai, boleh dibuka oleh mana-mana pembaca.",
     faq3q: "Betulkah ia sumber terbuka?",
-    faq3a: "Berlesen MIT. App web dan enjin rujukan kedua-duanya awam di GitHub — audit atau jalankan sendiri.",
+    faq3a: "Berlesen MIT. App web awam di GitHub — audit kod atau jalankan sendiri.",
     faq4q: "Bagaimana kemas kini berfungsi?",
     faq4a: "App membandingkan manifest versi apabila dibuka dan menawarkan kemas kini. Binaan asli akan menggunakan semakan yang sama.",
 
     mitLicense: "Lesen MIT",
-    coreEngine: "Enjin teras",
     webApp: "App web",
     networkActivity: "Aktiviti rangkaian",
     noRequestsYet: "Belum ada permintaan rangkaian — semuanya berjalan pada peranti anda.",

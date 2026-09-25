@@ -1,26 +1,11 @@
 services:
   palang:
-    build:
-      context: .
-      secrets:
-        - core_token
+    build: .
     ports:
-      - "8000:8000"
-    environment:
-      - PALANG_HOST=0.0.0.0
-      - PALANG_PORT=8000
+      - "8000:80"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/version.json')"]
+      test: ["CMD", "wget", "-qO-", "http://localhost/version.json"]
       interval: 30s
       timeout: 5s
       retries: 3
-
-# Read token for the PRIVATE core repo (github.com/farithadnan/palang) at build
-# time. Provide it where docker compose reads secrets from:
-#   CORE_READ_TOKEN=ghp_xxx docker compose build   (via shell env)
-# or a .env file next to this compose file. Not needed once the repo is public.
-# Scope: only "Contents: Read" on farithadnan/palang (fine-grained PAT).
-secrets:
-  core_token:
-    environment: CORE_READ_TOKEN

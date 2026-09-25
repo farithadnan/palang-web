@@ -6,14 +6,9 @@
 
   const REPOS = [
     {
-      name: "palang",
-      url: "https://github.com/farithadnan/palang",
-      role: () => t("docRepoEngine"),
-    },
-    {
       name: "palang-web",
       url: "https://github.com/farithadnan/palang-web",
-      role: () => t("docRepoWeb"),
+      role: () => t("docRepo"),
     },
   ];
 

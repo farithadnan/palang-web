@@ -192,8 +192,6 @@
       <span class="footdot">·</span>
       <span>{t("mitLicense")}</span>
       <span class="footdot">·</span>
-      <a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("coreEngine")}</a>
-      <span class="footdot">·</span>
       <a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">{t("webApp")}</a>
     </div>
   </footer>

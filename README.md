@@ -1,8 +1,7 @@
 # Palang web app
 
-The web client for [palang](https://github.com/farithadnan/palang) — a
-Malaysian-focused document prep tool: convert photos to PDF, stamp a **palang**
-purpose watermark, and merge PDFs.
+A Malaysian-focused document prep tool: convert photos to PDF, stamp a
+**palang** purpose watermark, and merge PDFs — all in your browser.
 
 **Fully offline-by-construction.** The engine ([pdf-lib]) runs in the browser:
 images are converted, palang markings are stamped, and PDFs are merged on the
@@ -14,7 +13,7 @@ trusted.
 [pdf-lib]: https://github.com/Hopding/pdf-lib
 
 - Live demo: <https://palang.oh-alam.my>
-- Reference engine (Python, REST contract): <https://github.com/farithadnan/palang>
+- Source: <https://github.com/farithadnan/palang-web>
 
 Built with **Svelte 5 (runes) + Vite**, plain custom CSS with design tokens
 (light/dark themes), EN/BM interface, mobile-first.
@@ -71,49 +70,40 @@ on any page. Runtime operator caps stay in `public/limits.json` (no rebuild).
 
 The build output (`dist/`) is plain static files and processing happens in the
 visitor's browser — so the app runs on any static host (Vercel, Cloudflare
-Pages, GitHub Pages) for free. The live demo is served by the reference
-engine's server (the core repo can serve `dist/` via the `PALANG_WEB_DIST`
-env var), but that is one option, not a requirement.
+Pages, GitHub Pages) for free. The live demo at palang.oh-alam.my is served
+exactly this way.
 
-### Docker (engine + UI in one image)
+### Docker (single static image)
 
 ```bash
 docker compose up -d        # http://localhost:8000
 docker compose build        # rebuild after a palang-web update
 ```
 
-The image builds the **app-only** bundle, installs the reference engine
-(github.com/farithadnan/palang — pinned to a commit, fetched from its source
-tarball with a build-time secret) and serves the UI from it. While the core
-repo is private, builds need a read token (Contents:Read, fine-grained PAT):
-
-```bash
-CORE_READ_TOKEN=ghp_xxx docker compose build   # private repo
-docker compose build                            # zero-config once it's public
-```
+The image builds the **app-only** bundle and serves it with nginx. It only
+ships files — all processing happens in the visitor's browser — so there is
+no backend, no build token, nothing to configure. Caching is split in
+`nginx.conf`: hashed assets are immutable, `index.html`/`version.json`/
+`limits.json` always revalidate, so deploys propagate within seconds.
 
 Override the operator limits without rebuilding:
 
 ```bash
-docker run -p 8000:8000 -v ./limits.json:/app/dist/limits.json:ro palang-web
+docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro palang-web
 ```
 
-The engine's own image and compose live in the core repo
-(<https://github.com/farithadnan/palang>); this repo's compose adds the UI
-bundle on top. The hosted app is deployment-aware: privacy copy switches
-between "hosted by you / hosted by us" wording, and the Network activity
-panel is always available so the no-upload claim stays checkable.
+The hosted app is deployment-aware: privacy copy switches between "hosted by
+you / hosted by us" wording, and the Network activity panel is always
+available so the no-upload claim stays checkable.
 
 ## Architecture
 
-Clean separation, mirroring the palang core's layering:
+Clean separation, with a single engine:
 
-**How the engine and the UI combine.** The web app is fully offline — its
-engine (pdf-lib) runs in the browser, so the UI never calls the Python core.
-The core (`palang`) is the reference implementation + documented REST contract,
-and it also serves the built UI in the server model (`PALANG_WEB_DIST=…/dist
-uv run palang-server`) — which is what the Docker image and the live site use.
-EXE/APK bundles embed only the browser engine; no Python ships inside them.
+**The engine.** Everything runs on the device: the PDF engine (pdf-lib)
+executes in the browser — convert, stamp and merge never leave it. The same
+bundle powers the website, the Docker image, the EXE and the APK: one engine,
+identical output everywhere. Servers only ever ship files.
 
 - `src/lib/domain.js` — pure helpers (spec builders, page-size fit geometry).
   No DOM, no fetch; unit-tested.
