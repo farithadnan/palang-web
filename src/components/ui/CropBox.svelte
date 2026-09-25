@@ -56,8 +56,10 @@
     if (r.width <= 0) return;
     sx = e.clientX;
     sy = e.clientY;
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
+    // Clamp the START point into the image rect: a press that begins just
+    // outside the edge (fast flicks) must not yield a negative origin.
+    const x = clamp(e.clientX - r.left, 0, r.width);
+    const y = clamp(e.clientY - r.top, 0, r.height);
     bx = x;
     by = y;
     bw = 0;
@@ -77,12 +79,14 @@
     let b = { ...box };
 
     if (mode === "draw") {
-      const cx = e.clientX - r.left;
-      const cy = e.clientY - r.top;
+      // Clamp the LIVE pointer too, so the box never spills past any edge
+      // while the cursor runs wild beyond the image.
+      const cx = clamp(e.clientX - r.left, 0, r.width);
+      const cy = clamp(e.clientY - r.top, 0, r.height);
       b.x = Math.min(bx, cx);
       b.y = Math.min(by, cy);
-      b.w = clamp(Math.abs(cx - bx), 24, r.width);
-      b.h = clamp(Math.abs(cy - by), 24, r.height);
+      b.w = clamp(cx - b.x, 24, r.width - b.x);
+      b.h = clamp(cy - b.y, 24, r.height - b.y);
     } else if (mode === "move") {
       b.x = clamp(bx + dx, 0, r.width - bw);
       b.y = clamp(by + dy, 0, r.height - bh);
@@ -119,11 +123,13 @@
     mode = null;
     const r = rect();
     if (!box || !r.width) return;
+    // Fractions are clamped to 0..1 as a final guarantee: whatever the
+    // drag did, the stored crop can never exceed the image bounds.
     onChange?.({
-      l: round2(box.x / r.width),
-      t: round2(box.y / r.height),
-      r: round2((box.x + box.w) / r.width),
-      b: round2((box.y + box.h) / r.height),
+      l: round2(clamp(box.x / r.width, 0, 1)),
+      t: round2(clamp(box.y / r.height, 0, 1)),
+      r: round2(clamp((box.x + box.w) / r.width, 0, 1)),
+      b: round2(clamp((box.y + box.h) / r.height, 0, 1)),
     });
   }
 </script>
