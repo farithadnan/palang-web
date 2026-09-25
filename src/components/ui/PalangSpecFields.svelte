@@ -50,7 +50,6 @@
     <input type="color" value={spec.color} oninput={(e) => patch({ color: e.currentTarget.value })} />
   </Field>
 </div>
-<p class="hint">{t("specPurposeHint")}</p>
 
 <style>
   .purpose-row {

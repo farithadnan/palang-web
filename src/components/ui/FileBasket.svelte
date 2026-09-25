@@ -16,6 +16,7 @@ import Icon from "./Icon.svelte";
     items = [], // {id, url?, name, filter?, icon?}
     editable = false,
     frameAspect = "", // e.g. "595/842" — thumbnails shown in the chosen paper shape
+    requestAddTick = 0, // topbar "+" drives the picker from outside
     onRemove,
     onItem,
     onPick,
@@ -23,6 +24,10 @@ import Icon from "./Icon.svelte";
 
   let input;
   const count = $derived(items.length);
+
+  $effect(() => {
+    if (requestAddTick) input?.click();
+  });
 </script>
 
 {#if !count}

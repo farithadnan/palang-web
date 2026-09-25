@@ -50,7 +50,7 @@
   }
 </script>
 
-<div class="panel">
+<div class="panel flat">
   <h2>{t("plTitle")}</h2>
   <p class="desc">
     Stamp a purpose bar across your document — transparent, so nothing is covered. You get a new copy; the original file is untouched.
@@ -61,8 +61,8 @@
     accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff"
     multiple
     main={t("plChoose")}
-    sub="PDF, or images · tap a file to position your marking"
     icon="palang"
+    requestAddTick={app.requestAdd}
     items={basketItems}
     onRemove={(id) => removePreviewFile(Number(id.replace("pf-", "")))}
     onItem={(id) => {
@@ -91,15 +91,6 @@
   {/if}
 
   <div class="actbar">
-    <span class="caption">
-      {app.spec.armed
-        ? app.previewFiles.length > 1
-          ? t("plReadyAll")
-          : t("plReady")
-        : app.previewFiles.length
-          ? t("plTapHint")
-          : t("plEmpty")}
-    </span>
     <button
       type="button"
       class="btn btn-primary"

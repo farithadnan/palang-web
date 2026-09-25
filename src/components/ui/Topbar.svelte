@@ -7,7 +7,7 @@
   import { nextLang, t } from "../../lib/i18n.js";
   import Icon from "./Icon.svelte";
 
-  let { context = "landing", children, onOpenApp, homeTo = "home" } = $props();
+  let { context = "landing", children, onOpenApp, onAdd, homeTo = "home" } = $props();
   let open = $state(false);
 
   function go(view) {
@@ -15,6 +15,9 @@
   }
   function goHome() {
     go(homeTo);
+  }
+  function addMedia() {
+    if (onAdd) onAdd();
   }
   function openApp() {
     if (onOpenApp) onOpenApp();
@@ -42,31 +45,37 @@
           <span>{t("home")}</span>
         </button>
       {/if}
-      <button
-        type="button"
-        class="iconbtn tb-lang"
-        aria-label={t("switchLang")}
-        onclick={() => setLang(nextLang())}
-      >
-        {app.lang === "en" ? "BM" : "EN"}
-      </button>
-      <button
-        type="button"
-        class="iconbtn"
-        aria-label={t("switchTheme")}
-        onclick={() => setTheme(app.theme === "dark" ? "light" : "dark")}
-      >
-        <Icon name={app.theme === "dark" ? "sun" : "moon"} size={18} />
-      </button>
-      <button
-        type="button"
-        class="iconbtn tb-burger"
-        aria-label={t("menu")}
-        aria-expanded={open}
-        onclick={() => (open = !open)}
-      >
-        <Icon name={open ? "x" : "menu"} size={20} />
-      </button>
+      {#if context === "app"}
+        <button type="button" class="iconbtn tb-add" aria-label={t("addFiles")} onclick={addMedia}>
+          <Icon name="plus" size={22} />
+        </button>
+      {:else}
+        <button
+          type="button"
+          class="iconbtn tb-lang"
+          aria-label={t("switchLang")}
+          onclick={() => setLang(nextLang())}
+        >
+          {app.lang === "en" ? "BM" : "EN"}
+        </button>
+        <button
+          type="button"
+          class="iconbtn"
+          aria-label={t("switchTheme")}
+          onclick={() => setTheme(app.theme === "dark" ? "light" : "dark")}
+        >
+          <Icon name={app.theme === "dark" ? "sun" : "moon"} size={18} />
+        </button>
+        <button
+          type="button"
+          class="iconbtn tb-burger"
+          aria-label={t("menu")}
+          aria-expanded={open}
+          onclick={() => (open = !open)}
+        >
+          <Icon name={open ? "x" : "menu"} size={24} />
+        </button>
+      {/if}
     </div>
   </div>
   {#if open}

@@ -6,19 +6,20 @@
   import Dropzone from "./ui/Dropzone.svelte";
   import OrderedList from "./ui/OrderedList.svelte";
   import { t } from "../lib/i18n.js";
-import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate } from "../lib/store.svelte.js";
+  import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate } from "../lib/store.svelte.js";
 
   let mergeInput;
 
-  function humanSize(bytes) {
-    return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + " MB" : (bytes / 1024).toFixed(0) + " KB";
-  }
+  // Topbar "+" triggers this picker (same wiring as the other tabs).
+  $effect(() => {
+    if (app.requestAdd) mergeInput?.click();
+  });
 
   const items = $derived(
     app.pdfs.map((p, i) => ({
       id: p.id,
       label: p.file.name,
-      sub: humanSize(p.file.size),
+      sub: "",
       first: i === 0,
       last: i === app.pdfs.length - 1,
     }))
@@ -36,9 +37,8 @@ import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate 
   }
 </script>
 
-<div class="panel">
+<div class="panel flat">
   <h2>{t("mergeLabel")}</h2>
-  <p class="desc">{t("mgIntro")}</p>
 
   {#if !app.pdfs.length}
     <Dropzone

@@ -12,7 +12,7 @@
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
-  import { app, applyUpdate, checkForUpdate, dismissUpdate } from "./lib/store.svelte.js";
+  import { app, applyUpdate, checkForUpdate, dismissUpdate, requestAdd } from "./lib/store.svelte.js";
   import { installNetworkLog } from "./lib/network-log.js";
   import { loadLimits } from "./lib/config.js";
   import { t } from "./lib/i18n.js";
@@ -93,7 +93,12 @@
     void checkForUpdate();
     const onShow = () => void checkForUpdate();
     document.addEventListener("visibilitychange", onShow);
-    return () => document.removeEventListener("visibilitychange", onShow);
+    // Daily auto-check: installed apps have no other update path.
+    const daily = setInterval(() => void checkForUpdate(), 24 * 60 * 60 * 1000);
+    return () => {
+      document.removeEventListener("visibilitychange", onShow);
+      clearInterval(daily);
+    };
   });
 </script>
 
@@ -110,15 +115,7 @@
   {#if view === "home"}
     <Landing />
   {:else}
-  <Topbar context="app" homeTo={HAS_LANDING ? "home" : null}>
-    {#snippet children()}
-      {#if HAS_LANDING}
-        <a href="#home" onclick={(e) => { e.preventDefault(); goHomePrivacy(); }}>{t("privacy")}</a>
-      {:else}
-        <a href="#/about">{t("about")}</a>
-      {/if}
-    {/snippet}
-  </Topbar>
+  <Topbar context="app" homeTo={HAS_LANDING ? "home" : null} onAdd={requestAdd} />
 
   <div class="app-main">
     <aside class="side">

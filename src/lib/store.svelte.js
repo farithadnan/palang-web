@@ -39,7 +39,8 @@ export const app = $state({
   message: null, // { kind: "ok" | "error", text }
   update: null, // { version } when a newer version.json is published
   lang: initialLang(), // ui language (en | ms)
-  network: [], // requests the app has made this session (privacy proof panel)
+  network: [],
+  requestAdd: 0, // requests the app has made this session (privacy proof panel)
   compiledFiles: new Map(), // file -> Blob with the palang baked in ("second temp")
 });
 
@@ -81,6 +82,10 @@ export function setView(view) {
 }
 
 let messageSeq = 0;
+export function requestAdd() {
+  app.requestAdd += 1;
+}
+
 export function flash(kind, text) {
   const seq = ++messageSeq;
   app.message = { kind, text };
@@ -507,6 +512,7 @@ export async function checkForUpdate() {
       /* storage unavailable */
     }
     app.update = dismissed[remote] ? null : { version: remote };
+    if (app.update) flash("ok", t("updateToast", { version: remote }));
   } catch {
     /* offline or static host unreachable: updates are best-effort */
   }

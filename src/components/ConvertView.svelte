@@ -64,17 +64,16 @@ import {
   }
 </script>
 
-<div class="panel">
+<div class="panel flat">
   <h2>{t("cvTitle")}</h2>
-  <p class="desc">{t("cvIntro")}</p>
 
   <FileBasket
     id="convert-files"
     accept=".jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff"
     multiple
     main={t("cvChoose")}
-    sub="JPG, PNG, WEBP, BMP, TIFF · tap any photo to crop or enhance it"
     icon="convert"
+    requestAddTick={app.requestAdd}
     items={galleryItems}
     editable
     frameAspect={app.pageSize !== "fit" ? PAGE_DIMS[app.pageSize]?.w + "/" + PAGE_DIMS[app.pageSize]?.h : ""}
