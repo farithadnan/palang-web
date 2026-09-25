@@ -7,8 +7,8 @@
   import Modal from "./ui/Modal.svelte";
   import SampleDemo from "./SampleDemo.svelte";
   import Icon from "./ui/Icon.svelte";
-  import { t } from "../lib/i18n.js";
-  import { setConsent } from "../lib/store.svelte.js";
+  import { t, hosted } from "../lib/i18n.js";
+  import { app, setConsent } from "../lib/store.svelte.js";
 
   const PLATFORMS = [
     { key: "platformWeb", status: "liveNow", action: "convert" },
@@ -51,13 +51,27 @@
 
   let startOpen = $state(false);
   function openApp() {
-    startOpen = true;
+    if (!app.consented) {
+      startOpen = true; // first-time visitors see the disclaimer before use
+    } else {
+      go("convert");
+    }
   }
   function enterApp() {
     setConsent(true);
     startOpen = false;
     go("convert");
   }
+
+  // Show the disclaimer on page access (not just on the button) for visitors
+  // who have not agreed yet — the pre-use notice the product brief asks for.
+  $effect(() => {
+    if (app.consented) return;
+    const t = setTimeout(() => {
+      startOpen = true;
+    }, 900);
+    return () => clearTimeout(t);
+  });
 
   function jump(sel, e) {
     e?.preventDefault();
@@ -178,6 +192,7 @@
 
   <section class="ld-section ld-privacy" id="privacy" data-reveal>
     <h2>{t("privateByConstruction")}</h2>
+    <p class="ld-privacy-note">{t(hosted ? "privateHostedNote" : "privateSelfNote")}</p>
     <ul class="ld-plain">
       {#each PRIVATE as p (p.strong)}
         <li><strong>{t(p.strong)}</strong> {t(p.rest)}</li>
@@ -185,7 +200,7 @@
     </ul>
     <div class="divider"></div>
     <h3>{t("proveIt")}</h3>
-    <p class="ld-prove-body">{t("proveBody")}</p>
+    <p class="ld-prove-body">{t(hosted ? "proveHosted" : "proveSelf")}</p>
   </section>
 
   <section class="ld-section" id="faq" data-reveal>
@@ -203,17 +218,29 @@
   <section class="ld-section" id="dev" data-reveal>
     <h2>{t("devTitle")}</h2>
     <p class="ld-sub">{t("devSub")}</p>
-    <h3>{t("devRun")}</h3>
+
+    <h3>{t("devEngine")}</h3>
+    <p class="ld-plain-note">{t("devEngineBody")}</p>
+    <pre class="ld-code">git clone https://github.com/farithadnan/palang
+cd palang
+uv sync --all-extras --dev
+uv run palang-server   # REST API on http://127.0.0.1:8000</pre>
+
+    <h3>{t("devWeb")}</h3>
+    <p class="ld-plain-note">{t("devWebBody")}</p>
     <pre class="ld-code">git clone https://github.com/farithadnan/palang-web
-cd palang-web && npm install && npm run dev</pre>
-    <p class="ld-plain-note">
-      The reference engine (Python) is separate: <code>palang</code> on GitHub — the web app
-      implements the same pipeline in-browser, so no server is required.
-    </p>
-    <h3>{t("devCi")}</h3>
-    <p class="ld-plain-note">{t("devCiBody")}</p>
-    <h3>{t("devDl")}</h3>
-    <p class="ld-plain-note">{t("devDlBody")}</p>
+cd palang-web
+npm install
+npm run dev            # local editor, in-browser engine, no server needed
+npm run build          # production build -> dist/</pre>
+
+    <h3>{t("devDocker")}</h3>
+    <p class="ld-plain-note">{t("devDockerBody")}</p>
+    <pre class="ld-code">cd palang
+docker compose up --build   # engine server (or: docker build -t palang . && docker run -p 8000:8000 palang)</pre>
+
+    <h3>{t("devDeploy")}</h3>
+    <p class="ld-plain-note">{t("devDeployBody")}</p>
   </section>
 
   <footer class="ld-foot">
@@ -232,13 +259,13 @@ cd palang-web && npm install && npm run dev</pre>
 {#if startOpen}
   <Modal title={t("consentBefore")} wide onClose={() => (startOpen = false)}>
     <div class="disclaimer-scroll">
-      <p class="desc">{t("consentBody")}</p>
-      <ul class="start-list">
+      <p class="desc">{t(hosted ? "consentHosted" : "consentSelf")}</p>
+      <ul class="disclaimer-list">
         {#each PRIVATE as p (p.strong)}
-          <li><strong>{t(p.strong)}</strong> {t(p.rest)}</li>
+          <li><strong>{t(p.strong)}</strong> <span>{t(p.rest)}</span></li>
         {/each}
       </ul>
-      <p class="desc">{t("proveBody")}</p>
+      <p class="desc">{t(hosted ? "proveHosted" : "proveSelf")}</p>
     </div>
     <div class="start-actions">
       <button type="button" class="btn btn-primary" onclick={enterApp}>
@@ -367,10 +394,30 @@ cd palang-web && npm install && npm run dev</pre>
   .ld-chips svg { color: var(--accent); }
 
   .disclaimer-scroll {
-    max-height: 44vh;
+    max-height: 46vh;
     overflow: auto;
     padding-right: 0.3rem;
   }
+  .disclaimer-list {
+    list-style: none;
+    padding: 0.4rem 0 0;
+    margin: 0 0 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .disclaimer-list li {
+    line-height: 1.5;
+    color: var(--muted);
+    font-size: 0.94rem;
+  }
+  .disclaimer-list li strong {
+    color: var(--text);
+    display: block;
+    margin-bottom: 0.12rem;
+    font-size: 0.95rem;
+  }
+  .disclaimer-list li span { display: block; }
   .ld-code {
     background: var(--bg);
     border: 1px solid var(--line);
@@ -389,6 +436,12 @@ cd palang-web && npm install && npm run dev</pre>
 
   /* interactive sample */
   .ld-sample .ld-sub { text-align: center; }
+  .ld-sample :global(.samplewrap) {
+    max-width: 330px;
+    margin: 0 auto;
+  }
+  .ld-sample :global(.sampletools) { margin-top: 0.7rem; }
+  .ld-sample :global(.sampletools .btn) { padding: 0.3rem 0.7rem; font-size: 0.82rem; }
   .start-actions {
     display: flex;
     align-items: center;
@@ -531,21 +584,16 @@ cd palang-web && npm install && npm run dev</pre>
   .ld-steps h3 { margin: 0 0 0.2rem; font-size: 1.05rem; }
   .ld-steps p { margin: 0; color: var(--muted); }
 
-  /* privacy + faq */
+  /* privacy + faq — open layout, no container per the design decision */
   .ld-privacy {
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: clamp(2rem, 5vh, 3rem) 1.6rem;
-    background: var(--panel);
     margin-top: clamp(2.6rem, 7vh, 4.5rem);
     margin-bottom: clamp(2.6rem, 7vh, 4.5rem);
   }
-  @media (max-width: 640px) {
-    /* keep the privacy panel off the screen edges on mobile */
-    .ld-privacy {
-      padding-left: 1.2rem;
-      padding-right: 1.2rem;
-    }
+  .ld-privacy-note {
+    color: var(--text);
+    font-size: 0.98rem;
+    font-weight: 600;
+    margin: 0.4rem 0 1.1rem;
   }
   .ld-privacy ul, .ld-faq {
     list-style: none;
@@ -555,14 +603,10 @@ cd palang-web && npm install && npm run dev</pre>
     gap: 0.95rem;
   }
   .ld-plain li { line-height: 1.55; color: var(--muted); }
-  .ld-plain strong { color: var(--text); }
+  .ld-plain strong { color: var(--text); margin-right: 0.2rem; }
   .ld-prove-body {
     color: var(--muted);
     line-height: 1.65;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: var(--panel);
-    padding: 1.1rem 1.3rem;
     margin: 0;
   }
   .ld-faq li { border-top: 1px solid var(--line); padding-top: 0.95rem; }

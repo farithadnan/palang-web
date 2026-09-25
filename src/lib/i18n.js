@@ -22,8 +22,10 @@ const DICT = {
     merge: "Merge",
 
     consentBefore: "Before you start:",
-    consentBody:
-      "your documents are processed on this device and never leave it — no uploads, no accounts.",
+    consentHosted:
+      "You are on the developer-hosted instance (palang.oh-alam.my). The app is served from a server, but every document you add is processed on this device — the server never sees it. The network panel will show only the version check and app files.",
+    consentSelf:
+      "You are running your own copy — locally, on your own server, or as an installed app. Every document is processed on this device and nothing is ever sent anywhere.",
     consentAgree: "I understand and agree",
 
     badge: "Offline · Open source · MIT",
@@ -79,12 +81,18 @@ const DICT = {
     private4a: "Update checks only.",
     private4b: "The sole network request is a small version manifest.",
     private5a: "PDPA-aware by design.",
+    privateHostedNote:
+      "This instance is served from a server — but the processing happens on this device, and the server never sees your documents.",
+    privateSelfNote:
+      "This is your own copy. It is served by your own setup — or runs fully offline as an installed app. Nothing is sent anywhere.",
     private5b:
       "Malaysia's PDPA 2010 governs how those who collect personal data must handle it. We don't collect it: nothing is stored, nothing is uploaded — so there is nothing to protect, leak, or lose.",
 
     proveIt: "Prove it yourself",
-    proveBody:
-      "Open the app, process a document, then open Network activity in the footer — the panel lists every request the app makes. Across a whole session you will only ever see the version check and static app assets: nothing about your documents ever leaves this device.",
+    proveHosted:
+      "Open the app, process a document, then open Network activity in the footer — the panel lists every request the app makes. On this hosted instance you will only ever see the version check and static app files: nothing about your documents leaves this device.",
+    proveSelf:
+      "Open the app, process a document, then open Network activity in the footer — the panel lists every request the app makes. On your own copy the list stays empty: nothing is ever sent anywhere.",
     verify: "Verify",
 
     faq5q: "Why does my photo have a white border in the PDF?",
@@ -92,12 +100,20 @@ const DICT = {
       "Palang places each page onto the page size you chose (A4 by default) and fits the image inside it — the same way banks and offices expect copies. The preview shows exactly this. To fill the page instead, crop the photo or pick a smaller page size.",
 
     devTitle: "For developers",
-    devSub: "Open source, MIT. Run it yourself or build on it.",
-    devRun: "Run locally",
-    devCi: "CI",
-    devCiBody: "Every push runs lint, type checks, tests and a production build on GitHub Actions.",
-    devDl: "Downloads",
-    devDlBody: "The web app is live. Android APK and desktop builds are coming — this section will host them.",
+    devSub: "Two repositories — the reference engine (Python) and the web app (in-browser engine). The web app runs fully on the client; a server is optional.",
+    devEngine:
+      "1 · Reference engine — github.com/farithadnan/palang",
+    devEngineBody: "The Python reference implementation and the documented REST contract.",
+    devWeb:
+      "2 · Web app — github.com/farithadnan/palang-web",
+    devWebBody: "The Svelte 5 app. Its engine (pdf-lib) runs in the browser, so development needs no server.",
+    devDocker:
+      "3 · Run the engine with Docker (optional)",
+    devDockerBody: "You only need this if you want the Python server, not for the web app.",
+    devDeploy:
+      "4 · Host the web app anywhere static",
+    devDeployBody:
+      "The build output (dist/) is plain static files, and processing happens in the visitor's browser — so the app runs free on Vercel, Cloudflare Pages or GitHub Pages. The live demo at palang.oh-alam.my is the real app hosted this way.",
 
     convertLabel: "Convert to PDF",
     mergeLabel: "Merge PDFs",
@@ -150,8 +166,10 @@ const DICT = {
     merge: "Gabung",
 
     consentBefore: "Sebelum anda mula:",
-    consentBody:
-      "dokumen anda diproses pada peranti ini dan tidak pernah meninggalkannya — tiada muat naik, tiada akaun.",
+    consentHosted:
+      "Anda berada di instance yang dihoskan oleh pembangun (palang.oh-alam.my). App itu dihidangkan dari pelayan, tetapi setiap dokumen yang anda tambah diproses pada peranti ini — pelayan tidak pernah melihatnya. Panel rangkaian hanya akan menunjukkan semakan versi dan fail app.",
+    consentSelf:
+      "Anda menjalankan salinan anda sendiri — secara tempatan, di pelayan anda sendiri, atau sebagai app yang dipasang. Setiap dokumen diproses pada peranti ini dan tiada apa-apa yang dihantar ke mana-mana.",
     consentAgree: "Saya faham dan bersetuju",
 
     badge: "Luar talian · Sumber terbuka · MIT",
@@ -207,12 +225,18 @@ const DICT = {
     private4a: "Semakan kemas kini sahaja.",
     private4b: "Satu-satunya permintaan rangkaian ialah fail manifest versi yang kecil.",
     private5a: "Sedar PDPA.",
+    privateHostedNote:
+      "Instance ini dihidangkan dari pelayan — tetapi pemprosesan berlaku pada peranti ini, dan pelayan tidak pernah melihat dokumen anda.",
+    privateSelfNote:
+      "Ini salinan anda sendiri. Ia dihidangkan oleh persediaan anda — atau berjalan sepenuhnya luar talian sebagai app dipasang. Tiada apa-apa dihantar ke mana-mana.",
     private5b:
       "Akta Perlindungan Data Peribadi 2010 (PDPA) mengawal cara data peribadi dikendalikan oleh pihak yang mengumpulnya. Kami tidak mengumpul: tiada yang disimpan, tiada yang dimuat naik — jadi tiada apa untuk dilindungi, dibocorkan, atau hilang.",
 
     proveIt: "Buktikan sendiri",
-    proveBody:
-      "Buka app, proses satu dokumen, kemudian buka Aktiviti rangkaian di kaki halaman — panel menyenaraikan setiap permintaan yang dibuat oleh app. Sepanjang sesi, anda hanya akan melihat semakan versi dan aset statik app: tiada apa-apa tentang dokumen anda yang meninggalkan peranti ini.",
+    proveHosted:
+      "Buka app, proses satu dokumen, kemudian buka Aktiviti rangkaian di kaki halaman — panel menyenaraikan setiap permintaan yang dibuat oleh app. Pada instance yang dihoskan ini, anda hanya akan melihat semakan versi dan fail statik app: tiada apa-apa tentang dokumen anda yang meninggalkan peranti ini.",
+    proveSelf:
+      "Buka app, proses satu dokumen, kemudian buka Aktiviti rangkaian di kaki halaman — panel menyenaraikan setiap permintaan yang dibuat oleh app. Pada salinan anda sendiri, senarai kekal kosong: tiada apa-apa dihantar ke mana-mana.",
     verify: "Semak",
 
     faq5q: "Mengapa foto saya ada sempadan putih dalam PDF?",
@@ -220,12 +244,20 @@ const DICT = {
       "Palang meletakkan setiap halaman pada saiz halaman yang anda pilih (A4 secara lalai) dan memuatkan imej di dalamnya — sama seperti yang bank dan pejabat jangkakan. Pratonton menunjukkan perkara ini dengan tepat. Untuk memenuhi halaman, potong foto atau pilih saiz halaman yang lebih kecil.",
 
     devTitle: "Untuk pembangun",
-    devSub: "Sumber terbuka, MIT. Jalankan sendiri atau bina di atasnya.",
-    devRun: "Jalankan secara tempatan",
-    devCi: "CI",
-    devCiBody: "Setiap push menjalankan lint, semakan jenis, ujian dan binaan produksi di GitHub Actions.",
-    devDl: "Muat turun",
-    devDlBody: "App web tersedia. Binaan APK Android dan desktop menyusul — bahagian ini akan memuatkannya.",
+    devSub: "Dua repositori — enjin rujukan (Python) dan app web (enjin dalam pelayar). App web berjalan sepenuhnya pada klien; pelayan adalah pilihan.",
+    devEngine:
+      "1 · Enjin rujukan — github.com/farithadnan/palang",
+    devEngineBody: "Implementasi rujukan Python dan kontrak REST yang didokumenkan.",
+    devWeb:
+      "2 · App web — github.com/farithadnan/palang-web",
+    devWebBody: "App Svelte 5. Enjinnya (pdf-lib) berjalan dalam pelayar, jadi pembangunan tidak memerlukan pelayan.",
+    devDocker:
+      "3 · Jalankan enjin dengan Docker (pilihan)",
+    devDockerBody: "Anda hanya perlukan ini jika mahu pelayan Python, bukan untuk app web.",
+    devDeploy:
+      "4 · Hoskan app web di mana-mana statik",
+    devDeployBody:
+      "Hasil binaan (dist/) ialah fail statik biasa, dan pemprosesan berlaku dalam pelayar pelawat — jadi app berjalan percuma di Vercel, Cloudflare Pages atau GitHub Pages. Demo langsung di palang.oh-alam.my ialah app sebenar yang dihoskan begini.",
 
     convertLabel: "Tukar ke PDF",
     mergeLabel: "Gabung PDF",
@@ -262,6 +294,22 @@ const DICT = {
     later: "Nanti",
   },
 };
+
+/** Whether this instance is served from a remote host (the developer's live
+ *  site) as opposed to a self-hosted/local copy. Processing is on-device in
+ *  both cases; this only changes the honesty of the network claims. Override
+ *  with ?mode=hosted|self for testing. */
+export const hosted = detectHosted();
+
+function detectHosted() {
+  if (typeof location === "undefined") return false;
+  const mode = new URLSearchParams(location.search).get("mode");
+  if (mode === "hosted") return true;
+  if (mode === "self") return false;
+  if (location.protocol === "file:") return false;
+  const h = location.hostname;
+  return !(h === "" || h === "localhost" || h === "127.0.0.1" || h.endsWith(".local"));
+}
 
 export function t(key, vars) {
   const table = DICT[app.lang] ?? DICT.en;

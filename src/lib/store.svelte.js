@@ -204,19 +204,22 @@ let pdfSeq = 0;
 
 export function addPdfs(fileList) {
   for (const file of fileList) {
-    app.pdfs.push({ id: "pdf-" + ++pdfSeq, file, thumb: null, thumbErr: false, thumbDone: false });
+    app.pdfs.push({ id: "pdf-" + ++pdfSeq, file, pages: [], thumb: null, thumbErr: false, thumbDone: false });
   }
   void refreshPdfThumbs();
 }
 
-/** First-page thumbnails for the merge list, rendered on-device. */
+/** First-page thumbnails for the merge preview strip, rendered on-device.
+ *  Pages are cached per file; the strip itself follows list order, so
+ *  reorder/add/remove updates the preview automatically. */
 async function refreshPdfThumbs() {
   for (const p of app.pdfs) {
     if (p.thumbDone) continue;
     p.thumbDone = true;
     try {
-      const r = await renderPdfPreviews(p.file, 1);
-      p.thumb = r.pages[0]?.url ?? null;
+      const r = await renderPdfPreviews(p.file, 3);
+      p.pages = r.pages.map((pg) => pg.url).filter(Boolean);
+      p.thumb = p.pages[0] ?? null;
     } catch {
       p.thumbErr = true;
     }

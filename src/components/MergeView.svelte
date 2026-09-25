@@ -11,8 +11,6 @@
       id: p.id,
       label: p.file.name,
       sub: (p.file.size / 1024).toFixed(0) + " KB",
-      thumb: p.thumb,
-      thumbErr: p.thumbErr,
       first: i === 0,
       last: i === app.pdfs.length - 1,
     }))
@@ -35,6 +33,30 @@
     />
   {:else}
     <OrderedList items={items} onMove={movePdf} onRemove={removePdf} empty="" />
+    <div class="mrg-preview" aria-label="Merged output preview">
+      {#each app.pdfs as p (p.id)}
+        {#if p.pages.length}
+          {#each p.pages as url, pi (p.id + "-" + pi)}
+            <figure class="mrg-page">
+              <img src={url} alt="" loading="lazy" />
+              <figcaption>
+                {p.file.name} · {pi + 1}
+              </figcaption>
+            </figure>
+          {/each}
+        {:else if p.thumbErr}
+          <figure class="mrg-page mrg-err">
+            <span>pdf</span>
+            <figcaption>{p.file.name} · preview unavailable</figcaption>
+          </figure>
+        {:else}
+          <figure class="mrg-page">
+            <span class="mrg-loading"></span>
+            <figcaption>{p.file.name} · …</figcaption>
+          </figure>
+        {/if}
+      {/each}
+    </div>
     <div class="actionrow">
       <button type="button" class="btn btn-sm" onclick={() => mergeInput?.click()}>Add more PDFs</button>
     </div>

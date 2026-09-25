@@ -7,11 +7,6 @@
   <ol class="orderlist">
     {#each items as item (item.id)}
       <li>
-        {#if item.thumb}
-          <img class="ol-thumb" src={item.thumb} alt="" loading="lazy" />
-        {:else if item.thumbErr}
-          <span class="ol-thumb ol-thumb-err" aria-hidden="true">pdf</span>
-        {/if}
         <span class="ol-label">
           {#if item.sub && item.sub !== true}<span class="ol-sub">{item.sub}</span>{/if}
           {item.label}
