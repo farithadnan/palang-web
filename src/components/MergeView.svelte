@@ -11,6 +11,8 @@
       id: p.id,
       label: p.file.name,
       sub: (p.file.size / 1024).toFixed(0) + " KB",
+      thumb: p.thumb,
+      thumbErr: p.thumbErr,
       first: i === 0,
       last: i === app.pdfs.length - 1,
     }))

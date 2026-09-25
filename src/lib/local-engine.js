@@ -60,7 +60,10 @@ function outToBytes(canvas, type) {
 
 /** Render the lines marking (text + top/bottom lines, rotated) to a
  *  transparent PNG, so the PDF output matches the canvas preview exactly
- *  (same text rendering, same rotation). Returns { bytes, w, h } in pt. */
+ *  (same text rendering, same rotation). The canvas is sized to the ROTATED
+ *  bounding box so a tilted band never clips at the edges — the preview
+ *  never clips, so the output must not either. Returns { bytes, w, h } in pt
+ *  (w/h are the rotated box the PDF must draw at). */
 async function renderPalang(spec, pageSize) {
   const api = buildPalangSpec(spec);
   const text = api.label?.text || "";
@@ -72,35 +75,49 @@ async function renderPalang(spec, pageSize) {
   const wPt = textW + pad * 2;
   const hPt = 10 + fontPt * 1.75;
   const size = 4; // canvas oversample for crisp text
+  const rad = (rotation * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  const rwPt = wPt * cos + hPt * sin; // rotated box (pt) — no clipping
+  const rhPt = wPt * sin + hPt * cos;
   const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(wPt * size));
-  canvas.height = Math.max(1, Math.round(hPt * size));
+  canvas.width = Math.max(1, Math.round(rwPt * size));
+  canvas.height = Math.max(1, Math.round(rhPt * size));
   const ctx = canvas.getContext("2d");
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.rotate((rotation * Math.PI) / 180);
-  ctx.translate(-canvas.width / 2, -canvas.height / 2);
+  const ox = -(wPt * size) / 2; // unrotated band frame, centred in the canvas
+  const oy = -(hPt * size) / 2;
   ctx.lineWidth = Math.max(1, 1.2 * size);
   ctx.strokeStyle = color;
   const lineY1 = Math.round(4 * size);
   const lineY2 = Math.round((hPt - 4) * size);
   ctx.beginPath();
-  ctx.moveTo(0, lineY1);
-  ctx.lineTo(canvas.width, lineY1);
-  ctx.moveTo(0, lineY2);
-  ctx.lineTo(canvas.width, lineY2);
+  ctx.moveTo(ox, oy + lineY1);
+  ctx.lineTo(ox + wPt * size, oy + lineY1);
+  ctx.moveTo(ox, oy + lineY2);
+  ctx.lineTo(ox + wPt * size, oy + lineY2);
   ctx.stroke();
   ctx.fillStyle = color;
-  const fontName = `bold ${Math.round(fontPt * size)}px Inter, system-ui, sans-serif`;
-  ctx.font = fontName;
+  ctx.font = `bold ${Math.round(fontPt * size)}px Inter, system-ui, sans-serif`;
   ctx.textBaseline = "middle";
   ctx.textAlign = "center";
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+  ctx.fillText(text, ox + (wPt * size) / 2, oy + (hPt * size) / 2);
   return {
     bytes: new Uint8Array(await outToBytes(canvas, "image/png")),
-    w: wPt,
-    h: hPt,
-    scale: size,
+    w: rwPt,
+    h: rhPt,
   };
+}
+
+/** The rotated bounding box of a w×h band at `rotation` degrees (pt) —
+ *  exported for tests: the PDF stamp rect must match the preview silhouette. */
+export function rotatedPalangBox(w, h, rotation) {
+  const deg = ((rotation % 360) + 360) % 360;
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  return { w: w * cos + h * sin, h: w * sin + h * cos };
 }
 
 function textWidthApprox(text, fontPt) {
@@ -133,7 +150,7 @@ export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
   if (spec?.armed && images.length + pdfs.length > 0) {
     const palang = await renderPalang(spec, page);
     const png = await doc.embedPng(palang.bytes);
-    const w = palang.w;
+    const w = palang.w; // rotated box — the full tilted band, no clipping
     const h = palang.h;
     const leftPt = spec.leftPt ?? (page.w - w) / 2;
     const topPt = spec.topPt ?? (page.h - h) / 2;

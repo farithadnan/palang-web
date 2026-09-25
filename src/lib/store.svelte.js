@@ -204,7 +204,22 @@ let pdfSeq = 0;
 
 export function addPdfs(fileList) {
   for (const file of fileList) {
-    app.pdfs.push({ id: "pdf-" + ++pdfSeq, file });
+    app.pdfs.push({ id: "pdf-" + ++pdfSeq, file, thumb: null, thumbErr: false, thumbDone: false });
+  }
+  void refreshPdfThumbs();
+}
+
+/** First-page thumbnails for the merge list, rendered on-device. */
+async function refreshPdfThumbs() {
+  for (const p of app.pdfs) {
+    if (p.thumbDone) continue;
+    p.thumbDone = true;
+    try {
+      const r = await renderPdfPreviews(p.file, 1);
+      p.thumb = r.pages[0]?.url ?? null;
+    } catch {
+      p.thumbErr = true;
+    }
   }
 }
 
@@ -408,7 +423,13 @@ export async function generate(mode = "convert") {
     return;
   }
 
-  const filename = mode === "merge" ? "merged.pdf" : mode === "palang" ? "stamped.pdf" : "converted.pdf";
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename =
+    mode === "merge"
+      ? `palang-merged-${stamp}.pdf`
+      : mode === "palang"
+        ? `palang-stamped-${stamp}.pdf`
+        : `palang-converted-${stamp}.pdf`;
   app.busy = true;
   try {
     const blob = await offlineBlob(mode, files);
@@ -464,6 +485,7 @@ if (typeof window !== "undefined") {
     app,
     updateImage,
     addImages,
+    addPdfs,
     removeImages,
     cropPreview,
     revertImage,

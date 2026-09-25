@@ -83,10 +83,24 @@ const DICT = {
       "Malaysia's PDPA 2010 governs how those who collect personal data must handle it. We don't collect it: nothing is stored, nothing is uploaded — so there is nothing to protect, leak, or lose.",
 
     proveIt: "Prove it yourself",
-    proveSub: "Claims are easy to make; checking is easy too.",
     proveBody:
-      "Open the app, process a document, and watch the network — either your browser's DevTools Network tab, or the built-in Network activity panel (link in the footer). The only request you will ever see is the small version check. No uploads, no analytics, no tracking.",
+      "Open the app, process a document, then open Network activity in the footer — the panel lists every request the app makes. Across a whole session you will only ever see the version check and static app assets: nothing about your documents ever leaves this device.",
     verify: "Verify",
+
+    faq5q: "Why does my photo have a white border in the PDF?",
+    faq5a:
+      "Palang places each page onto the page size you chose (A4 by default) and fits the image inside it — the same way banks and offices expect copies. The preview shows exactly this. To fill the page instead, crop the photo or pick a smaller page size.",
+
+    devTitle: "For developers",
+    devSub: "Open source, MIT. Run it yourself or build on it.",
+    devRun: "Run locally",
+    devCi: "CI",
+    devCiBody: "Every push runs lint, type checks, tests and a production build on GitHub Actions.",
+    devDl: "Downloads",
+    devDlBody: "The web app is live. Android APK and desktop builds are coming — this section will host them.",
+
+    convertLabel: "Convert to PDF",
+    mergeLabel: "Merge PDFs",
 
     seeItLive: "See it live",
     sampleHint: "Drag the palang band onto the sample document — this is exactly how the editor feels.",
@@ -197,10 +211,24 @@ const DICT = {
       "Akta Perlindungan Data Peribadi 2010 (PDPA) mengawal cara data peribadi dikendalikan oleh pihak yang mengumpulnya. Kami tidak mengumpul: tiada yang disimpan, tiada yang dimuat naik — jadi tiada apa untuk dilindungi, dibocorkan, atau hilang.",
 
     proveIt: "Buktikan sendiri",
-    proveSub: "Mudah untuk berkata; mudah juga untuk menyemak.",
     proveBody:
-      "Buka app, proses satu dokumen, dan tengok rangkaian — sama ada tab Network dalam DevTools pelayar anda, atau panel Aktiviti rangkaian terbina dalam (pautan di kaki halaman). Satu-satunya permintaan yang anda akan lihat ialah semakan versi kecil. Tiada muat naik, tiada analitik, tiada penjejakan.",
+      "Buka app, proses satu dokumen, kemudian buka Aktiviti rangkaian di kaki halaman — panel menyenaraikan setiap permintaan yang dibuat oleh app. Sepanjang sesi, anda hanya akan melihat semakan versi dan aset statik app: tiada apa-apa tentang dokumen anda yang meninggalkan peranti ini.",
     verify: "Semak",
+
+    faq5q: "Mengapa foto saya ada sempadan putih dalam PDF?",
+    faq5a:
+      "Palang meletakkan setiap halaman pada saiz halaman yang anda pilih (A4 secara lalai) dan memuatkan imej di dalamnya — sama seperti yang bank dan pejabat jangkakan. Pratonton menunjukkan perkara ini dengan tepat. Untuk memenuhi halaman, potong foto atau pilih saiz halaman yang lebih kecil.",
+
+    devTitle: "Untuk pembangun",
+    devSub: "Sumber terbuka, MIT. Jalankan sendiri atau bina di atasnya.",
+    devRun: "Jalankan secara tempatan",
+    devCi: "CI",
+    devCiBody: "Setiap push menjalankan lint, semakan jenis, ujian dan binaan produksi di GitHub Actions.",
+    devDl: "Muat turun",
+    devDlBody: "App web tersedia. Binaan APK Android dan desktop menyusul — bahagian ini akan memuatkannya.",
+
+    convertLabel: "Tukar ke PDF",
+    mergeLabel: "Gabung PDF",
 
     seeItLive: "Cuba lihat sendiri",
     sampleHint: "Seret jalur palang pada dokumen contoh — beginilah rasa editor sebenar.",

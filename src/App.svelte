@@ -15,9 +15,9 @@
   import { t } from "./lib/i18n.js";
 
   const TOOLS = [
-    { id: "convert", label: () => t("convert"), icon: "convert" },
+    { id: "convert", label: () => t("convertLabel"), icon: "convert" },
     { id: "palang", label: () => t("palang"), icon: "palang" },
-    { id: "merge", label: () => t("merge"), icon: "merge" },
+    { id: "merge", label: () => t("mergeLabel"), icon: "merge" },
   ];
   const HASH_TO_VIEW = {
     "": "home",
@@ -87,7 +87,11 @@
   {#if view === "home"}
     <Landing />
   {:else}
-  <Topbar context="app" />
+  <Topbar context="app">
+    {#snippet children()}
+      <a href="#home" onclick={(e) => { e.preventDefault(); goHomePrivacy(); }}>{t("privacy")}</a>
+    {/snippet}
+  </Topbar>
 
   <div class="app-main">
     <aside class="side">
@@ -103,12 +107,6 @@
             {tool.label()}
           </button>
         {/each}
-        <div class="sidegroup">
-          <button type="button" class="sidefoot" onclick={goHomePrivacy}>
-            <Icon name="shield" size={17} />
-            {t("privacy")}
-          </button>
-        </div>
       </nav>
     </aside>
 

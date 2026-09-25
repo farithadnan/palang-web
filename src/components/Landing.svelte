@@ -8,6 +8,7 @@
   import SampleDemo from "./SampleDemo.svelte";
   import Icon from "./ui/Icon.svelte";
   import { t } from "../lib/i18n.js";
+  import { setConsent } from "../lib/store.svelte.js";
 
   const PLATFORMS = [
     { key: "platformWeb", status: "liveNow", action: "convert" },
@@ -41,6 +42,7 @@
     { q: "faq2q", a: "faq2a" },
     { q: "faq3q", a: "faq3a" },
     { q: "faq4q", a: "faq4a" },
+    { q: "faq5q", a: "faq5a" },
   ];
 
   function go(view) {
@@ -50,6 +52,11 @@
   let startOpen = $state(false);
   function openApp() {
     startOpen = true;
+  }
+  function enterApp() {
+    setConsent(true);
+    startOpen = false;
+    go("convert");
   }
 
   function jump(sel, e) {
@@ -82,8 +89,8 @@
       <a href="#features" onclick={(e) => jump("#features", e)}>{t("features")}</a>
       <a href="#how" onclick={(e) => jump("#how", e)}>{t("how")}</a>
       <a href="#privacy" onclick={(e) => jump("#privacy", e)}>{t("privacy")}</a>
-      <a href="#verify" onclick={(e) => jump("#verify", e)}>{t("verify")}</a>
       <a href="#faq" onclick={(e) => jump("#faq", e)}>{t("faq")}</a>
+      <a href="#dev" onclick={(e) => jump("#dev", e)}>{t("devTitle")}</a>
     {/snippet}
   </Topbar>
 
@@ -100,6 +107,11 @@
       <button type="button" class="btn btn-primary btn-lg" onclick={openApp}>{t("openWebApp")}</button>
       <a class="btn btn-ghost btn-lg" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("viewGitHub")}</a>
     </div>
+    <ul class="ld-chips" aria-label="Capabilities">
+      <li><Icon name="convert" size={16} /> {t("featureConvert")}</li>
+      <li><Icon name="palang" size={16} /> {t("featurePalang")}</li>
+      <li><Icon name="merge" size={16} /> {t("featureMerge")}</li>
+    </ul>
     <p class="ld-misuse">
       <b>{t("misuseA")}</b> {t("misuseB")}
     </p>
@@ -171,11 +183,8 @@
         <li><strong>{t(p.strong)}</strong> {t(p.rest)}</li>
       {/each}
     </ul>
-  </section>
-
-  <section class="ld-section ld-verify" id="verify" data-reveal>
-    <h2>{t("proveIt")}</h2>
-    <p class="ld-sub">{t("proveSub")}</p>
+    <div class="divider"></div>
+    <h3>{t("proveIt")}</h3>
     <p class="ld-prove-body">{t("proveBody")}</p>
   </section>
 
@@ -189,6 +198,22 @@
         </li>
       {/each}
     </ul>
+  </section>
+
+  <section class="ld-section" id="dev" data-reveal>
+    <h2>{t("devTitle")}</h2>
+    <p class="ld-sub">{t("devSub")}</p>
+    <h3>{t("devRun")}</h3>
+    <pre class="ld-code">git clone https://github.com/farithadnan/palang-web
+cd palang-web && npm install && npm run dev</pre>
+    <p class="ld-plain-note">
+      The reference engine (Python) is separate: <code>palang</code> on GitHub — the web app
+      implements the same pipeline in-browser, so no server is required.
+    </p>
+    <h3>{t("devCi")}</h3>
+    <p class="ld-plain-note">{t("devCiBody")}</p>
+    <h3>{t("devDl")}</h3>
+    <p class="ld-plain-note">{t("devDlBody")}</p>
   </section>
 
   <footer class="ld-foot">
@@ -205,38 +230,24 @@
 </div>
 
 {#if startOpen}
-  <Modal title={t("startTitle")} onClose={() => (startOpen = false)}>
-    <p class="desc">{t("startBody")}</p>
+  <Modal title={t("consentBefore")} wide onClose={() => (startOpen = false)}>
+    <div class="disclaimer-scroll">
+      <p class="desc">{t("consentBody")}</p>
+      <ul class="start-list">
+        {#each PRIVATE as p (p.strong)}
+          <li><strong>{t(p.strong)}</strong> {t(p.rest)}</li>
+        {/each}
+      </ul>
+      <p class="desc">{t("proveBody")}</p>
+    </div>
     <div class="start-actions">
-      <button
-        type="button"
-        class="btn btn-primary"
-        onclick={() => {
-          startOpen = false;
-          go("convert");
-        }}
-      >
-        {t("openWebApp")}
+      <button type="button" class="btn btn-primary" onclick={enterApp}>
+        {t("consentAgree")}
       </button>
       <button type="button" class="link" onclick={() => jump("#privacy")}>
         {t("privacy")}
       </button>
     </div>
-    <div class="divider"></div>
-    <ul class="start-list">
-      <li>
-        <b>{t("platformWebName")}</b>
-        <span class="ld-status">{t("liveNow")}</span>
-      </li>
-      <li>
-        <b>{t("platformApkName")}</b>
-        <span class="ld-status soon">{t("startSoon")}</span>
-      </li>
-      <li>
-        <b>{t("platformExeName")}</b>
-        <span class="ld-status soon">{t("startSoon")}</span>
-      </li>
-    </ul>
   </Modal>
 {/if}
 
@@ -331,6 +342,50 @@
     line-height: 1.5;
   }
   .ld-misuse b { color: var(--text); }
+
+  /* hero capability chips: palang is one of three tools */
+  .ld-chips {
+    list-style: none;
+    padding: 0;
+    margin: 1.1rem auto 0;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .ld-chips li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.32rem 0.8rem;
+  }
+  .ld-chips svg { color: var(--accent); }
+
+  .disclaimer-scroll {
+    max-height: 44vh;
+    overflow: auto;
+    padding-right: 0.3rem;
+  }
+  .ld-code {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    overflow-x: auto;
+  }
+  .ld-plain-note {
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0.4rem 0 1.1rem;
+  }
+  .ld-plain-note code { color: var(--text); }
 
   /* interactive sample */
   .ld-sample .ld-sub { text-align: center; }

@@ -42,8 +42,8 @@ function blankPageJpeg(wPt, hPt) {
   return canvas.toDataURL("image/jpeg", 0.85);
 }
 
-/** Render up to MAX_PAGES pages of a PDF file to JPEG data URLs. */
-export async function renderPdfPreviews(file) {
+/** Render up to `maxPages` pages of a PDF file to JPEG data URLs. */
+export async function renderPdfPreviews(file, maxPages = MAX_PAGES) {
   const data = new Uint8Array(await file.arrayBuffer());
   const pdf = await withTimeout(
     // Standard font data is served from THIS app (dist/standard_fonts), not
@@ -58,7 +58,7 @@ export async function renderPdfPreviews(file) {
   );
   const pages = [];
   const renderScale = 1.5; // crisp previews without the old server round trip
-  for (let i = 1; i <= Math.min(pdf.numPages, MAX_PAGES); i++) {
+  for (let i = 1; i <= Math.min(pdf.numPages, maxPages); i++) {
     const page = await withTimeout(pdf.getPage(i), `page ${i}`);
     const pt = page.getViewport({ scale: 1 }); // page geometry in points
     let url = null;
