@@ -11,9 +11,9 @@ import { PDFDocument } from "pdf-lib";
 import { PAGE_DIMS, buildPalangSpec, fittedPageSize } from "./domain.js";
 
 /** Decode bytes into an ImageBitmap/HTMLImageElement for canvas work. */
-async function decodeImage(bytes) {
+async function decodeImage(bytes, opts) {
   const blob = new Blob([bytes]);
-  if (typeof createImageBitmap === "function") return createImageBitmap(blob);
+  if (typeof createImageBitmap === "function") return createImageBitmap(blob, opts);
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(blob);
     const img = new Image();
@@ -21,6 +21,29 @@ async function decodeImage(bytes) {
     img.onerror = reject;
     img.src = url;
   });
+}
+
+/** JPEG dimensions from the SOF markers (no full decode) — lets the
+ *  compiled bake cap its size at DECODE time instead of rasterising a
+ *  huge photo first. Returns { w, h } or null for non-JPEG/corrupt. */
+function jpegDims(bytes) {
+  if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return null;
+  let i = 2;
+  while (i + 9 < bytes.length) {
+    if (bytes[i] !== 0xff) return null;
+    const marker = bytes[i + 1];
+    if (marker === 0xd8 || (marker >= 0xd0 && marker <= 0xd7) || marker === 0x01) {
+      i += 2;
+      continue;
+    }
+    const segLen = (bytes[i + 2] << 8) | bytes[i + 3];
+    if (segLen < 2) return null;
+    if (marker >= 0xc0 && marker <= 0xc3) {
+      return { w: (bytes[i + 7] << 8) | bytes[i + 8], h: (bytes[i + 5] << 8) | bytes[i + 6] };
+    }
+    i += 2 + segLen;
+  }
+  return null;
 }
 
 /** Crop + basic enhance via canvas (browser-native; the old server-side
@@ -90,11 +113,14 @@ async function renderPalang(spec, pageSize) {
   const rotation = ((spec.rotationDeg ?? 0) % 360 + 360) % 360;
   const pad = 7; // pt padding around the text, mirrors the lines band
   const size = 4; // canvas oversample for crisp text
-  // Measure the REAL rendered width (canvas measureText — same font engine
-  // the browser preview uses). The old len*0.84 estimate differed from the
-  // visible band, so a centre-anchored marking drifted by half the gap.
+  // Measure + draw with the EXACT same font the preview label uses
+  // (.overlay-label: font-weight 400, and the app's "Inter Variable" stack).
+  // Any mismatch — weight or family — changes glyph widths, so a
+  // centre-anchored marking drifts by half the gap and the stamped text
+  // looks bolder/thinner than what the user placed.
+  const fontStack = `400 ${Math.round(fontPt * size)}px "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif`;
   const probe = document.createElement("canvas").getContext("2d");
-  probe.font = `bold ${Math.round(fontPt * size)}px Inter, system-ui, sans-serif`;
+  probe.font = fontStack;
   const measured = text ? probe.measureText(text).width : 0;
   const textW = (measured > 0 ? measured : textWidthApprox(text, fontPt)) / size;
   const wPt = textW + pad * 2;
@@ -123,7 +149,7 @@ async function renderPalang(spec, pageSize) {
   ctx.lineTo(ox + wPt * size, oy + lineY2);
   ctx.stroke();
   ctx.fillStyle = color;
-  ctx.font = `bold ${Math.round(fontPt * size)}px Inter, system-ui, sans-serif`;
+  ctx.font = fontStack;
   ctx.textBaseline = "middle";
   ctx.textAlign = "center";
   ctx.fillText(text, ox + (wPt * size) / 2, oy + (hPt * size) / 2);
@@ -199,14 +225,33 @@ async function bakePalang(img, palang, palangImg, page, spec) {
 
 /** Compile ONE photo into its stamped form (the "second temp": the palang
  *  is baked in and can no longer move). The editor keeps showing the
- *  original photo for re-editing. */
+ *  original photo for re-editing. The compiled image is capped at
+ *  MAX_COMPILE_PX on its longest side — it is only ever embedded on an A4
+ *  page (~340 dpi at 2400 px); a 24 MP bake would be memory-heavy and
+ *  bloat the PDF for zero visible gain. The cap is applied AT DECODE via
+ *  createImageBitmap's native resize (No full-resolution rasterisation). */
+export const MAX_COMPILE_PX = 2400;
+
 export async function compileStampedImage(input, pageSize, spec) {
   const bytes = new Uint8Array(await input.bytes());
-  const processed = await processImage(bytes, input.mime, input.setting);
-  const img = await decodeImage(processed); // EXIF-baked dims = what the preview shows
   const page = PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
   const palang = await renderPalang(spec, page);
   const palangImg = await decodeImage(palang.bytes);
+  let img;
+  const dims = jpegDims(bytes);
+  if (dims && dims.w > MAX_COMPILE_PX) {
+    img = await decodeImage(bytes, {
+      resizeWidth: MAX_COMPILE_PX,
+      resizeHeight: Math.max(1, Math.round((dims.h * MAX_COMPILE_PX) / dims.w)),
+    });
+  } else if (dims && dims.h > MAX_COMPILE_PX) {
+    img = await decodeImage(bytes, {
+      resizeHeight: MAX_COMPILE_PX,
+      resizeWidth: Math.max(1, Math.round((dims.w * MAX_COMPILE_PX) / dims.h)),
+    });
+  } else {
+    img = await decodeImage(bytes);
+  }
   return { bytes: await bakePalang(img, palang, palangImg, page, spec), mime: "image/png" };
 }
 
