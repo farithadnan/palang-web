@@ -75,7 +75,6 @@ import {
     icon="convert"
     requestAddTick={app.requestAdd}
     items={galleryItems}
-    editable
     frameAspect={app.pageSize !== "fit" ? PAGE_DIMS[app.pageSize]?.w + "/" + PAGE_DIMS[app.pageSize]?.h : ""}
     onRemove={removeImage}
     onItem={(id) => (editing = id)}

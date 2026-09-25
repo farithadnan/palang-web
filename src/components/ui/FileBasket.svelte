@@ -1,10 +1,9 @@
 <script>
-  /** Generic file basket shared by Convert and Palang: empty dropzone ↔ gallery
-   *  of chosen files with a dashed "add" tile, per-file remove, optional edit
-   *  icon, and an optional paper-aspect frame around thumbnails. */
+  /** Generic file basket: empty dropzone or a long-press-selection gallery
+   *  (MediaGrid) with an add tile. Shared by Convert, Palang and Merge. */
   import { t } from "../../lib/i18n.js";
-import Icon from "./Icon.svelte";
   import Dropzone from "./Dropzone.svelte";
+  import MediaGrid from "./MediaGrid.svelte";
 
   let {
     id,
@@ -14,7 +13,6 @@ import Icon from "./Icon.svelte";
     sub = "",
     icon = "upload",
     items = [], // {id, url?, name, filter?, icon?}
-    editable = false,
     frameAspect = "", // e.g. "595/842" — thumbnails shown in the chosen paper shape
     requestAddTick = 0, // topbar "+" drives the picker from outside
     onRemove,
@@ -33,62 +31,13 @@ import Icon from "./Icon.svelte";
 {#if !count}
   <Dropzone {id} {accept} {multiple} {main} {sub} {icon} {onPick} />
 {:else}
-  <div class="gbar">
-    <span class="caption">
-      <strong>{count}</strong> file{count > 1 ? "s" : ""}
-    </span>
-  </div>
-
-  <div class="gallery">
-    {#each items as item (item.id)}
-      <div class="gitem">
-        {#if onRemove}
-          <button
-            type="button"
-            class="gremove"
-            aria-label={t("basketRemove") + " " + item.name}
-            onclick={() => onRemove(item.id)}
-          >
-            ✕
-          </button>
-        {/if}
-        <button
-          type="button"
-          class="gthumb"
-          style={frameAspect ? "aspect-ratio:" + frameAspect : ""}
-          onclick={() => onItem?.(item.id)}
-          aria-label={item.name}
-        >
-          {#if item.url}
-            <img
-              src={item.url}
-              alt={item.name}
-              style={(frameAspect ? "object-fit:contain;" : "") + (item.filter && item.filter !== "none" ? "filter:" + item.filter : "")}
-              loading="lazy"
-            />
-          {:else}
-            <span class="gfileicon"><Icon name={item.icon || "file"} size={26} /></span>
-          {/if}
-        </button>
-        {#if editable && onItem}
-          <button
-            type="button"
-            class="gedit"
-            aria-label={t("basketEdit") + " " + item.name}
-            onclick={() => onItem(item.id)}
-          >
-            <Icon name="pencil" size={13} />
-          </button>
-        {/if}
-      </div>
-    {/each}
-    {#if onPick}
-      <button type="button" class="gtile-add" aria-label={t("basketAddMore")} onclick={() => input?.click()}>
-        <Icon name="plus" size={22} />
-        <span>Add</span>
-      </button>
-    {/if}
-  </div>
+  <MediaGrid
+    {items}
+    {frameAspect}
+    onOpen={onItem}
+    onRemove={onRemove}
+    onAdd={() => input?.click()}
+  />
 
   <input
     bind:this={input}

@@ -69,6 +69,7 @@
     {/if}
   </div>
 
+  <h3 class="about-settings-title">{t("aboutSettings")}</h3>
   <div class="about-settings">
     <div class="kv">
       <dt>{t("switchLang")}</dt>
@@ -136,6 +137,12 @@
     font-size: 0.95rem;
   }
   .about-update .link:disabled { opacity: 0.6; }
+  .about-settings-title {
+    margin: 1.6rem 0 0.2rem;
+    font-size: 1.02rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.5rem;
+  }
   .seg {
     border: 1px solid var(--border, rgba(128,128,128,.35));
     background: transparent;
