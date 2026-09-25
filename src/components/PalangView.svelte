@@ -93,7 +93,9 @@
   <div class="actbar">
     <span class="caption">
       {app.spec.armed
-        ? t("plReady")
+        ? app.previewFiles.length > 1
+          ? t("plReadyAll")
+          : t("plReady")
         : app.previewFiles.length
           ? t("plTapHint")
           : t("plEmpty")}
