@@ -5,7 +5,8 @@
    *  one page at a time, so a 1000-page document never triggers bulk work. */
   import Dropzone from "./ui/Dropzone.svelte";
   import OrderedList from "./ui/OrderedList.svelte";
-  import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate } from "../lib/store.svelte.js";
+  import { t } from "../lib/i18n.js";
+import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate } from "../lib/store.svelte.js";
 
   let mergeInput;
 
@@ -31,21 +32,21 @@
     if (!mergePage) return "";
     let fileCount = 0;
     for (const pg of app.merge.pages) if (pg.pdfId === mergePage.pdfId) fileCount++;
-    return mergePage.file.name + " · " + mergePage.page + " of " + fileCount + (mergePage.err ? " · preview unavailable" : "");
+    return mergePage.file.name + " · " + mergePage.page + " of " + fileCount + (mergePage.err ? " · " + t("mgPrevUnavail") : "");
   }
 </script>
 
 <div class="panel">
-  <h2>Merge PDFs</h2>
-  <p class="desc">Combine several PDFs into one, in the order you choose. The preview shows the whole merged output — page through every file.</p>
+  <h2>{t("mergeLabel")}</h2>
+  <p class="desc">{t("mgIntro")}</p>
 
   {#if !app.pdfs.length}
     <Dropzone
       id="merge-files"
       accept=".pdf"
       multiple
-      main="Choose PDFs to merge"
-      sub="Pick the files — the result follows the order in the list, which you can rearrange"
+      main={t("mgChoose")}
+      sub={t("mgPickHint")}
       icon="merge"
       onPick={addPdfs}
     />
@@ -58,7 +59,7 @@
       empty=""
     />
     <div class="actionrow">
-      <button type="button" class="btn btn-sm" onclick={() => mergeInput?.click()}>Add more PDFs</button>
+      <button type="button" class="btn btn-sm" onclick={() => mergeInput?.click()}>{t('mgAddMore')}</button>
     </div>
 
     {#if mergePage}
@@ -67,9 +68,9 @@
           {#if mergePage.img || mergePage.url}
             <img src={mergePage.url} alt={fileContext()} />
           {:else if mergePage.loading}
-            <div class="spinner" role="status" aria-label="Rendering page"></div>
+            <div class="spinner" role="status" aria-label={t("mgRendering")}></div>
           {:else}
-            <p class="caption">This page can&apos;t be previewed — it will still be merged as-is.</p>
+            <p class="caption">{t("mgNoPreview")}</p>
           {/if}
         </div>
         <div class="page-stepper">
@@ -113,7 +114,7 @@
 
   <div class="actbar">
     <span class="caption">
-      {app.pdfs.length ? app.pdfs.length + " PDF" + (app.pdfs.length > 1 ? "s" : "") + " → one file" : "No PDFs added yet"}
+      {app.pdfs.length ? t("mgSummary", { n: app.pdfs.length, s: app.pdfs.length > 1 ? "s" : "" }) : t("mgEmpty")}
     </span>
     <button
       type="button"
@@ -121,7 +122,7 @@
       disabled={!app.pdfs.length || app.busy}
       onclick={() => generate("merge")}
     >
-      {app.busy ? "Working…" : "Merge PDFs"}
+      {app.busy ? t("plWorking") : t("mergeLabel")}
     </button>
   </div>
 </div>

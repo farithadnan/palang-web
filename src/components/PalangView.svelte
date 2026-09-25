@@ -50,7 +50,7 @@
 </script>
 
 <div class="panel">
-  <h2>Add a palang watermark</h2>
+  <h2>{t("plTitle")}</h2>
   <p class="desc">
     Stamp a purpose bar across your document — transparent, so nothing is covered. You get a new copy; the original file is untouched.
   </p>
@@ -59,7 +59,7 @@
     id="palang-files"
     accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff"
     multiple
-    main="Choose a document to stamp"
+    main={t("plChoose")}
     sub="PDF, or images · tap a file to position your marking"
     icon="palang"
     items={basketItems}
@@ -74,16 +74,16 @@
 
   {#if app.previewFiles.length}
     {#if app.previewLoading}
-      <div class="spinner" role="status" aria-label="Preparing document"></div>
+      <div class="spinner" role="status" aria-label={t("plPreparing")}></div>
       <p class="caption" style="text-align:center">
-        {slow ? "Still preparing your document… large files can take a little longer." : "Preparing…"}
+        {slow ? t("plStillPreparing") : t("plPreparingEll")}
       </p>
     {:else if !app.preview}
       <div class="retrycard">
-        <p class="desc">Unable to prepare this document. It may be too large or unsupported.</p>
+        <p class="desc">{t("plUnable")}</p>
         <div class="actionrow">
-          <button type="button" class="btn btn-primary btn-sm" onclick={() => void retryPreview()}>Try again</button>
-          <button type="button" class="btn btn-sm" onclick={removeDocument}>Choose another file</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick={() => void retryPreview()}>{t('plTryAgain')}</button>
+          <button type="button" class="btn btn-sm" onclick={removeDocument}>{t('plChooseOther')}</button>
         </div>
       </div>
     {/if}
@@ -92,10 +92,10 @@
   <div class="actbar">
     <span class="caption">
       {app.spec.armed
-        ? "Marking ready"
+        ? t("plReady")
         : app.previewFiles.length
-          ? "Tap a file to position the marking"
-          : "No document added yet"}
+          ? t("plTapHint")
+          : t("plEmpty")}
     </span>
     <button
       type="button"
@@ -103,19 +103,19 @@
       disabled={!app.previewFiles.length || app.busy}
       onclick={() => generate("palang")}
     >
-      {app.busy ? "Working…" : "Stamp PDF"}
+      {app.busy ? t("plWorking") : t("plStamp")}
     </button>
   </div>
 </div>
 
 {#if editing && active}
-  <Modal title="Position your marking" wide onClose={() => (editing = false)}>
+  <Modal title={t("plPosTitle")} wide onClose={() => (editing = false)}>
     {#if app.preview && app.preview.pages.length > 1}
       <div class="page-stepper">
         <button
           type="button"
           class="btn btn-sm"
-          aria-label="Previous page"
+          aria-label={t("pagePrev")}
           disabled={app.activePage === 0}
           onclick={() => setActivePage(Math.max(0, app.activePage - 1))}
         >
@@ -125,7 +125,7 @@
         <button
           type="button"
           class="btn btn-sm"
-          aria-label="Next page"
+          aria-label={t("pageNext")}
           disabled={app.activePage >= app.preview.pages.length - 1}
           onclick={() => setActivePage(Math.min(app.preview.pages.length - 1, app.activePage + 1))}
         >
@@ -152,7 +152,7 @@
       {:else}
         <div class="pv-loading">
           <p class="caption">This page can&apos;t be previewed — the marking is still placed at its true size.</p>
-          <button type="button" class="btn btn-sm" onclick={() => void retryPreview()}>Try again</button>
+          <button type="button" class="btn btn-sm" onclick={() => void retryPreview()}>{t('plTryAgain')}</button>
         </div>
       {/if}
     {/key}
@@ -173,7 +173,7 @@
           // second temp") — the editor keeps the originals for re-editing,
           // and Stamp will use the compiled images.
           editing = false;
-          void applyCompiled().then(() => flash("ok", "Marking ready — stamp the PDF when you're done."));
+          void applyCompiled().then(() => flash("ok", t("plReadyToast")));
         }}
       >
         Apply &amp; save

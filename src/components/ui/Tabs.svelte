@@ -3,7 +3,7 @@
   let { items = [], value, onPick, variant = "top" } = $props();
 </script>
 
-<div class="tabs tabs-{variant}" role="tablist" aria-label="Tools">
+<div class="tabs tabs-{variant}" role="tablist" aria-label={t("tabsAria")}>
   {#each items as item (item.id)}
     <button
       type="button"

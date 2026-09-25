@@ -9,7 +9,8 @@
   import CropBox from "./ui/CropBox.svelte";
   import Modal from "./ui/Modal.svelte";
   import { PAGE_DIMS, PAGE_SIZES } from "../lib/domain.js";
-  import {
+  import { t } from "../lib/i18n.js";
+import {
     app,
     addImages,
     cropPreview,
@@ -44,34 +45,34 @@
     if (!editingImage) return;
     if (editingImage.crop) cropPreview(editingImage.id, editingImage.crop);
     editing = null;
-    flash("ok", "Saved — the photo now shows what was applied.");
+    flash("ok", t("cvSaved"));
   }
 
   function undoEdit() {
     if (!editingImage) return;
     revertImage(editingImage.id);
-    flash("ok", "Undone — back to the original photo.");
+    flash("ok", t("cvUndone"));
   }
 
   function pickReplace(e) {
     const file = e.currentTarget.files?.[0];
     if (file && editingImage) {
       replaceImage(editingImage.id, file);
-      flash("ok", "File replaced.");
+      flash("ok", t("cvReplaced"));
     }
     e.currentTarget.value = "";
   }
 </script>
 
 <div class="panel">
-  <h2>Convert images to PDF</h2>
-  <p class="desc">Turn one or more photos or scans into a single PDF. Each photo becomes one page, and you can crop or enhance each one on its own.</p>
+  <h2>{t("cvTitle")}</h2>
+  <p class="desc">{t("cvIntro")}</p>
 
   <FileBasket
     id="convert-files"
     accept=".jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff"
     multiple
-    main="Choose images to convert"
+    main={t("cvChoose")}
     sub="JPG, PNG, WEBP, BMP, TIFF · tap any photo to crop or enhance it"
     icon="convert"
     items={galleryItems}
@@ -82,7 +83,7 @@
     onPick={addImages}
   />
 
-  <Field label="Paper size" hint={app.pageSize === "fit" ? "Each photo becomes a full page at its own size." : "Each photo becomes one page in this size — the thumbnails show the proportion."}>
+  <Field label={t("cvPaperSize")} hint={app.pageSize === "fit" ? t("cvPageOwn") : t("cvPageFit")}>
     <Select id="page-size" value={app.pageSize} options={PAGE_SIZES} onChange={(v) => (app.pageSize = v)} />
   </Field>
 
@@ -90,7 +91,7 @@
     <span class="caption">
       {app.images.length
         ? app.images.length + " photo" + (app.images.length > 1 ? "s" : "") + " → one PDF"
-        : "No photos added yet"}
+        : t("cvEmpty")}
     </span>
     <button
       type="button"
@@ -110,7 +111,7 @@
         <button
           type="button"
           class="btn btn-sm"
-          aria-label="Previous photo"
+          aria-label={t("cvPrev")}
           disabled={!app.images.findIndex((im) => im.id === editingImage.id)}
           onclick={() => {
             const idx = app.images.findIndex((im) => im.id === editingImage.id);
@@ -125,7 +126,7 @@
         <button
           type="button"
           class="btn btn-sm"
-          aria-label="Next photo"
+          aria-label={t("cvNext")}
           disabled={app.images.findIndex((im) => im.id === editingImage.id) >= app.images.length - 1}
           onclick={() => {
             const idx = app.images.findIndex((im) => im.id === editingImage.id);
@@ -138,8 +139,8 @@
     {/if}
     {#key editingImage.id + "-" + (editingImage.crop ? JSON.stringify(editingImage.crop) : "none")}
       <Checkbox
-        label="Improve quality"
-        hint="Sharpen and boost contrast, good for scans. The preview is approximate — the final enhance runs on the server when you convert."
+        label={t("cvImprove")}
+        hint={t("cvImproveHint")}
         checked={editingImage.enhance}
         onChange={(v) => updateImage(editingImage.id, { enhance: v })}
       />
@@ -167,7 +168,7 @@
         type="button"
         class="btn btn-sm btn-danger"
         onclick={() => {
-          if (!confirm("Remove this photo from the list? This cannot be undone.")) return;
+          if (!confirm(t("cvRemoveConfirm"))) return;
           const id = editingImage.id;
           removeImage(id);
           editing = null;

@@ -52,6 +52,21 @@ Use **app only** for Docker, APK, EXE and any third-party hosting where a promo
 page would be noise. The full variant is only needed for the public marketing
 site. CI builds and tests both.
 
+The official instance URL and the build variant are configured through dotenv
+files — the single config source (Vite's standard). `.env.production` holds
+the committed defaults, `.env.local` holds YOUR overrides (gitignored), e.g. a
+staging domain that should speak for itself:
+
+```bash
+# .env.local — personal / environment overrides (never committed)
+VITE_HOST_URL=https://staging.example.com
+```
+
+Privacy wording follows the origin: equal to `VITE_HOST_URL` → "official
+instance" copy, any other remote origin → third-party hosting, localhost /
+`file:` → your own copy. Test all three locally with `?mode=hosted|third|self`
+on any page. Runtime operator caps stay in `public/limits.json` (no rebuild).
+
 ## Hosting
 
 The build output (`dist/`) is plain static files and processing happens in the

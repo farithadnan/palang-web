@@ -1,6 +1,7 @@
 /* Module-mode runes store: the single owner of app state and side effects.
    Views read/write `app.*`; components stay presentational. */
 
+import { t, deployKind } from "./i18n.js"; // lazy use only — i18n imports `app` from here (cycle is safe)
 import { processOffline, compileStampedImage } from "./local-engine.js";
 import { openPdf, renderPdfPage } from "./pdf-preview.js";
 import { LIMITS, loadLimits } from "./config.js";
@@ -111,12 +112,12 @@ let imageSeq = 0;
 export function addImages(fileList) {
   const room = LIMITS.images - app.images.length;
   if (room <= 0) {
-    flash("error", `Maximum ${LIMITS.images} photos per session.`);
+    flash("error", t("msgMaxImages", { n: LIMITS.images }));
     return;
   }
   for (const file of fileList.slice(0, room)) {
     if (file.size > LIMITS.fileMb * 1024 * 1024) {
-      flash("error", `${file.name} is over the ${LIMITS.fileMb} MB limit.`);
+      flash("error", t("msgOverMb", { name: file.name, n: LIMITS.fileMb }));
       continue;
     }
     const url = URL.createObjectURL(file);
@@ -220,12 +221,12 @@ let pdfSeq = 0;
 export function addPdfs(fileList) {
   const room = LIMITS.files - app.pdfs.length;
   if (room <= 0) {
-    flash("error", `Maximum ${LIMITS.files} files per document.`);
+    flash("error", t("msgMaxFiles", { n: LIMITS.files }));
     return;
   }
   for (const file of fileList.slice(0, room)) {
     if (file.size > LIMITS.fileMb * 1024 * 1024) {
-      flash("error", `${file.name} is over the ${LIMITS.fileMb} MB limit.`);
+      flash("error", t("msgOverMb", { name: file.name, n: LIMITS.fileMb }));
       continue;
     }
     app.pdfs.push({ id: "pdf-" + ++pdfSeq, file });
@@ -243,7 +244,7 @@ async function buildMergePreview() {
     try {
       const doc = await openPdf(p.file);
       if (cum + doc.count > LIMITS.pdfPages) {
-        flash("error", `More than ${LIMITS.pdfPages} pages — the overflow was dropped.`);
+        flash("error", t("msgOverflow", { n: LIMITS.pdfPages }));
         break;
       }
       for (let i = 1; i <= doc.count; i++) {
@@ -345,7 +346,7 @@ function isImageFile(file) {
        try {
          const doc = await openPdf(f);
          if (cumPdf + doc.count > LIMITS.pdfPages) {
-           flash("error", `More than ${LIMITS.pdfPages} pages — the overflow was dropped.`);
+           flash("error", t("msgOverflow", { n: LIMITS.pdfPages }));
            cumPdf = LIMITS.pdfPages;
          }
          const until = Math.min(doc.count, LIMITS.pdfPages - cumPdf);
@@ -559,15 +560,15 @@ export async function generate(mode = "convert") {
         ? app.previewFiles
         : app.images.map((im) => im.file);
   if (!files.length) {
-    flash("error", "Add the files you want to process first.");
+    flash("error", t("msgAddFirst"));
     return;
   }
   if (!app.consented) {
-    flash("error", "Tick the agreement first: your files are processed on this device and never leave it.");
+    flash("error", t(deployKind === "self" ? "msgAgreeSelf" : "msgAgreeHosted"));
     return;
   }
   if (mode === "palang" && app.spec.armed && app.spec.mode === "band" && !(app.spec.text || "").trim()) {
-    flash("error", "Add the purpose text for the bar.");
+    flash("error", t("msgPurpose"));
     return;
   }
 

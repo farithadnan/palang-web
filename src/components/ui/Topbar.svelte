@@ -7,14 +7,14 @@
   import { nextLang, t } from "../../lib/i18n.js";
   import Icon from "./Icon.svelte";
 
-  let { context = "landing", children, onOpenApp } = $props();
+  let { context = "landing", children, onOpenApp, homeTo = "home" } = $props();
   let open = $state(false);
 
   function go(view) {
     location.hash = "#/" + view;
   }
   function goHome() {
-    go("home");
+    go(homeTo);
   }
   function openApp() {
     if (onOpenApp) onOpenApp();
@@ -24,7 +24,7 @@
 
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="#/home" onclick={(e) => { e.preventDefault(); goHome(); }}>
+    <a class="brand" href={"#/" + homeTo} onclick={(e) => { e.preventDefault(); goHome(); }}>
       <span class="brand-mark" aria-hidden="true"></span>
       <b>Palang</b>
     </a>
@@ -36,7 +36,7 @@
         <button type="button" class="btn btn-sm btn-primary tb-open" onclick={openApp}>
           {t("openApp")}
         </button>
-      {:else}
+      {:else if homeTo}
         <button type="button" class="btn btn-sm tb-home" onclick={goHome}>
           <Icon name="home" size={16} />
           <span>{t("home")}</span>

@@ -30,7 +30,7 @@
     privacy: "home",
   };
 
-  const HAS_LANDING = import.meta.env.VITE_MODE !== "app";
+  const HAS_LANDING = import.meta.env.MODE !== "app";
 
   function readHash() {
     const hash = (typeof location !== "undefined" ? location.hash : "").replace(/^#\/?/, "");
@@ -66,6 +66,12 @@
   void loadLimits();
 
   function goHomePrivacy() {
+    // App-only builds have no landing page to scroll to: the privacy evidence
+    // IS the network activity panel, so the link opens it instead.
+    if (!HAS_LANDING) {
+      netOpen = true;
+      return;
+    }
     location.hash = "#/home";
     // Wait for the landing to render, then bring the privacy section in.
     setTimeout(() => {
@@ -98,9 +104,17 @@
   {#if view === "home"}
     <Landing />
   {:else}
-  <Topbar context="app">
+  <Topbar context="app" homeTo={HAS_LANDING ? "home" : null}>
     {#snippet children()}
-      <a href="#home" onclick={(e) => { e.preventDefault(); goHomePrivacy(); }}>{t("privacy")}</a>
+      {#if HAS_LANDING}
+        <a href="#home" onclick={(e) => { e.preventDefault(); goHomePrivacy(); }}>{t("privacy")}</a>
+      {:else}
+        <a
+          href="#convert"
+          onclick={(e) => { e.preventDefault(); netOpen = !netOpen; }}
+          aria-expanded={netOpen}
+        >{t("networkActivity")}</a>
+      {/if}
     {/snippet}
   </Topbar>
 
@@ -166,8 +180,10 @@
       <button type="button" class="link" onclick={() => (netOpen = !netOpen)} aria-expanded={netOpen}>
         {t("networkActivity")}
       </button>
-      <span class="footdot">·</span>
-      <button type="button" class="link" onclick={goHomePrivacy}>{t("privacy")}</button>
+      {#if HAS_LANDING}
+        <span class="footdot">·</span>
+        <button type="button" class="link" onclick={goHomePrivacy}>{t("privacy")}</button>
+      {/if}
       <span class="footdot">·</span>
       <span>{t("mitLicense")}</span>
       <span class="footdot">·</span>

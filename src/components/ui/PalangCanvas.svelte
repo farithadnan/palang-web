@@ -5,7 +5,8 @@
    *  on release. The lines band measures its width from the live text, like the
    *  server. Selection: the marking shows handles while selected; Delete/Esc
    *  remove/deselect it; tap the page to re-add it after deleting. */
-  import { onMount } from "svelte";
+  import { t } from "../../lib/i18n.js";
+import { onMount } from "svelte";
   import { fittedPageSize, round1 } from "../../lib/domain.js";
 
   let { url, widthPt, heightPt, spec, onChange, fitContain = false, class: cls = "" } = $props();
@@ -486,7 +487,7 @@
       class="canvas-wrap"
       bind:this={wrap}
       role="application"
-      aria-label="Page preview surface"
+      aria-label={t("pcPageSurface")}
       onpointerdown={wrapDown}
       onpointermove={emitMove}
       onpointerup={emitUp}
@@ -504,23 +505,23 @@
             onpointerup={emitUp}
             onpointercancel={release}
             role="application"
-            aria-label={lines ? "Palang line marking" : "Palang marking"}
+            aria-label={lines ? t("pcLine") : t("pcMarking")}
           >
             {#if lines}
               <span bind:this={labelEl} class="overlay-label" style={labelStyle}>{spec.text || ""}</span>
             {/if}
             {#if showHandles && !lines}
-              <div class="handle h-midb" role="button" tabindex="-1" aria-label="Resize marking height" onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>
+              <div class="handle h-midb" role="button" tabindex="-1" aria-label={t("pcResizeH")} onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>
             {/if}
             {#if showHandles && lines}
-              <div class="rotate-handle" role="button" tabindex="-1" aria-label="Rotate the marking" onpointerdown={(e) => { e.preventDefault(); e.stopPropagation(); beginRotate(e); }}></div>
-              <div class="handle h-se" role="button" tabindex="-1" aria-label="Scale the marking" onpointerdown={(e) => { e.preventDefault(); begin(e, "scale"); }}></div>
+              <div class="rotate-handle" role="button" tabindex="-1" aria-label={t("pcRotate")} onpointerdown={(e) => { e.preventDefault(); e.stopPropagation(); beginRotate(e); }}></div>
+              <div class="handle h-se" role="button" tabindex="-1" aria-label={t("pcScale")} onpointerdown={(e) => { e.preventDefault(); begin(e, "scale"); }}></div>
             {/if}
             {#if showHandles && region}
-              <div class="handle h-nw" role="button" tabindex="-1" aria-label="Resize top-left" onpointerdown={(e) => { e.preventDefault(); begin(e, "nw"); }}></div>
-              <div class="handle h-ne" role="button" tabindex="-1" aria-label="Resize top-right" onpointerdown={(e) => { e.preventDefault(); begin(e, "ne"); }}></div>
-              <div class="handle h-sw" role="button" tabindex="-1" aria-label="Resize bottom-left" onpointerdown={(e) => { e.preventDefault(); begin(e, "sw"); }}></div>
-              <div class="handle h-se" role="button" tabindex="-1" aria-label="Resize bottom-right" onpointerdown={(e) => { e.preventDefault(); begin(e, "se"); }}></div>
+              <div class="handle h-nw" role="button" tabindex="-1" aria-label={t("resizeTL")} onpointerdown={(e) => { e.preventDefault(); begin(e, "nw"); }}></div>
+              <div class="handle h-ne" role="button" tabindex="-1" aria-label={t("resizeTR")} onpointerdown={(e) => { e.preventDefault(); begin(e, "ne"); }}></div>
+              <div class="handle h-sw" role="button" tabindex="-1" aria-label={t("resizeBL")} onpointerdown={(e) => { e.preventDefault(); begin(e, "sw"); }}></div>
+              <div class="handle h-se" role="button" tabindex="-1" aria-label={t("resizeBR")} onpointerdown={(e) => { e.preventDefault(); begin(e, "se"); }}></div>
             {/if}
           </div>
         {/if}
@@ -533,7 +534,7 @@
           style:aspect-ratio={`${widthPt} / ${heightPt}`}
           style:margin="0 auto"
           role="application"
-          aria-label="Page preview"
+          aria-label={t("pcPagePreview")}
         >
           <img
             bind:this={img}
@@ -561,10 +562,10 @@
   </div>
 
   <div class="canvas-zoom">
-    <button type="button" class="btn btn-sm" aria-label="Show the whole image" onclick={fitView}>
+    <button type="button" class="btn btn-sm" aria-label={t("pcWhole")} onclick={fitView}>
       Fit view
     </button>
-    <button type="button" class="btn btn-sm" aria-label="Reset marking position to the middle" onclick={centerReset}>
+    <button type="button" class="btn btn-sm" aria-label={t("pcReset")} onclick={centerReset}>
       Reset position
     </button>
   </div>

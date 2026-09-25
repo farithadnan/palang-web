@@ -2,14 +2,15 @@
   /** Generic file basket shared by Convert and Palang: empty dropzone ↔ gallery
    *  of chosen files with a dashed "add" tile, per-file remove, optional edit
    *  icon, and an optional paper-aspect frame around thumbnails. */
-  import Icon from "./Icon.svelte";
+  import { t } from "../../lib/i18n.js";
+import Icon from "./Icon.svelte";
   import Dropzone from "./Dropzone.svelte";
 
   let {
     id,
     accept = "",
     multiple = false,
-    main = "Choose files",
+    main = t("basketChoose"),
     sub = "",
     icon = "upload",
     items = [], // {id, url?, name, filter?, icon?}
@@ -40,7 +41,7 @@
           <button
             type="button"
             class="gremove"
-            aria-label={"Remove " + item.name}
+            aria-label={t("basketRemove") + " " + item.name}
             onclick={() => onRemove(item.id)}
           >
             ✕
@@ -68,7 +69,7 @@
           <button
             type="button"
             class="gedit"
-            aria-label={"Edit " + item.name}
+            aria-label={t("basketEdit") + " " + item.name}
             onclick={() => onItem(item.id)}
           >
             <Icon name="pencil" size={13} />
@@ -77,7 +78,7 @@
       </div>
     {/each}
     {#if onPick}
-      <button type="button" class="gtile-add" aria-label="Add more files" onclick={() => input?.click()}>
+      <button type="button" class="gtile-add" aria-label={t("basketAddMore")} onclick={() => input?.click()}>
         <Icon name="plus" size={22} />
         <span>Add</span>
       </button>

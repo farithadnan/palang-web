@@ -7,7 +7,7 @@
   import Modal from "./ui/Modal.svelte";
   import SampleDemo from "./SampleDemo.svelte";
   import Icon from "./ui/Icon.svelte";
-  import { t, hosted } from "../lib/i18n.js";
+  import { t, deployKind, hostUrl } from "../lib/i18n.js";
   import { app, setConsent } from "../lib/store.svelte.js";
 
   const PLATFORMS = [
@@ -36,6 +36,15 @@
     { strong: "private4a", rest: "private4b" },
     { strong: "private5a", rest: "private5b" },
   ];
+
+  // Honest wording per deployment: the official instance, a third-party host,
+  // or the user's own copy. privateHostedNote is URL-agnostic, so it is shared
+  // by "hosted" and "third"; only the consent/prove copy differs.
+  const DEPLOY_KEY = {
+    hosted: { priv: "privateHostedNote", prove: "proveHosted", consent: "consentHosted" },
+    third: { priv: "privateHostedNote", prove: "proveThird", consent: "consentThird" },
+    self: { priv: "privateSelfNote", prove: "proveSelf", consent: "consentSelf" },
+  }[deployKind];
 
   const FAQS = [
     { q: "faq1q", a: "faq1a" },
@@ -192,7 +201,7 @@
 
   <section class="ld-section ld-privacy" id="privacy" data-reveal>
     <h2>{t("privateByConstruction")}</h2>
-    <p class="ld-privacy-note">{t(hosted ? "privateHostedNote" : "privateSelfNote")}</p>
+    <p class="ld-privacy-note">{t(DEPLOY_KEY.priv)}</p>
     <ul class="ld-plain">
       {#each PRIVATE as p (p.strong)}
         <li><strong>{t(p.strong)}</strong> {t(p.rest)}</li>
@@ -200,7 +209,7 @@
     </ul>
     <div class="divider"></div>
     <h3>{t("proveIt")}</h3>
-    <p class="ld-prove-body">{t(hosted ? "proveHosted" : "proveSelf")}</p>
+    <p class="ld-prove-body">{t(DEPLOY_KEY.prove)}</p>
   </section>
 
   <section class="ld-section" id="faq" data-reveal>
@@ -260,13 +269,13 @@ docker compose up --build   # app + engine on http://localhost:8000</pre>
 {#if startOpen}
   <Modal title={t("consentBefore")} wide onClose={() => (startOpen = false)}>
     <div class="disclaimer-scroll">
-      <p class="desc">{t(hosted ? "consentHosted" : "consentSelf")}</p>
+      <p class="desc">{t(DEPLOY_KEY.consent, { url: hostUrl })}</p>
       <ul class="disclaimer-list">
         {#each PRIVATE as p (p.strong)}
           <li><strong>{t(p.strong)}</strong> <span>{t(p.rest)}</span></li>
         {/each}
       </ul>
-      <p class="desc">{t(hosted ? "proveHosted" : "proveSelf")}</p>
+      <p class="desc">{t(DEPLOY_KEY.prove)}</p>
     </div>
     <div class="start-actions">
       <button type="button" class="btn btn-primary" onclick={enterApp}>

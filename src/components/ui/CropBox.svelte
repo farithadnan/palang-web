@@ -3,7 +3,8 @@
    *  Presentational — emits crop fractions {l,t,r,b} (0..1) only on pointer release.
    *  fitMaxH (vh/px) fits the whole image inside the surface so no scrolling is
    *  needed while editing. */
-  import { clamp, round2 } from "../../lib/domain.js";
+  import { t } from "../../lib/i18n.js";
+import { clamp, round2 } from "../../lib/domain.js";
 
   let { url, crop = null, onChange, filter = "none", fitMaxH = "" } = $props();
 
@@ -139,7 +140,7 @@
   bind:this={wrap}
   style={wrapStyle}
   role="application"
-  aria-label="Crop area"
+  aria-label={t("cbCropArea")}
   onpointerdown={wrapDown}
   onpointermove={drag}
   onpointerup={release}
@@ -163,15 +164,15 @@
       style="left:{box.x}px; top:{box.y}px; width:{box.w}px; height:{box.h}px"
       onpointerdown={(e) => begin(e, "move")}
       role="application"
-      aria-label="Crop area"
+      aria-label={t("cbCropArea")}
     >
-      <div class="handle h-nw" role="button" tabindex="-1" aria-label="Resize top-left" onpointerdown={(e) => { e.stopPropagation(); begin(e, "nw"); }}></div>
-      <div class="handle h-ne" role="button" tabindex="-1" aria-label="Resize top-right" onpointerdown={(e) => { e.stopPropagation(); begin(e, "ne"); }}></div>
-      <div class="handle h-sw" role="button" tabindex="-1" aria-label="Resize bottom-left" onpointerdown={(e) => { e.stopPropagation(); begin(e, "sw"); }}></div>
-      <div class="handle h-se" role="button" tabindex="-1" aria-label="Resize bottom-right" onpointerdown={(e) => { e.stopPropagation(); begin(e, "se"); }}></div>
-      <div class="handle h-midl" role="button" tabindex="-1" aria-label="Resize left edge" onpointerdown={(e) => { e.stopPropagation(); begin(e, "midl"); }}></div>
-      <div class="handle h-midt" role="button" tabindex="-1" aria-label="Resize top edge" onpointerdown={(e) => { e.stopPropagation(); begin(e, "midt"); }}></div>
-      <div class="handle h-midr" role="button" tabindex="-1" aria-label="Resize right edge" onpointerdown={(e) => { e.stopPropagation(); begin(e, "midr"); }}></div>
+      <div class="handle h-nw" role="button" tabindex="-1" aria-label={t("resizeTL")} onpointerdown={(e) => { e.stopPropagation(); begin(e, "nw"); }}></div>
+      <div class="handle h-ne" role="button" tabindex="-1" aria-label={t("resizeTR")} onpointerdown={(e) => { e.stopPropagation(); begin(e, "ne"); }}></div>
+      <div class="handle h-sw" role="button" tabindex="-1" aria-label={t("resizeBL")} onpointerdown={(e) => { e.stopPropagation(); begin(e, "sw"); }}></div>
+      <div class="handle h-se" role="button" tabindex="-1" aria-label={t("resizeBR")} onpointerdown={(e) => { e.stopPropagation(); begin(e, "se"); }}></div>
+      <div class="handle h-midl" role="button" tabindex="-1" aria-label={t("resizeLeft")} onpointerdown={(e) => { e.stopPropagation(); begin(e, "midl"); }}></div>
+      <div class="handle h-midt" role="button" tabindex="-1" aria-label={t("resizeTop")} onpointerdown={(e) => { e.stopPropagation(); begin(e, "midt"); }}></div>
+      <div class="handle h-midr" role="button" tabindex="-1" aria-label={t("resizeRight")} onpointerdown={(e) => { e.stopPropagation(); begin(e, "midr"); }}></div>
     </div>
   {/if}
 </div>

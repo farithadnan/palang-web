@@ -126,7 +126,7 @@
 <div
   class="samplewrap"
   role="application"
-  aria-label="Interactive Palang sample document"
+  aria-label={t("sdAria")}
 >
   <canvas
     bind:this={canvas}
@@ -137,8 +137,8 @@
   ></canvas>
   <div class="sampletools">
     <button type="button" class="btn btn-sm btn-ghost" onclick={rotate}>↻ 15°</button>
-    <button type="button" class="btn btn-sm btn-ghost" aria-label="Smaller" onclick={() => grow(-0.2)}>−</button>
-    <button type="button" class="btn btn-sm btn-ghost" aria-label="Bigger" onclick={() => grow(0.2)}>+</button>
+    <button type="button" class="btn btn-sm btn-ghost" aria-label={t("sdSmaller")} onclick={() => grow(-0.2)}>−</button>
+    <button type="button" class="btn btn-sm btn-ghost" aria-label={t("sdBigger")} onclick={() => grow(0.2)}>+</button>
   </div>
 </div>
 

@@ -23,7 +23,9 @@ const DICT = {
 
     consentBefore: "Before you start:",
     consentHosted:
-      "You are on the developer-hosted instance (palang.oh-alam.my). The app is served from a server, but every document you add is processed on this device — the server never sees it. The network panel will show only the version check and app files.",
+      "You are on the official instance ({url}). The app is served from a server, but every document you add is processed on this device — the server never sees it. The network panel will show only the version check and app files.",
+    consentThird:
+      "You are on a copy hosted by a third party. The app is served from a server, but every document you add is processed on this device — the server never sees it. The network panel will show only the version check and app files.",
     consentSelf:
       "You are running your own copy — locally, on your own server, or as an installed app. Every document is processed on this device and nothing is ever sent anywhere.",
     consentAgree: "I understand and agree",
@@ -91,6 +93,8 @@ const DICT = {
     proveIt: "Prove it yourself",
     proveHosted:
       "Open the app, process a document, then open Network activity in the footer — the panel lists every request the app makes. On this hosted instance you will only ever see the version check and static app files: nothing about your documents leaves this device.",
+    proveThird:
+      "Open the app, process a document, then open Network activity in the footer — the panel lists every request the app makes. On this third-party copy you will only ever see the version check and static app files: nothing about your documents leaves this device.",
     proveSelf:
       "Open the app, process a document, then open Network activity in the footer — the panel lists every request the app makes. On your own copy the list stays empty: nothing is ever sent anywhere.",
     verify: "Verify",
@@ -108,7 +112,7 @@ const DICT = {
     devWebLink:
       "2 · palang-web — the app (Svelte 5)",
     devWebBody:
-      "The Svelte 5 app. Its engine (pdf-lib) runs in the browser, so development needs no server. VITE_MODE=app builds the tools without the landing page.",
+      "The Svelte 5 app. Its engine (pdf-lib) runs in the browser, so development needs no server. npm run build:app builds the tools without the landing page.",
     devDocker:
       "3 · Host it with Docker (app + engine)",
     devDockerBody:
@@ -120,6 +124,100 @@ const DICT = {
 
     convertLabel: "Convert to PDF",
     mergeLabel: "Merge PDFs",
+
+    // ---- Tool views (Convert / Palang / Merge) ----
+    cancel: "Cancel",
+    pagePrev: "Previous page",
+    pageNext: "Next page",
+
+    cvTitle: "Convert images to PDF",
+    cvIntro:
+      "Turn one or more photos or scans into a single PDF. Each photo becomes one page, and you can crop or enhance each one on its own.",
+    cvChoose: "Choose images to convert",
+    cvPageOwn: "Each photo becomes a full page at its own size.",
+    cvPageFit: "Each photo becomes one page in this size — the thumbnails show the proportion.",
+    cvPaperSize: "Paper size",
+    cvImprove: "Improve quality",
+    cvImproveHint:
+      "Sharpen and boost contrast, good for scans. The preview is approximate — the final enhance runs in the browser when you convert.",
+    cvEmpty: "No photos added yet",
+    cvPrev: "Previous photo",
+    cvNext: "Next photo",
+    cvRemoveConfirm: "Remove this photo from the list? This cannot be undone.",
+    cvSaved: "Saved — the photo now shows what was applied.",
+    cvUndone: "Undone — back to the original photo.",
+    cvReplaced: "File replaced.",
+
+    mgIntro:
+      "Combine several PDFs into one, in the order you choose. The preview shows the whole merged output — page through every file.",
+    mgChoose: "Choose PDFs to merge",
+    mgPickHint: "Pick the files — the result follows the order in the list, which you can rearrange",
+    mgEmpty: "No PDFs added yet",
+    mgAddMore: "Add more PDFs",
+    mgRendering: "Rendering page",
+    mgNoPreview: "This page can't be previewed — it will still be merged as-is.",
+    mgPrevUnavail: "preview unavailable",
+    mgSummary: "{n} PDF{s} → one file",
+
+    plTitle: "Add a palang watermark",
+    plChoose: "Choose a document to stamp",
+    plEmpty: "No document added yet",
+    plTapHint: "Tap a file to position the marking",
+    plPosTitle: "Position your marking",
+    plPreparing: "Preparing document",
+    plPreparingEll: "Preparing…",
+    plStillPreparing: "Still preparing your document… large files can take a little longer.",
+    plReady: "Marking ready",
+    plStamp: "Stamp PDF",
+    plWorking: "Working…",
+    plReadyToast: "Marking ready — stamp the PDF when you're done.",
+    plChooseOther: "Choose another file",
+    plTryAgain: "Try again",
+    plUnable: "Unable to prepare this document. It may be too large or unsupported.",
+
+    basketAddMore: "Add more files",
+    basketChoose: "Choose files",
+    basketAdd: "Add",
+    basketEdit: "Edit",
+    basketRemove: "Remove",
+    olUp: "Move up",
+    olDown: "Move down",
+    olEmpty: "Nothing here yet.",
+    specColour: "Colour",
+    specPurpose: "Purpose text",
+    tabsAria: "Tools",
+    cbCropArea: "Crop area",
+    resizeTL: "Resize top-left",
+    resizeTR: "Resize top-right",
+    resizeBL: "Resize bottom-left",
+    resizeBR: "Resize bottom-right",
+    resizeLeft: "Resize left edge",
+    resizeRight: "Resize right edge",
+    resizeTop: "Resize top edge",
+    resizeBottom: "Resize bottom edge",
+    pcPagePreview: "Page preview",
+    pcPageSurface: "Page preview surface",
+    pcLine: "Palang line marking",
+    pcMarking: "Palang marking",
+    pcReset: "Reset marking position to the middle",
+    pcRotate: "Rotate the marking",
+    pcScale: "Scale the marking",
+    pcWhole: "Show the whole image",
+    pcResizeH: "Resize marking height",
+
+    sdBigger: "Bigger",
+    sdSmaller: "Smaller",
+    sdAria: "Interactive Palang sample document",
+
+    msgMaxImages: "Maximum {n} photos per session.",
+    msgOverMb: "{name} is over the {n} MB limit.",
+    msgMaxFiles: "Maximum {n} files per document.",
+    msgOverflow: "More than {n} pages — the overflow was dropped.",
+    msgAddFirst: "Add the files you want to process first.",
+    msgAgreeHosted:
+      "Tick the agreement first: your files are processed on this device and the server never sees them.",
+    msgAgreeSelf: "Tick the agreement first: your files are processed on this device and never leave it.",
+    msgPurpose: "Add the purpose text for the bar.",
 
     seeItLive: "See it live",
     sampleHint: "Drag the palang band onto the sample document — this is exactly how the editor feels.",
@@ -170,7 +268,9 @@ const DICT = {
 
     consentBefore: "Sebelum anda mula:",
     consentHosted:
-      "Anda berada di instance yang dihoskan oleh pembangun (palang.oh-alam.my). App itu dihidangkan dari pelayan, tetapi setiap dokumen yang anda tambah diproses pada peranti ini — pelayan tidak pernah melihatnya. Panel rangkaian hanya akan menunjukkan semakan versi dan fail app.",
+      "Anda berada di instance rasmi ({url}). App dihidangkan dari pelayan, tetapi setiap dokumen yang anda tambah diproses pada peranti ini — pelayan tidak pernah melihatnya. Panel rangkaian hanya akan menunjukkan semakan versi dan fail app.",
+    consentThird:
+      "Anda berada di salinan yang dihoskan oleh pihak ketiga. App dihidangkan dari pelayan, tetapi setiap dokumen yang anda tambah diproses pada peranti ini — pelayan tidak pernah melihatnya. Panel rangkaian hanya akan menunjukkan semakan versi dan fail app.",
     consentSelf:
       "Anda menjalankan salinan anda sendiri — secara tempatan, di pelayan anda sendiri, atau sebagai app yang dipasang. Setiap dokumen diproses pada peranti ini dan tiada apa-apa yang dihantar ke mana-mana.",
     consentAgree: "Saya faham dan bersetuju",
@@ -238,6 +338,8 @@ const DICT = {
     proveIt: "Buktikan sendiri",
     proveHosted:
       "Buka app, proses satu dokumen, kemudian buka Aktiviti rangkaian di kaki halaman — panel menyenaraikan setiap permintaan yang dibuat oleh app. Pada instance yang dihoskan ini, anda hanya akan melihat semakan versi dan fail statik app: tiada apa-apa tentang dokumen anda yang meninggalkan peranti ini.",
+    proveThird:
+      "Buka app, proses satu dokumen, kemudian buka Aktiviti rangkaian di kaki halaman — panel menyenaraikan setiap permintaan yang dibuat oleh app. Pada salinan pihak ketiga ini, anda hanya akan melihat semakan versi dan fail statik app: tiada apa-apa tentang dokumen anda yang meninggalkan peranti ini.",
     proveSelf:
       "Buka app, proses satu dokumen, kemudian buka Aktiviti rangkaian di kaki halaman — panel menyenaraikan setiap permintaan yang dibuat oleh app. Pada salinan anda sendiri, senarai kekal kosong: tiada apa-apa dihantar ke mana-mana.",
     verify: "Semak",
@@ -255,7 +357,7 @@ const DICT = {
     devWebLink:
       "2 · palang-web — app (Svelte 5)",
     devWebBody:
-      "App Svelte 5. Enjinnya (pdf-lib) berjalan dalam pelayar, jadi pembangunan tidak memerlukan pelayan. VITE_MODE=app membina alatan tanpa laman landing.",
+      "App Svelte 5. Enjinnya (pdf-lib) berjalan dalam pelayar, jadi pembangunan tidak memerlukan pelayan. npm run build:app membina alatan tanpa laman landing.",
     devDocker:
       "3 · Hoskan dengan Docker (app + enjin)",
     devDockerBody:
@@ -267,6 +369,100 @@ const DICT = {
 
     convertLabel: "Tukar ke PDF",
     mergeLabel: "Gabung PDF",
+
+    // ---- Paparan alatan (Tukar / Palang / Gabung) ----
+    cancel: "Batal",
+    pagePrev: "Halaman sebelumnya",
+    pageNext: "Halaman seterusnya",
+
+    cvTitle: "Tukar imej kepada PDF",
+    cvIntro:
+      "Tukar satu atau lebih foto atau imej imbasan kepada satu PDF. Setiap foto menjadi satu halaman, dan anda boleh potong atau cerahkan setiap satu secara berasingan.",
+    cvChoose: "Pilih imej untuk ditukar",
+    cvPageOwn: "Setiap foto menjadi satu halaman penuh pada saiz asalnya.",
+    cvPageFit: "Setiap foto menjadi satu halaman dalam saiz ini — thumbnail menunjukkan perkadaran.",
+    cvPaperSize: "Saiz kertas",
+    cvImprove: "Tingkatkan kualiti",
+    cvImproveHint:
+      "Tajamkan dan cerahkan kontras, sesuai untuk imbasan. Pratonton adalah anggaran — pencerahan akhir berjalan dalam pelayar semasa anda menukar.",
+    cvEmpty: "Belum ada foto ditambah",
+    cvPrev: "Foto sebelumnya",
+    cvNext: "Foto seterusnya",
+    cvRemoveConfirm: "Buang foto ini dari senarai? Tindakan ini tidak boleh dibatalkan.",
+    cvSaved: "Disimpan — foto kini menunjukkan apa yang digunakan.",
+    cvUndone: "Dibatalkan — kembali ke foto asal.",
+    cvReplaced: "Fail diganti.",
+
+    mgIntro:
+      "Gabungkan beberapa PDF menjadi satu, mengikut urutan pilihan anda. Pratonton menunjukkan keseluruhan output gabungan — lihat setiap halaman setiap fail.",
+    mgChoose: "Pilih PDF untuk digabung",
+    mgPickHint: "Pilih fail — hasil mengikut susunan dalam senarai, yang boleh anda susun semula",
+    mgEmpty: "Belum ada PDF ditambah",
+    mgAddMore: "Tambah lebih PDF",
+    mgRendering: "Memaparkan halaman",
+    mgNoPreview: "Halaman ini tidak dapat dipratonton — ia tetap akan digabung seperti asal.",
+    mgPrevUnavail: "pratonton tidak tersedia",
+    mgSummary: "{n} PDF → satu fail",
+
+    plTitle: "Tambah tanda palang",
+    plChoose: "Pilih dokumen untuk dicap",
+    plEmpty: "Belum ada dokumen ditambah",
+    plTapHint: "Ketik fail untuk meletakkan tanda",
+    plPosTitle: "Letakkan tanda anda",
+    plPreparing: "Menyediakan dokumen",
+    plPreparingEll: "Menyediakan…",
+    plStillPreparing: "Masih menyediakan dokumen anda… fail besar mungkin mengambil masa lebih lama.",
+    plReady: "Tanda sedia",
+    plStamp: "Cap PDF",
+    plWorking: "Sedang…",
+    plReadyToast: "Tanda sedia — cap PDF apabila anda selesai.",
+    plChooseOther: "Pilih fail lain",
+    plTryAgain: "Cuba lagi",
+    plUnable: "Tidak dapat menyediakan dokumen ini. Ia mungkin terlalu besar atau tidak disokong.",
+
+    basketAddMore: "Tambah lebih fail",
+    basketChoose: "Pilih fail",
+    basketAdd: "Tambah",
+    basketEdit: "Sunting",
+    basketRemove: "Buang",
+    olUp: "Naikkan",
+    olDown: "Turunkan",
+    olEmpty: "Tiada apa-apa lagi.",
+    specColour: "Warna",
+    specPurpose: "Teks tujuan",
+    tabsAria: "Alatan",
+    cbCropArea: "Kawasan potong",
+    resizeTL: "Ubah saiz kiri atas",
+    resizeTR: "Ubah saiz kanan atas",
+    resizeBL: "Ubah saiz kiri bawah",
+    resizeBR: "Ubah saiz kanan bawah",
+    resizeLeft: "Ubah saiz tepi kiri",
+    resizeRight: "Ubah saiz tepi kanan",
+    resizeTop: "Ubah saiz tepi atas",
+    resizeBottom: "Ubah saiz tepi bawah",
+    pcPagePreview: "Pratonton halaman",
+    pcPageSurface: "Permukaan pratonton halaman",
+    pcLine: "Tanda garisan palang",
+    pcMarking: "Tanda palang",
+    pcReset: "Tetapkan semula tanda ke tengah",
+    pcRotate: "Putar tanda",
+    pcScale: "Skala tanda",
+    pcWhole: "Tunjukkan keseluruhan imej",
+    pcResizeH: "Ubah saiz ketinggian tanda",
+
+    sdBigger: "Besar",
+    sdSmaller: "Kecil",
+    sdAria: "Dokumen sampel palang interaktif",
+
+    msgMaxImages: "Maksimum {n} foto setiap sesi.",
+    msgOverMb: "{name} melebihi had {n} MB.",
+    msgMaxFiles: "Maksimum {n} fail setiap dokumen.",
+    msgOverflow: "Lebih daripada {n} halaman — lebihan digugurkan.",
+    msgAddFirst: "Tambah fail yang anda mahu proses terlebih dahulu.",
+    msgAgreeHosted:
+      "Tandakan persetujuan dahulu: fail anda diproses pada peranti ini dan pelayan tidak pernah melihatnya.",
+    msgAgreeSelf: "Tandakan persetujuan dahulu: fail anda diproses pada peranti ini dan tidak pernah keluar daripadanya.",
+    msgPurpose: "Tambah teks tujuan untuk bar.",
 
     seeItLive: "Cuba lihat sendiri",
     sampleHint: "Seret jalur palang pada dokumen contoh — beginilah rasa editor sebenar.",
@@ -301,21 +497,7 @@ const DICT = {
   },
 };
 
-/** Whether this instance is served from a remote host (the developer's live
- *  site) as opposed to a self-hosted/local copy. Processing is on-device in
- *  both cases; this only changes the honesty of the network claims. Override
- *  with ?mode=hosted|self for testing. */
-export const hosted = detectHosted();
-
-function detectHosted() {
-  if (typeof location === "undefined") return false;
-  const mode = new URLSearchParams(location.search).get("mode");
-  if (mode === "hosted") return true;
-  if (mode === "self") return false;
-  if (location.protocol === "file:") return false;
-  const h = location.hostname;
-  return !(h === "" || h === "localhost" || h === "127.0.0.1" || h.endsWith(".local"));
-}
+export { hostUrl, deployKind } from "./site-config.js";
 
 export function t(key, vars) {
   const table = DICT[app.lang] ?? DICT.en;

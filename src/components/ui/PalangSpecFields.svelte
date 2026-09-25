@@ -1,7 +1,8 @@
 <script>
   /** The palang marking fields: purpose text + colour, one compact row.
    *  Presentational: spec in, patch out. */
-  import Field from "./Field.svelte";
+  import { t } from "../../lib/i18n.js";
+import Field from "./Field.svelte";
 
   let { spec, onChange } = $props();
 
@@ -11,7 +12,7 @@
 </script>
 
 <div class="row palang-fields">
-  <Field label="Purpose text">
+  <Field label={t("specPurpose")}>
     <input
       type="text"
       value={spec.text}
@@ -19,7 +20,7 @@
       placeholder="UNTUK KEGUNAAN BANK SAHAJA"
     />
   </Field>
-  <Field label="Colour">
+  <Field label={t("specColour")}>
     <input type="color" value={spec.color} oninput={(e) => patch({ color: e.currentTarget.value })} />
   </Field>
 </div>
