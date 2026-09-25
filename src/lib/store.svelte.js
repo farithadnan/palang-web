@@ -607,6 +607,7 @@ async function offlineBlob(mode, files) {
       // can be a mix of images and PDFs) — both must copy pages, never be
       // fed to the image embedder (the reported PDF break).
       const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+      const im = app.images.find((x) => x.file === f);
       const compiled = app.compiledFiles.get(f);
       if (compiled && !isPdf) {
         // The photo already carries the baked palang ("second temp") — the
