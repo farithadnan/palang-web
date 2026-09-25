@@ -40,7 +40,8 @@ export const app = $state({
   update: null, // { version } when a newer version.json is published
   lang: initialLang(), // ui language (en | ms)
   network: [],
-  requestAdd: 0, // requests the app has made this session (privacy proof panel)
+  requestAdd: 0,
+  updateFreq: updateFreqDefault(), // requests the app has made this session (privacy proof panel)
   compiledFiles: new Map(), // file -> Blob with the palang baked in ("second temp")
 });
 
@@ -82,6 +83,23 @@ export function setView(view) {
 }
 
 let messageSeq = 0;
+function updateFreqDefault() {
+  try {
+    return (typeof localStorage !== "undefined" && localStorage.getItem("palang-updfreq")) || "daily";
+  } catch {
+    return "daily";
+  }
+}
+
+export function setUpdateFreq(freq) {
+  app.updateFreq = freq;
+  try {
+    localStorage.setItem("palang-updfreq", freq);
+  } catch {
+    /* session only */
+  }
+}
+
 export function requestAdd() {
   app.requestAdd += 1;
 }

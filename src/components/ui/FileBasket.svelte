@@ -36,7 +36,6 @@
     {frameAspect}
     onOpen={onItem}
     onRemove={onRemove}
-    onAdd={() => input?.click()}
   />
 
   <input

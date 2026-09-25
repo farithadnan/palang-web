@@ -9,6 +9,7 @@
   import Landing from "$landing"; // variant switch: stub in app-only builds
   import DevDocs from "./components/DevDocs.svelte"; // full-site builds only (#/docs)
   import AboutView from "./components/AboutView.svelte";
+  import SettingsView from "./components/SettingsView.svelte";
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
@@ -22,6 +23,7 @@
     { id: "palang", label: () => t("palang"), icon: "palang" },
     { id: "merge", label: () => t("mergeLabel"), icon: "merge" },
     { id: "about", label: () => t("about"), icon: "info" },
+    { id: "settings", label: () => t("settings"), icon: "sliders" },
   ];
   const HASH_TO_VIEW = {
     "": "home",
@@ -30,6 +32,7 @@
     palang: "palang",
     merge: "merge",
     about: "about",
+    settings: "settings",
     docs: "docs",
     // The standalone privacy view was folded into the landing section.
     privacy: "home",
@@ -93,12 +96,18 @@
     void checkForUpdate();
     const onShow = () => void checkForUpdate();
     document.addEventListener("visibilitychange", onShow);
-    // Daily auto-check: installed apps have no other update path.
-    const daily = setInterval(() => void checkForUpdate(), 24 * 60 * 60 * 1000);
     return () => {
       document.removeEventListener("visibilitychange", onShow);
-      clearInterval(daily);
     };
+  });
+
+  // Auto update check cadence (Settings page): daily / weekly / off.
+  $effect(() => {
+    const perFreq = { daily: 24 * 3600 * 1000, weekly: 7 * 24 * 3600 * 1000, never: 0 };
+    const ms = perFreq[app.updateFreq] ?? 0;
+    if (!ms) return;
+    const id = setInterval(() => void checkForUpdate(), ms);
+    return () => clearInterval(id);
   });
 </script>
 
@@ -157,6 +166,8 @@
         <MergeView />
       {:else if view === "about"}
         <AboutView />
+      {:else if view === "settings"}
+        <SettingsView />
       {:else if view === "docs"}
         <DevDocs />
       {/if}

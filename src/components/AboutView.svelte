@@ -3,7 +3,7 @@
    *  date + channel, links as icons, update check as a label, and the
    *  language/theme toggles that used to live in the topbar. Presentational. */
   import { APP_VERSION, APP_BUILT_AT, APP_CHANNEL } from "../lib/version.js";
-  import { app, applyUpdate, checkForUpdate, setLang, setTheme } from "../lib/store.svelte.js";
+  import { app, applyUpdate, checkForUpdate } from "../lib/store.svelte.js";
   import { t } from "../lib/i18n.js";
   import Icon from "./ui/Icon.svelte";
 
@@ -68,24 +68,6 @@
       </button>
     {/if}
   </div>
-
-  <h3 class="about-settings-title">{t("aboutSettings")}</h3>
-  <div class="about-settings">
-    <div class="kv">
-      <dt>{t("switchLang")}</dt>
-      <dd>
-        <button type="button" class="seg" class:on={app.lang === "en"} onclick={() => setLang("en")}>EN</button>
-        <button type="button" class="seg" class:on={app.lang === "ms"} onclick={() => setLang("ms")}>BM</button>
-      </dd>
-    </div>
-    <div class="kv">
-      <dt>{t("switchTheme")}</dt>
-      <dd>
-        <button type="button" class="seg" class:on={app.theme === "light"} onclick={() => setTheme("light")}>{t("themeLight")}</button>
-        <button type="button" class="seg" class:on={app.theme === "dark"} onclick={() => setTheme("dark")}>{t("themeDark")}</button>
-      </dd>
-    </div>
-  </div>
 </section>
 
 <style>
@@ -137,20 +119,4 @@
     font-size: 0.95rem;
   }
   .about-update .link:disabled { opacity: 0.6; }
-  .about-settings-title {
-    margin: 1.6rem 0 0.2rem;
-    font-size: 1.02rem;
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 0.5rem;
-  }
-  .seg {
-    border: 1px solid var(--border, rgba(128,128,128,.35));
-    background: transparent;
-    color: var(--text);
-    padding: 0.3rem 0.8rem;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    cursor: pointer;
-  }
-  .seg.on { background: var(--accent, #c9b458); border-color: transparent; color: #111; }
 </style>

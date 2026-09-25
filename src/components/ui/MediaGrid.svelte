@@ -12,7 +12,6 @@
     selectable = true,
     onOpen,
     onRemove,
-    onAdd,
   } = $props();
 
   let selecting = $state(false);
@@ -112,12 +111,6 @@
       <span class="mname">{item.name}</span>
     </button>
   {/each}
-  {#if onAdd}
-    <button type="button" class="mtile mtile-add" aria-label={t("basketAddMore")} onclick={onAdd}>
-      <Icon name="plus" size={26} />
-      <span class="mname">{t("basketAdd")}</span>
-    </button>
-  {/if}
 </div>
 
 {#if selecting}

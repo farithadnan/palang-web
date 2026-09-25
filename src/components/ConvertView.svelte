@@ -6,6 +6,7 @@
   import Select from "./ui/Select.svelte";
   import Checkbox from "./ui/Checkbox.svelte";
   import FileBasket from "./ui/FileBasket.svelte";
+  import FullView from "./ui/FullView.svelte";
   import CropBox from "./ui/CropBox.svelte";
   import Modal from "./ui/Modal.svelte";
   import { PAGE_DIMS, PAGE_SIZES } from "../lib/domain.js";
@@ -22,10 +23,13 @@ import {
     generate,
   } from "../lib/store.svelte.js";
 
-  let editing = $state(null); // image id being edited (modal)
+  let editing = $state(null); // image id being edited (crop/enhance modal)
+  let viewing = $state(null); // image id open in the full-page viewer
+  let viewStart = $state(0);
   let replaceInput = $state(null);
 
   const editingImage = $derived(app.images.find((im) => im.id === editing) ?? null);
+  const viewingImage = $derived(app.images.find((im) => im.id === viewing) ?? null);
 
   const ENHANCE_FILTER = "contrast(1.08) saturate(1.15)"; // matches the modal preview
 
@@ -62,6 +66,20 @@ import {
     }
     e.currentTarget.value = "";
   }
+  function openViewer(id) {
+    viewStart = Math.max(0, app.images.findIndex((im) => im.id === id));
+    viewing = id;
+  }
+
+  function viewerCrop(id) {
+    viewing = null; // the crop/enhance modal takes over (step 3 replaces it)
+    editing = id;
+  }
+
+  function viewerEnhance(id) {
+    const im = app.images.find((x) => x.id === id);
+    if (im) updateImage(id, { enhance: !im.enhance }); // live on/off in the viewer
+  }
 </script>
 
 <div class="panel flat">
@@ -77,7 +95,7 @@ import {
     items={galleryItems}
     frameAspect={app.pageSize !== "fit" ? PAGE_DIMS[app.pageSize]?.w + "/" + PAGE_DIMS[app.pageSize]?.h : ""}
     onRemove={removeImage}
-    onItem={(id) => (editing = id)}
+    onItem={openViewer}
     onPick={addImages}
   />
 
@@ -181,4 +199,15 @@ import {
       <button type="button" class="btn btn-primary" onclick={applyEdit}>Apply &amp; save</button>
     </div>
   </Modal>
+{/if}
+
+{#if viewing !== null && viewingImage}
+  <FullView
+    items={galleryItems}
+    start={viewStart}
+    onClose={() => (viewing = null)}
+    onDelete={removeImage}
+    onCrop={viewerCrop}
+    onEnhance={viewerEnhance}
+  />
 {/if}
