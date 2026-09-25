@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { app, setConsent, setTheme, updateSpec } from "../src/lib/store.svelte.js";
+import { app, setTheme, updateSpec } from "../src/lib/store.svelte.js";
 import { defaultSpec } from "../src/lib/domain.js";
 
 beforeEach(() => {
@@ -27,14 +27,7 @@ describe("updateSpec", () => {
   });
 });
 
-describe("consent and theme", () => {
-  it("setConsent stores the choice", () => {
-    setConsent(true);
-    expect(app.consented).toBe(true);
-    setConsent(false);
-    expect(app.consented).toBe(false);
-  });
-
+describe("theme", () => {
   it("setTheme updates the theme", () => {
     setTheme("dark");
     expect(app.theme).toBe("dark");

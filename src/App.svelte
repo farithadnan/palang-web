@@ -8,10 +8,11 @@
   import Topbar from "./components/ui/Topbar.svelte";
   import Landing from "$landing"; // variant switch: stub in app-only builds
   import DevDocs from "./components/DevDocs.svelte"; // full-site builds only (#/docs)
+  import AboutView from "./components/AboutView.svelte";
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
-  import { app, applyUpdate, checkForUpdate, dismissUpdate, setConsent } from "./lib/store.svelte.js";
+  import { app, applyUpdate, checkForUpdate, dismissUpdate } from "./lib/store.svelte.js";
   import { installNetworkLog } from "./lib/network-log.js";
   import { loadLimits } from "./lib/config.js";
   import { t } from "./lib/i18n.js";
@@ -20,6 +21,7 @@
     { id: "convert", label: () => t("convertLabel"), icon: "convert" },
     { id: "palang", label: () => t("palang"), icon: "palang" },
     { id: "merge", label: () => t("mergeLabel"), icon: "merge" },
+    { id: "about", label: () => t("about"), icon: "info" },
   ];
   const HASH_TO_VIEW = {
     "": "home",
@@ -27,6 +29,7 @@
     convert: "convert",
     palang: "palang",
     merge: "merge",
+    about: "about",
     docs: "docs",
     // The standalone privacy view was folded into the landing section.
     privacy: "home",
@@ -112,11 +115,7 @@
       {#if HAS_LANDING}
         <a href="#home" onclick={(e) => { e.preventDefault(); goHomePrivacy(); }}>{t("privacy")}</a>
       {:else}
-        <a
-          href="#convert"
-          onclick={(e) => { e.preventDefault(); netOpen = !netOpen; }}
-          aria-expanded={netOpen}
-        >{t("networkActivity")}</a>
+        <a href="#/about">{t("about")}</a>
       {/if}
     {/snippet}
   </Topbar>
@@ -153,42 +152,28 @@
         {/each}
       </div>
 
-      {#if !app.consented}
-        <section class="consent">
-          <p>
-            <strong>{t("consentBefore")}</strong> {t("consentBody")}{" "}
-            <button type="button" class="link" onclick={goHomePrivacy}>
-              {t("privacy")}
-            </button>
-          </p>
-          <label class="checkline">
-            <input type="checkbox" onchange={(e) => setConsent(e.currentTarget.checked)} />
-            <span>{t("consentAgree")}</span>
-          </label>
-        </section>
-      {/if}
-
-      {#if view === "convert"}
+    {#if view === "convert"}
         <ConvertView />
       {:else if view === "palang"}
         <PalangView />
       {:else if view === "merge"}
         <MergeView />
+      {:else if view === "about"}
+        <AboutView />
       {:else if view === "docs"}
         <DevDocs />
       {/if}
     </div>
   </div>
 
+  {#if HAS_LANDING}
   <footer class="sitefoot">
     <div class="wrap">
       <button type="button" class="link" onclick={() => (netOpen = !netOpen)} aria-expanded={netOpen}>
         {t("networkActivity")}
       </button>
-      {#if HAS_LANDING}
-        <span class="footdot">·</span>
-        <button type="button" class="link" onclick={goHomePrivacy}>{t("privacy")}</button>
-      {/if}
+      <span class="footdot">·</span>
+      <button type="button" class="link" onclick={goHomePrivacy}>{t("privacy")}</button>
       <span class="footdot">·</span>
       <span>{t("mitLicense")}</span>
       <span class="footdot">·</span>
@@ -198,6 +183,7 @@
       </a>
     </div>
   </footer>
+  {/if}
   {/if}
 </div>
 
@@ -218,7 +204,7 @@
 </div>
 {/if}
 
-{#if netOpen}
+{#if netOpen && HAS_LANDING}
   <aside class="netpanel" role="region" aria-label={t("networkActivity")}>
     <div class="netpanel-head">
       <b>{t("networkActivity")}</b>

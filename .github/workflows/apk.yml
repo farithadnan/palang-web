@@ -22,6 +22,7 @@ jobs:
       - name: Generate + sync the Android platform
         run: |
           npx cap add android
+          npx capacitor-assets generate --android --iconBackgroundColor '#111111'
           npx cap sync android
       - name: Build APK (debug-signed — installable by sideload)
         run: cd android && ./gradlew assembleDebug

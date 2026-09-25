@@ -31,8 +31,6 @@ const DICT = {
     palang: "Palang",
     merge: "Merge",
 
-    consentBefore: "Before you start:",
-    consentAgree: "I understand and agree",
 
     badge: "Offline · Open source · MIT",
     title: "Prepare documents for sharing",
@@ -182,6 +180,17 @@ const DICT = {
     specPurposeHint:
       "The message stamped on the bar, for example \"UNTUK KEGUNAAN BANK SAHAJA\" (for bank use only). The colour is used for the lines and the text — nothing is covered.",
     tabsAria: "Tools",
+    about: "About",
+    aboutTagline: "Prepare documents for sharing — fully on your device.",
+    aboutVersion: "Version",
+    aboutLicense: "License",
+    aboutWebsite: "Website",
+    aboutGithub: "Source",
+    aboutIssues: "Feedback",
+    aboutIssuesLink: "Report an issue on GitHub",
+    aboutCheckUpdate: "Check for updates",
+    aboutChecking: "Checking…",
+    aboutNote: "All processing happens on this device. Nothing is uploaded, nothing is stored on a server.",
     cbCropArea: "Crop area",
     resizeTL: "Resize top-left",
     resizeTR: "Resize top-right",
@@ -210,10 +219,8 @@ const DICT = {
     msgMaxFiles: "Maximum {n} files per document.",
     msgOverflow: "More than {n} pages — the overflow was dropped.",
     msgAddFirst: "Add the files you want to process first.",
-    msgAgreeHosted:
-      "Tick the agreement first: your files are processed on this device and the server never sees them.",
-    msgAgreeSelf: "Tick the agreement first: your files are processed on this device and never leave it.",
     msgPurpose: "Add the purpose text for the bar.",
+    dlReady: "Done — {name} is downloading (check your Downloads folder).",
 
     // ---- Developer guide page (route #/docs) + slim landing dev section ----
     devSlim: "One repository — the app (Svelte 5). Its engine runs in the browser; nothing else ships.",
@@ -303,8 +310,6 @@ const DICT = {
     palang: "Palang",
     merge: "Gabung",
 
-    consentBefore: "Sebelum anda mula:",
-    consentAgree: "Saya faham dan bersetuju",
 
     badge: "Luar talian · Sumber terbuka · MIT",
     title: "Sediakan dokumen untuk dikongsi",
@@ -454,6 +459,17 @@ const DICT = {
     specPurposeHint:
       "Mesej yang dicap pada bar, contohnya \"UNTUK KEGUNAAN BANK SAHAJA\" (untuk kegunaan bank sahaja). Warna digunakan untuk garisan dan teks — tiada apa yang ditutup.",
     tabsAria: "Alatan",
+    about: "Perihal",
+    aboutTagline: "Sediakan dokumen untuk dikongsi — sepenuhnya pada peranti anda.",
+    aboutVersion: "Versi",
+    aboutLicense: "Lesen",
+    aboutWebsite: "Laman web",
+    aboutGithub: "Sumber",
+    aboutIssues: "Maklum balas",
+    aboutIssuesLink: "Laporkan isu di GitHub",
+    aboutCheckUpdate: "Semak kemas kini",
+    aboutChecking: "Menyemak…",
+    aboutNote: "Semua pemprosesan berlaku pada peranti ini. Tiada apa yang dimuat naik, tiada apa yang disimpan pada pelayan.",
     cbCropArea: "Kawasan potong",
     resizeTL: "Ubah saiz kiri atas",
     resizeTR: "Ubah saiz kanan atas",
@@ -482,10 +498,8 @@ const DICT = {
     msgMaxFiles: "Maksimum {n} fail setiap dokumen.",
     msgOverflow: "Lebih daripada {n} halaman — lebihan digugurkan.",
     msgAddFirst: "Tambah fail yang anda mahu proses terlebih dahulu.",
-    msgAgreeHosted:
-      "Tandakan persetujuan dahulu: fail anda diproses pada peranti ini dan pelayan tidak pernah melihatnya.",
-    msgAgreeSelf: "Tandakan persetujuan dahulu: fail anda diproses pada peranti ini dan tidak pernah keluar daripadanya.",
     msgPurpose: "Tambah teks tujuan untuk bar.",
+    dlReady: "Selesai — {name} sedang dimuat turun (semak folder Muat Turun anda).",
 
     seeItLive: "Cuba lihat sendiri",
 

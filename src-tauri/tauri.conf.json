@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Palang",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "identifier": "my.faritadnan.palang",
   "build": {
     "beforeBuildCommand": "npm run build:app",
@@ -16,7 +16,12 @@
         "width": 1080,
         "height": 780,
         "minWidth": 420,
-        "minHeight": 620
+        "minHeight": 620,
+        "icon": [
+          "icons/32x32.png",
+          "icons/128x128.png",
+          "icons/icon.ico"
+        ]
       }
     ],
     "security": {
@@ -26,6 +31,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Farith Adnan",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

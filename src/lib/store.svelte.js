@@ -1,24 +1,15 @@
 /* Module-mode runes store: the single owner of app state and side effects.
    Views read/write `app.*`; components stay presentational. */
 
-import { t, __bindLang, deployKind } from "./i18n.js";
+import { t, __bindLang } from "./i18n.js";
 import { processOffline, compileStampedImage } from "./local-engine.js";
 import { openPdf, renderPdfPage } from "./pdf-preview.js";
 import { LIMITS, loadLimits } from "./config.js";
 import { APP_VERSION } from "./version.js";
 import { defaultSpec, PAGE_DIMS } from "./domain.js";
 
-const CONSENT_KEY = "palang-consent-v1";
 const THEME_KEY = "palang-theme";
 const LANG_KEY = "palang-lang";
-
-function initialConsent() {
-  try {
-    return typeof localStorage !== "undefined" && localStorage.getItem(CONSENT_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
 
 function initialTheme() {
   try {
@@ -49,23 +40,12 @@ export const app = $state({
   update: null, // { version } when a newer version.json is published
   lang: initialLang(), // ui language (en | ms)
   network: [], // requests the app has made this session (privacy proof panel)
-  consented: initialConsent(),
   compiledFiles: new Map(), // file -> Blob with the palang baked in ("second temp")
 });
 
 // i18n reads the language through this getter (never by importing the store),
 // so the store -> i18n import stays one-way and cycle-free.
 __bindLang(() => app.lang);
-
-export function setConsent(agreed) {
-  app.consented = agreed;
-  try {
-    if (agreed) localStorage.setItem(CONSENT_KEY, "1");
-    else localStorage.removeItem(CONSENT_KEY);
-  } catch {
-    /* storage unavailable: consent lasts for this session only */
-  }
-}
 
 export function setTheme(theme) {
   app.theme = theme;
@@ -567,10 +547,6 @@ export async function generate(mode = "convert") {
     flash("error", t("msgAddFirst"));
     return;
   }
-  if (!app.consented) {
-    flash("error", t(deployKind === "self" ? "msgAgreeSelf" : "msgAgreeHosted"));
-    return;
-  }
   if (mode === "palang" && app.spec.armed && app.spec.mode === "band" && !(app.spec.text || "").trim()) {
     flash("error", t("msgPurpose"));
     return;
@@ -593,7 +569,7 @@ export async function generate(mode = "convert") {
     }
     const blob = await offlineBlob(mode, files);
     downloadBlob(blob, filename);
-    flash("ok", "Done. Your file is downloading.");
+    flash("ok", t("dlReady", { name: filename }));
   } catch (err) {
     flash("error", err.message);
   } finally {
@@ -669,7 +645,6 @@ if (typeof window !== "undefined") {
     stepMerge,
     setActivePage,
     applyCompiled,
-    setConsent,
     setTheme,
     setLang,
     generate,
