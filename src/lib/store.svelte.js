@@ -5,7 +5,7 @@ import { processOffline } from "./local-engine.js";
 import { openPdf, renderPdfPage } from "./pdf-preview.js";
 import { LIMITS, loadLimits } from "./config.js";
 import { APP_VERSION } from "./version.js";
-import { defaultSpec, fittedPageSize, PAGE_DIMS } from "./domain.js";
+import { defaultSpec, PAGE_DIMS } from "./domain.js";
 
 const CONSENT_KEY = "palang-consent-v1";
 const THEME_KEY = "palang-theme";
@@ -359,29 +359,19 @@ function isImageFile(file) {
        }
        continue;
      }
-     let w = 0;
-     let h = 0;
      const url = URL.createObjectURL(f);
-     try {
-       const img = await new Promise((resolve, reject) => {
-         const i = new Image();
-         i.onload = () => resolve(i);
-         i.onerror = () => reject(new Error("decode"));
-         i.src = url;
-       });
-       w = img.naturalWidth;
-       h = img.naturalHeight;
-     } catch {
-       /* fall back to A4 for undecodable images */
-     }
-     const rect = w && h ? fittedPageSize(w, h, size.w, size.h) : { w: size.w, h: size.h };
+     // The page box is the FULL chosen page (like the output PDF, where the
+     // photo is fitted and centred inside it). The canvas computes the
+     // letterbox margin itself and shifts the emitted points by it — using
+     // the fitted rect instead would drop the margin and the marking would
+     // land ~half a letterbox too high in the output (the reported bug).
      pages.push({
        kind: "img",
        file: f,
        page: pages.length + 1,
        url,
-       w: Math.round(rect.w),
-       h: Math.round(rect.h),
+       w: Math.round(size.w),
+       h: Math.round(size.h),
        loading: false,
        err: false,
      });
@@ -573,12 +563,15 @@ async function offlineBlob(mode, files) {
       const bytes = await f.arrayBuffer();
       const mime = f.type || "image/jpeg";
       const im = app.images.find((x) => x.file === f);
-      const pdf = app.pdfs.find((x) => x.file === f);
+      // PDFs come from the merge basket OR the palang basket (previewFiles
+      // can be a mix of images and PDFs) — both must copy pages, never be
+      // fed to the image embedder (the reported PDF break).
+      const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
       return {
         bytes: () => Promise.resolve(bytes),
         mime,
         setting: im ? { enhance: im.enhance, crop: im.crop } : null,
-        isPdf: !!pdf,
+        isPdf,
       };
     })
   );

@@ -122,6 +122,23 @@ export function rotatedPalangBox(w, h, rotation) {
   return { w: w * cos + h * sin, h: w * sin + h * cos };
 }
 
+/** Where a stamp drawn at visual offsets (leftPt, topPt, visual box w×h)
+ *  lands in a page's USER space. The preview works in visual space (pdf.js
+ *  applies the page's /Rotate); pdf-lib draws in unrotated user space, so a
+ *  page rotated 90/180/270 swaps/mirrors the rect. Pure + exported for tests. */
+export function palangDrawRect(pageW, pageH, pageRot, leftPt, topPt, w, h) {
+  const rot = ((pageRot % 360) + 360) % 360;
+  // Derived from pdf.js's viewport transforms (user→visual, y-down):
+  //   rot 0:  vx=ux,      vy=H-uy
+  //   rot 90: vx=uy,      vy=ux
+  //   rot180: vx=W-ux,    vy=uy
+  //   rot270: vx=H-uy,    vy=W-ux
+  if (rot === 0) return { x: leftPt, y: pageH - topPt - h, width: w, height: h };
+  if (rot === 90) return { x: topPt, y: leftPt, width: h, height: w };
+  if (rot === 180) return { x: pageW - leftPt - w, y: topPt, width: w, height: h };
+  return { x: pageW - topPt - h, y: pageH - leftPt - w, width: h, height: w }; // 270
+}
+
 function textWidthApprox(text, fontPt) {
   if (!text) return fontPt * 2;
   return text.length * fontPt * 0.84;
@@ -152,16 +169,20 @@ export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
   if (spec?.armed && images.length + pdfs.length > 0) {
     const palang = await renderPalang(spec, page);
     const png = await doc.embedPng(palang.bytes);
-    // Anchor by the band's CENTRE, exactly like the preview: the editor
-    // rotates the band around its frame centre, so the rotated PNG must be
-    // drawn centred on that same point — anchoring a rotated box at the
-    // unrotated corner drifts it by (rw-w)/2, (rh-h)/2 (the reported bug).
-    const cx = (spec.leftPt ?? (page.w - palang.w) / 2) + palang.w / 2;
-    const cy = (spec.topPt ?? (page.h - palang.h) / 2) + palang.h / 2;
     const w = palang.rw;
     const h = palang.rh;
     for (const p of doc.getPages()) {
-      p.drawImage(png, { x: cx - w / 2, y: page.h - cy - h / 2, width: w, height: h });
+      // Each page has its OWN size: image pages were fitted to the chosen
+      // page size, but pages copied from a source PDF keep their native
+      // geometry (Letter, landscape, photo-size…) — stamp coordinates must
+      // use the actual page, or the marking drifts (the reported bug).
+      const { width: pw, height: ph } = p.getSize();
+      const cx = (spec.leftPt ?? (pw - palang.w) / 2) + palang.w / 2;
+      const cy = (spec.topPt ?? (ph - palang.h) / 2) + palang.h / 2;
+      // Visual space (what the preview shows, pdf.js applies /Rotate) →
+      // user space (pdf-lib draws unrotated): rotation-aware mapping.
+      const rect = palangDrawRect(pw, ph, p.getRotation().angle, cx - w / 2, cy - h / 2, w, h);
+      p.drawImage(png, rect);
     }
   }
 
