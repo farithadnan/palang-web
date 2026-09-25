@@ -1,7 +1,7 @@
 /* Module-mode runes store: the single owner of app state and side effects.
    Views read/write `app.*`; components stay presentational. */
 
-import { t, deployKind } from "./i18n.js"; // lazy use only — i18n imports `app` from here (cycle is safe)
+import { t, __bindLang, deployKind } from "./i18n.js";
 import { processOffline, compileStampedImage } from "./local-engine.js";
 import { openPdf, renderPdfPage } from "./pdf-preview.js";
 import { LIMITS, loadLimits } from "./config.js";
@@ -52,6 +52,10 @@ export const app = $state({
   consented: initialConsent(),
   compiledFiles: new Map(), // file -> Blob with the palang baked in ("second temp")
 });
+
+// i18n reads the language through this getter (never by importing the store),
+// so the store -> i18n import stays one-way and cycle-free.
+__bindLang(() => app.lang);
 
 export function setConsent(agreed) {
   app.consented = agreed;

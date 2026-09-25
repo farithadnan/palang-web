@@ -3,6 +3,7 @@
    *  band rendered the same way the editor draws it (two accent lines +
    *  centred text). The band is draggable; Rotate and +/− resize it — a
    *  taster of the real editor. No props → local state is safe here. */
+  import { t } from "../lib/i18n.js";
   let canvas;
   let band = $state({ x: 0.2, y: 0.42, w: 0.6, h: 0.09, rot: 0, size: 1 });
   let dragging = $state(false);

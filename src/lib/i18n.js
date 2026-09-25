@@ -1,9 +1,19 @@
 /**
- * Minimal i18n: flat key dictionaries for en + ms, read through the store's
- * reactive `lang` so templates re-render on switch. Missing keys fall back
- * to the English value, so a key left untranslated never renders garbage.
+ * Minimal i18n: flat key dictionaries for en + ms, read through a language
+ * source bound by the store (see __bindLang). Templates read t() during
+ * render, so reading the reactive lang through the getter keeps re-rendering
+ * working on switch. Missing keys fall back to the English value, so a key
+ * left untranslated never renders garbage.
+ *
+ * Deliberately imports NOTHING from the store: the store imports t() from
+ * here for its toasts, so i18n must stay cycle-free (a store <-> i18n cycle
+ * breaks in the bundled module order with "t is not defined" at boot).
  */
-import { app } from "./store.svelte.js";
+let langOf = () => "ms";
+/** Store-only: bind the reactive language getter (called once at store init). */
+export function __bindLang(get) {
+  langOf = get;
+}
 
 const DICT = {
   en: {
@@ -500,7 +510,7 @@ const DICT = {
 export { hostUrl, deployKind } from "./site-config.js";
 
 export function t(key, vars) {
-  const table = DICT[app.lang] ?? DICT.en;
+  const table = DICT[langOf()] ?? DICT.en;
   let text = table[key] ?? DICT.en[key] ?? key;
   if (vars) {
     for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, String(v));

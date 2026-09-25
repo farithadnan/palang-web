@@ -1,5 +1,6 @@
 <script>
   /** Generic ordered list: items [{id,label,sub,first,last}] + move/remove callbacks. */
+  import { t } from "../../lib/i18n.js";
   let { items = [], onMove, onRemove, onSelect, empty = t("olEmpty") } = $props();
 </script>
 

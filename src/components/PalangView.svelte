@@ -1,6 +1,7 @@
 <script>
   /** Palang tab: file basket; tapping a file opens the positioning editor as an
    *  expanded modal (same pattern as Convert's photo editor). */
+  import { t } from "../lib/i18n.js";
   import FileBasket from "./ui/FileBasket.svelte";
   import Modal from "./ui/Modal.svelte";
   import PalangCanvas from "./ui/PalangCanvas.svelte";

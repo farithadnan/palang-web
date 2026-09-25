@@ -1,5 +1,6 @@
 <script>
   /** Generic tab bar. variant: "top" (desktop) | "bottom" (mobile fixed). */
+  import { t } from "../../lib/i18n.js";
   let { items = [], value, onPick, variant = "top" } = $props();
 </script>
 
