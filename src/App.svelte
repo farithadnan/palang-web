@@ -7,6 +7,7 @@
   import Icon from "./components/ui/Icon.svelte";
   import Topbar from "./components/ui/Topbar.svelte";
   import Landing from "$landing"; // variant switch: stub in app-only builds
+  import DevDocs from "./components/DevDocs.svelte"; // full-site builds only (#/docs)
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
@@ -26,6 +27,7 @@
     convert: "convert",
     palang: "palang",
     merge: "merge",
+    docs: "docs",
     // The standalone privacy view was folded into the landing section.
     privacy: "home",
   };
@@ -35,9 +37,10 @@
   function readHash() {
     const hash = (typeof location !== "undefined" ? location.hash : "").replace(/^#\/?/, "");
     const v = HASH_TO_VIEW[hash] ?? "home";
-    // App-only builds: the home route IS the tool. No landing page, no
-    // entry modal - users open the app and land straight in Convert.
-    if (v === "home" && !HAS_LANDING) return "convert";
+    // App-only builds: the home route IS the tool, and there is no docs page.
+    // No landing page, no entry modal - users open the app and land straight
+    // in Convert.
+    if (!HAS_LANDING && (v === "home" || v === "docs")) return "convert";
     return v;
   }
 
@@ -171,6 +174,8 @@
         <PalangView />
       {:else if view === "merge"}
         <MergeView />
+      {:else if view === "docs"}
+        <DevDocs />
       {/if}
     </div>
   </div>

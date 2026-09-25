@@ -113,7 +113,7 @@
       <a href="#how" onclick={(e) => jump("#how", e)}>{t("how")}</a>
       <a href="#privacy" onclick={(e) => jump("#privacy", e)}>{t("privacy")}</a>
       <a href="#faq" onclick={(e) => jump("#faq", e)}>{t("faq")}</a>
-      <a href="#dev" onclick={(e) => jump("#dev", e)}>{t("devTitle")}</a>
+      <a href="#/docs">{t("devTitle")}</a>
     {/snippet}
   </Topbar>
 
@@ -226,31 +226,17 @@
 
   <section class="ld-section" id="dev" data-reveal>
     <h2>{t("devTitle")}</h2>
-    <p class="ld-sub">{t("devSub")}</p>
+    <p class="ld-sub">{t("devSlim")}</p>
 
     <h3><a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("devEngineLink")}</a></h3>
     <p class="ld-plain-note">{t("devEngineBody")}</p>
-    <pre class="ld-code">git clone https://github.com/farithadnan/palang
-cd palang
-uv sync --all-extras --dev
-uv run palang-server   # REST API on http://127.0.0.1:8000</pre>
 
     <h3><a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">{t("devWebLink")}</a></h3>
     <p class="ld-plain-note">{t("devWebBody")}</p>
-    <pre class="ld-code">git clone https://github.com/farithadnan/palang-web
-cd palang-web
-npm install
-npm run dev            # local editor, in-browser engine, no server needed
-npm run build          # full site: landing page + app
-npm run build:app      # app only - no landing page (Docker, APK, EXE)</pre>
 
-    <h3>{t("devDocker")}</h3>
-    <p class="ld-plain-note">{t("devDockerBody")}</p>
-    <pre class="ld-code">cd palang-web
-docker compose up --build   # app + engine on http://localhost:8000</pre>
-
-    <h3>{t("devDeploy")}</h3>
-    <p class="ld-plain-note">{t("devDeployBody")}</p>
+    <p style="margin-top: 1.4rem">
+      <a class="btn btn-sm btn-primary" href="#/docs">{t("devCTA")}</a>
+    </p>
   </section>
 
   <footer class="ld-foot">

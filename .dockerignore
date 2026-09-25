@@ -1,0 +1,14 @@
+# Docker build context hygiene: only what the image needs
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+src-tauri/target/
+android/
+.git/
+.github/
+docs/
+tests/
+*.log
+app-icon.png

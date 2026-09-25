@@ -83,9 +83,16 @@ docker compose build        # rebuild after a palang-web update
 ```
 
 The image builds the **app-only** bundle, installs the reference engine
-(github.com/farithadnan/palang, cloned at build time, never modified), and
-serves the UI from it — the same setup the live site runs. Override the
-operator limits without rebuilding:
+(github.com/farithadnan/palang — pinned to a commit, fetched from its source
+tarball with a build-time secret) and serves the UI from it. While the core
+repo is private, builds need a read token (Contents:Read, fine-grained PAT):
+
+```bash
+CORE_READ_TOKEN=ghp_xxx docker compose build   # private repo
+docker compose build                            # zero-config once it's public
+```
+
+Override the operator limits without rebuilding:
 
 ```bash
 docker run -p 8000:8000 -v ./limits.json:/app/dist/limits.json:ro palang-web
@@ -100,6 +107,13 @@ panel is always available so the no-upload claim stays checkable.
 ## Architecture
 
 Clean separation, mirroring the palang core's layering:
+
+**How the engine and the UI combine.** The web app is fully offline — its
+engine (pdf-lib) runs in the browser, so the UI never calls the Python core.
+The core (`palang`) is the reference implementation + documented REST contract,
+and it also serves the built UI in the server model (`PALANG_WEB_DIST=…/dist
+uv run palang-server`) — which is what the Docker image and the live site use.
+EXE/APK bundles embed only the browser engine; no Python ships inside them.
 
 - `src/lib/domain.js` — pure helpers (spec builders, page-size fit geometry).
   No DOM, no fetch; unit-tested.

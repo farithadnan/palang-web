@@ -114,8 +114,6 @@ const DICT = {
       "Palang places each page onto the page size you chose (A4 by default) and fits the image inside it — the same way banks and offices expect copies. The preview shows exactly this. To fill the page instead, crop the photo or pick a smaller page size.",
 
     devTitle: "For developers",
-    devSub:
-      "Two repositories — the reference engine (Python) and the web app (in-browser engine). One codebase builds two variants: the full site (landing page + app) or the app only, for hosting, Docker, APK and EXE.",
     devEngineLink:
       "1 · palang — reference engine (Python)",
     devEngineBody: "The Python reference implementation and the documented REST contract.",
@@ -123,14 +121,6 @@ const DICT = {
       "2 · palang-web — the app (Svelte 5)",
     devWebBody:
       "The Svelte 5 app. Its engine (pdf-lib) runs in the browser, so development needs no server. npm run build:app builds the tools without the landing page.",
-    devDocker:
-      "3 · Host it with Docker (app + engine)",
-    devDockerBody:
-      "One image: the app-only build served by the engine's server — the same setup as the live site. The engine's standalone image and compose live in the palang repo.",
-    devDeploy:
-      "4 · Host the web app anywhere static",
-    devDeployBody:
-      "The build output (dist/) is plain static files, and processing happens in the visitor's browser — so the app runs free on Vercel, Cloudflare Pages or GitHub Pages. Use the app-only build for hosted instances that should skip the promo page. The live demo at palang.oh-alam.my is the real app hosted this way.",
 
     convertLabel: "Convert to PDF",
     mergeLabel: "Merge PDFs",
@@ -228,6 +218,49 @@ const DICT = {
       "Tick the agreement first: your files are processed on this device and the server never sees them.",
     msgAgreeSelf: "Tick the agreement first: your files are processed on this device and never leave it.",
     msgPurpose: "Add the purpose text for the bar.",
+
+    // ---- Developer guide page (route #/docs) + slim landing dev section ----
+    devSlim: "Two repositories: the reference engine (Python) and the web app (in-browser engine).",
+    devCTA: "Open the developer guide",
+    docTitle: "Developer guide",
+    docRepos: "Repositories",
+    docRepoEngine: "reference engine (Python) — REST contract + the static server for hosted deploys",
+    docRepoWeb: "the app (Svelte 5) — everything runs in the browser",
+    docDev: "Local development",
+    docVariants: "Build variants",
+    docRun: "Run",
+    docShips: "Ships",
+    docVarFull: "landing page + app (the marketing site)",
+    docVarApp: "tools only, no landing page — Docker, EXE, APK, private hosting",
+    docConfig: "Configuration",
+    docConfigBody:
+      "One dotenv source: .env.production holds the committed defaults, .env.local (gitignored) holds your overrides (e.g. a staging domain).",
+    docMode: "?mode=hosted|third|self on any page previews the deployment wording.",
+    docLimits: "Runtime operator caps live in public/limits.json — adjustable without a rebuild.",
+    docEngine: "How the engine and the UI combine",
+    docEngineA:
+      "The web app is fully offline: its engine (pdf-lib) runs in the browser, so the UI never calls the Python engine.",
+    docEngineB:
+      "The Python palang core is the reference implementation + documented REST contract. It can also serve the built UI — the model used by the Docker image and the live site (PALANG_WEB_DIST=…/dist uv run palang-server).",
+    docEngineC: "EXE / APK embed only the browser engine — no Python ships inside them.",
+    docDocker: "Docker",
+    docDockerBody:
+      "One image: the app-only build served by the engine. The core repo is private today — build with a read token (CORE_READ_TOKEN), zero-config once it is public.",
+    docDockerLimits:
+      "Override limits.json without rebuilding: docker run -p 8000:8000 -v ./limits.json:/app/dist/limits.json:ro palang-web",
+    docHosting: "Hosting",
+    docHostingBody:
+      "Both variants are plain static files — they run free on Vercel, Cloudflare Pages or any static host, because all processing happens in the visitor's browser.",
+    docPackaging: "EXE & APK pipeline",
+    docPackBody:
+      "Tag a release and CI builds everything — the workflows run on GitHub Actions (Windows runner for the EXE, Android SDK in CI for the APK), nothing to install locally.",
+    docPackExe: "Windows EXE/MSI via Tauri — published to the GitHub release.",
+    docPackApk: "Android APK via Capacitor — sideloadable debug-signed artifact.",
+    docPlaySign:
+      "Play-Store release needs your keystore wired into the signing config (documented in the README).",
+    docCi: "CI",
+    docCiBody:
+      "CI builds both variants, runs the unit tests, and the packaging workflows run on tags only.",
 
     seeItLive: "See it live",
     sampleHint: "Drag the palang band onto the sample document — this is exactly how the editor feels.",
@@ -359,8 +392,6 @@ const DICT = {
       "Palang meletakkan setiap halaman pada saiz halaman yang anda pilih (A4 secara lalai) dan memuatkan imej di dalamnya — sama seperti yang bank dan pejabat jangkakan. Pratonton menunjukkan perkara ini dengan tepat. Untuk memenuhi halaman, potong foto atau pilih saiz halaman yang lebih kecil.",
 
     devTitle: "Untuk pembangun",
-    devSub:
-      "Dua repositori — enjin rujukan (Python) dan app web (enjin dalam pelayar). Satu kod membina dua varian: laman penuh (landing + app) atau app sahaja, untuk hosting, Docker, APK dan EXE.",
     devEngineLink:
       "1 · palang — enjin rujukan (Python)",
     devEngineBody: "Implementasi rujukan Python dan kontrak REST yang didokumenkan.",
@@ -368,14 +399,6 @@ const DICT = {
       "2 · palang-web — app (Svelte 5)",
     devWebBody:
       "App Svelte 5. Enjinnya (pdf-lib) berjalan dalam pelayar, jadi pembangunan tidak memerlukan pelayan. npm run build:app membina alatan tanpa laman landing.",
-    devDocker:
-      "3 · Hoskan dengan Docker (app + enjin)",
-    devDockerBody:
-      "Satu imej: binaan app sahaja disajikan oleh pelayan enjin — sama seperti laman live. Imej dan compose enjin berasingan ada dalam repo palang.",
-    devDeploy:
-      "4 · Hoskan app web di mana-mana statik",
-    devDeployBody:
-      "Hasil binaan (dist/) ialah fail statik biasa, dan pemprosesan berlaku dalam pelayar pelawat — jadi app berjalan percuma di Vercel, Cloudflare Pages atau GitHub Pages. Guna binaan app sahaja untuk instans yang dihos tanpa halaman promosi. Demo langsung di palang.oh-alam.my ialah app sebenar yang dihoskan begini.",
 
     convertLabel: "Tukar ke PDF",
     mergeLabel: "Gabung PDF",
@@ -475,6 +498,50 @@ const DICT = {
     msgPurpose: "Tambah teks tujuan untuk bar.",
 
     seeItLive: "Cuba lihat sendiri",
+
+    // ---- Halaman panduan pembangun (laluan #/docs) + bahagian dev yang ringkas ----
+    devSlim: "Dua repositori: enjin rujukan (Python) dan app web (enjin dalam pelayar).",
+    devCTA: "Buka panduan pembangun",
+    docTitle: "Panduan pembangun",
+    docRepos: "Repositori",
+    docRepoEngine: "enjin rujukan (Python) — kontrak REST + pelayan statik untuk pengehosan",
+    docRepoWeb: "app (Svelte 5) — semua berjalan dalam pelayar",
+    docDev: "Pembangunan tempatan",
+    docVariants: "Varian binaan",
+    docRun: "Jalankan",
+    docShips: "Dihantar",
+    docVarFull: "laman landing + app (laman pemasaran)",
+    docVarApp: "alatan sahaja, tanpa laman landing — Docker, EXE, APK, pengehosan persendirian",
+    docConfig: "Konfigurasi",
+    docConfigBody:
+      "Satu sumber dotenv: .env.production menyimpan lalai yang dikomit, .env.local (tidak dalam git) untuk overriding anda (cth. domain pentas).",
+    docMode: "?mode=hosted|third|self pada mana-mana halaman mempratonton teks pengehosan.",
+    docLimits: "Had pengendali masa jalan ada dalam public/limits.json — boleh ubah tanpa binaan semula.",
+    docEngine: "Cara enjin dan UI digabungkan",
+    docEngineA:
+      "App web berfungsi sepenuhnya luar talian: enjinnya (pdf-lib) berjalan dalam pelayar, jadi UI tidak pernah memanggil enjin Python.",
+    docEngineB:
+      "Teras palang Python ialah implementasi rujukan + kontrak REST yang didokumenkan. Ia juga boleh menyajikan UI yang dibina — model yang digunakan oleh imej Docker dan laman live (PALANG_WEB_DIST=…/dist uv run palang-server).",
+    docEngineC: "EXE / APK hanya membenam enjin pelayar — tiada Python di dalamnya.",
+    docDocker: "Docker",
+    docDockerBody:
+      "Satu imej: binaan app sahaja disajikan oleh enjin. Repo teras bersifat peribadi buat masa ini — bina dengan token baca (CORE_READ_TOKEN), tanpa konfigurasi bila ia umum.",
+    docDockerLimits:
+      "Ubah limits.json tanpa binaan semula: docker run -p 8000:8000 -v ./limits.json:/app/dist/limits.json:ro palang-web",
+    docHosting: "Pengehosan",
+    docHostingBody:
+      "Kedua-dua varian ialah fail statik biasa — berjalan percuma di Vercel, Cloudflare Pages atau mana-mana hos statik, kerana semua pemprosesan berlaku dalam pelayar pelawat.",
+    docPackaging: "Saluran EXE & APK",
+    docPackBody:
+      "Tag satu release dan CI membina segala-galanya — aliran kerja berjalan di GitHub Actions (runner Windows untuk EXE, SDK Android dalam CI untuk APK), tiada perlu pasang tempatan.",
+    docPackExe: "EXE/MSI Windows melalui Tauri — diterbitkan ke release GitHub.",
+    docPackApk: "APK Android melalui Capacitor — artifak debug-signed boleh dipasang.",
+    docPlaySign:
+      "Release Play Store perlukan keystore anda dalam konfigurasi tanda tangan (didokumenkan dalam README).",
+    docCi: "CI",
+    docCiBody:
+      "CI membina kedua-dua varian, menjalankan ujian unit, dan aliran kerja pembungkusan hanya berjalan pada tag.",
+
     sampleHint: "Seret jalur palang pada dokumen contoh — beginilah rasa editor sebenar.",
     misuseA: "Salinan tanpa palang boleh disalahguna.",
     misuseB: "Bank, pejabat kerajaan dan syarikat lazimnya minta salinan berpalang sebelum apa-apa dikongsi.",
