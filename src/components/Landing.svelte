@@ -232,12 +232,13 @@ uv run palang-server   # REST API on http://127.0.0.1:8000</pre>
 cd palang-web
 npm install
 npm run dev            # local editor, in-browser engine, no server needed
-npm run build          # production build -> dist/</pre>
+npm run build          # full site: landing page + app
+npm run build:app      # app only - no landing page (Docker, APK, EXE)</pre>
 
     <h3>{t("devDocker")}</h3>
     <p class="ld-plain-note">{t("devDockerBody")}</p>
-    <pre class="ld-code">cd palang
-docker compose up --build   # engine server (or: docker build -t palang . && docker run -p 8000:8000 palang)</pre>
+    <pre class="ld-code">cd palang-web
+docker compose up --build   # app + engine on http://localhost:8000</pre>
 
     <h3>{t("devDeploy")}</h3>
     <p class="ld-plain-note">{t("devDeployBody")}</p>

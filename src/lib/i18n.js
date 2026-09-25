@@ -100,20 +100,23 @@ const DICT = {
       "Palang places each page onto the page size you chose (A4 by default) and fits the image inside it — the same way banks and offices expect copies. The preview shows exactly this. To fill the page instead, crop the photo or pick a smaller page size.",
 
     devTitle: "For developers",
-    devSub: "Two repositories — the reference engine (Python) and the web app (in-browser engine). The web app runs fully on the client; a server is optional.",
+    devSub:
+      "Two repositories — the reference engine (Python) and the web app (in-browser engine). One codebase builds two variants: the full site (landing page + app) or the app only, for hosting, Docker, APK and EXE.",
     devEngineLink:
       "1 · palang — reference engine (Python)",
     devEngineBody: "The Python reference implementation and the documented REST contract.",
     devWebLink:
       "2 · palang-web — the app (Svelte 5)",
-    devWebBody: "The Svelte 5 app. Its engine (pdf-lib) runs in the browser, so development needs no server.",
+    devWebBody:
+      "The Svelte 5 app. Its engine (pdf-lib) runs in the browser, so development needs no server. VITE_MODE=app builds the tools without the landing page.",
     devDocker:
-      "3 · Run the engine with Docker (optional)",
-    devDockerBody: "You only need this if you want the Python server, not for the web app.",
+      "3 · Host it with Docker (app + engine)",
+    devDockerBody:
+      "One image: the app-only build served by the engine's server — the same setup as the live site. The engine's standalone image and compose live in the palang repo.",
     devDeploy:
       "4 · Host the web app anywhere static",
     devDeployBody:
-      "The build output (dist/) is plain static files, and processing happens in the visitor's browser — so the app runs free on Vercel, Cloudflare Pages or GitHub Pages. The live demo at palang.oh-alam.my is the real app hosted this way.",
+      "The build output (dist/) is plain static files, and processing happens in the visitor's browser — so the app runs free on Vercel, Cloudflare Pages or GitHub Pages. Use the app-only build for hosted instances that should skip the promo page. The live demo at palang.oh-alam.my is the real app hosted this way.",
 
     convertLabel: "Convert to PDF",
     mergeLabel: "Merge PDFs",
@@ -244,20 +247,23 @@ const DICT = {
       "Palang meletakkan setiap halaman pada saiz halaman yang anda pilih (A4 secara lalai) dan memuatkan imej di dalamnya — sama seperti yang bank dan pejabat jangkakan. Pratonton menunjukkan perkara ini dengan tepat. Untuk memenuhi halaman, potong foto atau pilih saiz halaman yang lebih kecil.",
 
     devTitle: "Untuk pembangun",
-    devSub: "Dua repositori — enjin rujukan (Python) dan app web (enjin dalam pelayar). App web berjalan sepenuhnya pada klien; pelayan adalah pilihan.",
+    devSub:
+      "Dua repositori — enjin rujukan (Python) dan app web (enjin dalam pelayar). Satu kod membina dua varian: laman penuh (landing + app) atau app sahaja, untuk hosting, Docker, APK dan EXE.",
     devEngineLink:
       "1 · palang — enjin rujukan (Python)",
     devEngineBody: "Implementasi rujukan Python dan kontrak REST yang didokumenkan.",
     devWebLink:
       "2 · palang-web — app (Svelte 5)",
-    devWebBody: "App Svelte 5. Enjinnya (pdf-lib) berjalan dalam pelayar, jadi pembangunan tidak memerlukan pelayan.",
+    devWebBody:
+      "App Svelte 5. Enjinnya (pdf-lib) berjalan dalam pelayar, jadi pembangunan tidak memerlukan pelayan. VITE_MODE=app membina alatan tanpa laman landing.",
     devDocker:
-      "3 · Jalankan enjin dengan Docker (pilihan)",
-    devDockerBody: "Anda hanya perlukan ini jika mahu pelayan Python, bukan untuk app web.",
+      "3 · Hoskan dengan Docker (app + enjin)",
+    devDockerBody:
+      "Satu imej: binaan app sahaja disajikan oleh pelayan enjin — sama seperti laman live. Imej dan compose enjin berasingan ada dalam repo palang.",
     devDeploy:
       "4 · Hoskan app web di mana-mana statik",
     devDeployBody:
-      "Hasil binaan (dist/) ialah fail statik biasa, dan pemprosesan berlaku dalam pelayar pelawat — jadi app berjalan percuma di Vercel, Cloudflare Pages atau GitHub Pages. Demo langsung di palang.oh-alam.my ialah app sebenar yang dihoskan begini.",
+      "Hasil binaan (dist/) ialah fail statik biasa, dan pemprosesan berlaku dalam pelayar pelawat — jadi app berjalan percuma di Vercel, Cloudflare Pages atau GitHub Pages. Guna binaan app sahaja untuk instans yang dihos tanpa halaman promosi. Demo langsung di palang.oh-alam.my ialah app sebenar yang dihoskan begini.",
 
     convertLabel: "Tukar ke PDF",
     mergeLabel: "Gabung PDF",

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/make-version.mjs && vite build && node scripts/copy-static.mjs && node scripts/write-manifest.mjs",
+    "build:app": "VITE_MODE=app npm run build",
     "preview": "vite preview",
     "test": "vitest run"
   },

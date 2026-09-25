@@ -1,0 +1,14 @@
+services:
+  palang:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PALANG_HOST=0.0.0.0
+      - PALANG_PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/version.json')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

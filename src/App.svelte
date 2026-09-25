@@ -6,7 +6,7 @@
   import { onMount } from "svelte";
   import Icon from "./components/ui/Icon.svelte";
   import Topbar from "./components/ui/Topbar.svelte";
-  import Landing from "./components/Landing.svelte";
+  import Landing from "$landing"; // variant switch: stub in app-only builds
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
@@ -30,9 +30,15 @@
     privacy: "home",
   };
 
+  const HAS_LANDING = import.meta.env.VITE_MODE !== "app";
+
   function readHash() {
     const hash = (typeof location !== "undefined" ? location.hash : "").replace(/^#\/?/, "");
-    return HASH_TO_VIEW[hash] ?? "home";
+    const v = HASH_TO_VIEW[hash] ?? "home";
+    // App-only builds: the home route IS the tool. No landing page, no
+    // entry modal - users open the app and land straight in Convert.
+    if (v === "home" && !HAS_LANDING) return "convert";
+    return v;
   }
 
   let view = $state(readHash());

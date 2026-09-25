@@ -39,6 +39,19 @@ The build chain stamps `src/lib/version.js` + `public/version.json`
 (update-check manifest), copies pdf.js standard fonts into `dist/`, and writes
 the PWA manifest.
 
+## Build variants
+
+One codebase, two build outputs — the landing page is NOT a separate project.
+
+| Variant | Build | Ships |
+| --- | --- | --- |
+| Full site | `npm run build` | Landing page + app (the marketing site at palang.oh-alam.my) |
+| App only | `VITE_MODE=app npm run build` | Tools only: users open the app and land straight in Convert. The landing page, entry modal and promo copy are tree-shaken out of the bundle — they do not ship at all. |
+
+Use **app only** for Docker, APK, EXE and any third-party hosting where a promo
+page would be noise. The full variant is only needed for the public marketing
+site. CI builds and tests both.
+
 ## Hosting
 
 The build output (`dist/`) is plain static files and processing happens in the
@@ -46,6 +59,28 @@ visitor's browser — so the app runs on any static host (Vercel, Cloudflare
 Pages, GitHub Pages) for free. The live demo is served by the reference
 engine's server (the core repo can serve `dist/` via the `PALANG_WEB_DIST`
 env var), but that is one option, not a requirement.
+
+### Docker (engine + UI in one image)
+
+```bash
+docker compose up -d        # http://localhost:8000
+docker compose build        # rebuild after a palang-web update
+```
+
+The image builds the **app-only** bundle, installs the reference engine
+(github.com/farithadnan/palang, cloned at build time, never modified), and
+serves the UI from it — the same setup the live site runs. Override the
+operator limits without rebuilding:
+
+```bash
+docker run -p 8000:8000 -v ./limits.json:/app/dist/limits.json:ro palang-web
+```
+
+The engine's own image and compose live in the core repo
+(<https://github.com/farithadnan/palang>); this repo's compose adds the UI
+bundle on top. The hosted app is deployment-aware: privacy copy switches
+between "hosted by you / hosted by us" wording, and the Network activity
+panel is always available so the no-upload claim stays checkable.
 
 ## Architecture
 
