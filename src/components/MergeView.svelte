@@ -1,32 +1,43 @@
 <script>
-  /** Merge tab: dropzone + ordered PDF list (tap a row to preview) + an
-   *  embedded preview editor at the bottom — one page rendered at a time,
-   *  so a 1000-page document never triggers bulk work. */
+  /** Merge tab: dropzone + ordered PDF list (tap a row to jump its first
+   *  page) + an embedded preview editor at the bottom. The preview walks the
+   *  WHOLE merged output — every file's pages, in merge order — rendering
+   *  one page at a time, so a 1000-page document never triggers bulk work. */
   import Dropzone from "./ui/Dropzone.svelte";
   import OrderedList from "./ui/OrderedList.svelte";
-  import { app, addPdfs, movePdf, removePdf, selectPdfFile, stepPdfFile, generate } from "../lib/store.svelte.js";
+  import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate } from "../lib/store.svelte.js";
 
   let mergeInput;
+
+  function humanSize(bytes) {
+    return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + " MB" : (bytes / 1024).toFixed(0) + " KB";
+  }
 
   const items = $derived(
     app.pdfs.map((p, i) => ({
       id: p.id,
       label: p.file.name,
-      sub: (p.file.size / 1024).toFixed(0) + " KB",
+      sub: humanSize(p.file.size),
       first: i === 0,
       last: i === app.pdfs.length - 1,
     }))
   );
 
-  const previewPdf = $derived(app.pdfs.find((p) => p.id === app.activePdfId) ?? null);
-  const countLabel = $derived(
-    previewPdf ? (previewPdf.count ?? "…") + " page" + (previewPdf.count === 1 ? "" : "s") : ""
-  );
+  const mergePage = $derived(app.merge.pages?.[app.merge.active] ?? null);
+  const total = $derived(app.merge.pages.length);
+
+  /** Pages of the CURRENT file — "page k of m" context next to "page n of total". */
+  function fileContext() {
+    if (!mergePage) return "";
+    let fileCount = 0;
+    for (const pg of app.merge.pages) if (pg.pdfId === mergePage.pdfId) fileCount++;
+    return mergePage.file.name + " · " + mergePage.page + " of " + fileCount + (mergePage.err ? " · preview unavailable" : "");
+  }
 </script>
 
 <div class="panel">
   <h2>Merge PDFs</h2>
-  <p class="desc">Combine several PDFs into one, in the order you choose. Tap a file in the list to preview it.</p>
+  <p class="desc">Combine several PDFs into one, in the order you choose. The preview shows the whole merged output — page through every file.</p>
 
   {#if !app.pdfs.length}
     <Dropzone
@@ -41,7 +52,7 @@
   {:else}
     <OrderedList
       items={items}
-      onSelect={selectPdfFile}
+      onSelect={selectMergeFile}
       onMove={movePdf}
       onRemove={removePdf}
       empty=""
@@ -50,15 +61,15 @@
       <button type="button" class="btn btn-sm" onclick={() => mergeInput?.click()}>Add more PDFs</button>
     </div>
 
-    {#if previewPdf}
+    {#if mergePage}
       <div class="mrg-editor">
         <div class="mrg-frame">
-          {#if previewPdf.img}
-            <img src={previewPdf.img} alt={"Page " + previewPdf.cur + " of " + previewPdf.file.name} />
-          {:else if previewPdf.loading}
+          {#if mergePage.img || mergePage.url}
+            <img src={mergePage.url} alt={fileContext()} />
+          {:else if mergePage.loading}
             <div class="spinner" role="status" aria-label="Rendering page"></div>
           {:else}
-            <p class="caption">This PDF can&apos;t be previewed — it will still be merged as-is.</p>
+            <p class="caption">This page can&apos;t be previewed — it will still be merged as-is.</p>
           {/if}
         </div>
         <div class="page-stepper">
@@ -66,20 +77,20 @@
             type="button"
             class="btn btn-sm"
             aria-label="Previous page"
-            disabled={!previewPdf.count || previewPdf.cur <= 1}
-            onclick={() => stepPdfFile(previewPdf.id, -1)}
+            disabled={app.merge.active <= 0}
+            onclick={() => stepMerge(-1)}
           >
             ←
           </button>
-          <span class="caption">
-            {previewPdf.file.name} · Page {previewPdf.count ? previewPdf.cur : "…"} of {countLabel}
+          <span class="caption" title={fileContext()}>
+            {fileContext()} — Page {app.merge.active + 1} of {total}
           </span>
           <button
             type="button"
             class="btn btn-sm"
             aria-label="Next page"
-            disabled={!previewPdf.count || previewPdf.cur >= previewPdf.count}
-            onclick={() => stepPdfFile(previewPdf.id, 1)}
+            disabled={app.merge.active >= total - 1}
+            onclick={() => stepMerge(1)}
           >
             →
           </button>

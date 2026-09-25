@@ -219,14 +219,14 @@
     <h2>{t("devTitle")}</h2>
     <p class="ld-sub">{t("devSub")}</p>
 
-    <h3>{t("devEngine")}</h3>
+    <h3><a class="link" href="https://github.com/farithadnan/palang" target="_blank" rel="noopener">{t("devEngineLink")}</a></h3>
     <p class="ld-plain-note">{t("devEngineBody")}</p>
     <pre class="ld-code">git clone https://github.com/farithadnan/palang
 cd palang
 uv sync --all-extras --dev
 uv run palang-server   # REST API on http://127.0.0.1:8000</pre>
 
-    <h3>{t("devWeb")}</h3>
+    <h3><a class="link" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener">{t("devWebLink")}</a></h3>
     <p class="ld-plain-note">{t("devWebBody")}</p>
     <pre class="ld-code">git clone https://github.com/farithadnan/palang-web
 cd palang-web

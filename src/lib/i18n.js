@@ -101,11 +101,11 @@ const DICT = {
 
     devTitle: "For developers",
     devSub: "Two repositories — the reference engine (Python) and the web app (in-browser engine). The web app runs fully on the client; a server is optional.",
-    devEngine:
-      "1 · Reference engine — github.com/farithadnan/palang",
+    devEngineLink:
+      "1 · palang — reference engine (Python)",
     devEngineBody: "The Python reference implementation and the documented REST contract.",
-    devWeb:
-      "2 · Web app — github.com/farithadnan/palang-web",
+    devWebLink:
+      "2 · palang-web — the app (Svelte 5)",
     devWebBody: "The Svelte 5 app. Its engine (pdf-lib) runs in the browser, so development needs no server.",
     devDocker:
       "3 · Run the engine with Docker (optional)",
@@ -245,11 +245,11 @@ const DICT = {
 
     devTitle: "Untuk pembangun",
     devSub: "Dua repositori — enjin rujukan (Python) dan app web (enjin dalam pelayar). App web berjalan sepenuhnya pada klien; pelayan adalah pilihan.",
-    devEngine:
-      "1 · Enjin rujukan — github.com/farithadnan/palang",
+    devEngineLink:
+      "1 · palang — enjin rujukan (Python)",
     devEngineBody: "Implementasi rujukan Python dan kontrak REST yang didokumenkan.",
-    devWeb:
-      "2 · App web — github.com/farithadnan/palang-web",
+    devWebLink:
+      "2 · palang-web — app (Svelte 5)",
     devWebBody: "App Svelte 5. Enjinnya (pdf-lib) berjalan dalam pelayar, jadi pembangunan tidak memerlukan pelayan.",
     devDocker:
       "3 · Jalankan enjin dengan Docker (pilihan)",

@@ -12,6 +12,7 @@
   import MergeView from "./components/MergeView.svelte";
   import { app, applyUpdate, checkForUpdate, dismissUpdate, setConsent } from "./lib/store.svelte.js";
   import { installNetworkLog } from "./lib/network-log.js";
+  import { loadLimits } from "./lib/config.js";
   import { t } from "./lib/i18n.js";
 
   const TOOLS = [
@@ -53,6 +54,10 @@
     entry.seq = (app.network.at(-1)?.seq ?? 0) + 1;
     app.network.push(entry);
   });
+  // Operator flag: limits.json on the host overrides the compiled caps.
+  // Runs after the wrapper is installed, so the request is visible in the
+  // Network activity panel (it is a static app file, like version.json).
+  void loadLimits();
 
   function goHomePrivacy() {
     location.hash = "#/home";

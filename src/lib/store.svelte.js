@@ -3,6 +3,7 @@
 
 import { processOffline } from "./local-engine.js";
 import { openPdf, renderPdfPage } from "./pdf-preview.js";
+import { LIMITS, loadLimits } from "./config.js";
 import { APP_VERSION } from "./version.js";
 import { defaultSpec, fittedPageSize, PAGE_DIMS } from "./domain.js";
 
@@ -41,7 +42,7 @@ export const app = $state({
   previewFiles: [],
   previewLoading: false,
   activePage: 0,
-  activePdfId: null, // merge preview: which PDF is being inspected
+  merge: { pages: [], active: 0 }, // flat ordered page list across all merge PDFs
   busy: false,
   message: null, // { kind: "ok" | "error", text }
   update: null, // { version } when a newer version.json is published
@@ -107,7 +108,16 @@ export function flash(kind, text) {
 let imageSeq = 0;
 
 export function addImages(fileList) {
-  for (const file of fileList) {
+  const room = LIMITS.images - app.images.length;
+  if (room <= 0) {
+    flash("error", `Maximum ${LIMITS.images} photos per session.`);
+    return;
+  }
+  for (const file of fileList.slice(0, room)) {
+    if (file.size > LIMITS.fileMb * 1024 * 1024) {
+      flash("error", `${file.name} is over the ${LIMITS.fileMb} MB limit.`);
+      continue;
+    }
     const url = URL.createObjectURL(file);
     app.images.push({
       id: "img-" + ++imageSeq,
@@ -205,56 +215,52 @@ let pdfSeq = 0;
 
 /** Add PDFs to the merge basket. Page images are NOT rendered here: a
  *  document with 1000+ pages must not trigger bulk work — the preview pane
- *  renders one page at a time via selectPdfFile/stepPdfFile. */
+ *  renders one page at a time (see ensureMergePage). */
 export function addPdfs(fileList) {
-  for (const file of fileList) {
-    app.pdfs.push({
-      id: "pdf-" + ++pdfSeq,
-      file,
-      count: null, // total pages, filled lazily on first preview
-      cur: 1, // page being previewed
-      img: null, // data URL of that page, rendered on demand
-      loading: false,
-      err: false,
-    });
+  const room = LIMITS.files - app.pdfs.length;
+  if (room <= 0) {
+    flash("error", `Maximum ${LIMITS.files} files per document.`);
+    return;
   }
-  if (app.pdfs.length === fileList.length) {
-    // first batch: open the preview on the first file
-    selectPdfFile(app.pdfs[0]?.id);
+  for (const file of fileList.slice(0, room)) {
+    if (file.size > LIMITS.fileMb * 1024 * 1024) {
+      flash("error", `${file.name} is over the ${LIMITS.fileMb} MB limit.`);
+      continue;
+    }
+    app.pdfs.push({ id: "pdf-" + ++pdfSeq, file });
   }
+  void buildMergePreview();
 }
 
-/** Show the merge preview for `id` — lazily parsed, one page at a time. */
-export function selectPdfFile(id) {
-  app.activePdfId = id;
-  const p = app.pdfs.find((x) => x.id === id);
-  if (p) void ensurePdfPage(p);
-}
-
-export function stepPdfFile(id, delta) {
-  const p = app.pdfs.find((x) => x.id === id);
-  if (!p) return;
-  const next = Math.min(Math.max(1, p.cur + delta), p.count ?? 1);
-  if (next === p.cur) return;
-  p.cur = next;
-  void ensurePdfPage(p);
-}
-
-async function ensurePdfPage(p) {
-  if (p.loading || app.activePdfId !== p.id) return;
-  p.loading = true;
-  p.err = false;
-  try {
-    const doc = await openPdf(p.file);
-    p.count = doc.count;
-    const r = await renderPdfPage(doc, p.cur);
-    if (p.cur === r.page) p.img = r.url;
-    p.loading = false;
-  } catch {
-    p.err = true;
-    p.loading = false;
+/** Flatten every PDF into one ordered page list (metadata only — cheap for
+ *  1000+ page files) and render the page being viewed. */
+async function buildMergePreview() {
+  const seq = ++mergePreviewSeq;
+  const pages = [];
+  let cum = 0;
+  for (const p of app.pdfs) {
+    try {
+      const doc = await openPdf(p.file);
+      if (cum + doc.count > LIMITS.pdfPages) {
+        flash("error", `More than ${LIMITS.pdfPages} pages — the overflow was dropped.`);
+        break;
+      }
+      for (let i = 1; i <= doc.count; i++) {
+        pages.push({ pdfId: p.id, file: p.file, page: i, url: null, w: null, h: null, loading: false, err: false });
+      }
+      cum += doc.count;
+    } catch {
+      console.warn("pdf structure failed:", p.file.name);
+      pages.push({ pdfId: p.id, file: p.file, page: 1, url: null, w: null, h: null, loading: false, err: true });
+    }
   }
+  if (seq !== mergePreviewSeq) return;
+  const active = Math.min(app.merge.active, Math.max(0, pages.length - 1));
+  app.merge = { pages, active };
+  void ensureMergePage(active);
 }
+
+let mergePreviewSeq = 0;
 
 export function movePdf(id, delta) {
   const index = app.pdfs.findIndex((p) => p.id === id);
@@ -263,14 +269,51 @@ export function movePdf(id, delta) {
   const tmp = app.pdfs[index];
   app.pdfs[index] = app.pdfs[swap];
   app.pdfs[swap] = tmp;
+  void buildMergePreview();
 }
 
 export function removePdf(id) {
   const index = app.pdfs.findIndex((p) => p.id === id);
   if (index >= 0) app.pdfs.splice(index, 1);
-  if (app.activePdfId === id) {
-    app.activePdfId = app.pdfs[0]?.id ?? null;
-    if (app.activePdfId) void ensurePdfPage(app.pdfs[0]);
+  void buildMergePreview();
+}
+
+/** Step through the WHOLE merged output — across file boundaries. */
+export function stepMerge(delta) {
+  const total = app.merge.pages.length;
+  const next = Math.min(Math.max(0, app.merge.active + delta), Math.max(0, total - 1));
+  if (next === app.merge.active) return;
+  app.merge.active = next;
+  void ensureMergePage(next);
+}
+
+/** Jump the preview to the first page of `id` (list row tap). */
+export function selectMergeFile(id) {
+  const idx = app.merge.pages.findIndex((pg) => pg.pdfId === id);
+  if (idx < 0) return;
+  app.merge.active = idx;
+  void ensureMergePage(idx);
+}
+
+/** Render ONLY the page being viewed (pdf.js, one page at a time). */
+async function ensureMergePage(index) {
+  const entry = app.merge.pages?.[index];
+  if (!entry || entry.err || entry.loading || entry.url) return;
+  if (app.merge.active !== index) return; // only the visible page renders
+  entry.loading = true;
+  try {
+    const doc = await openPdf(entry.file);
+    const r = await renderPdfPage(doc, entry.page);
+    if (app.merge.pages?.[index] === entry && app.merge.active === index) {
+      entry.url = r.url;
+      entry.w = r.width_pt;
+      entry.h = r.height_pt;
+      entry.err = r.placeholder;
+    }
+  } catch {
+    if (app.merge.pages?.[index] === entry) entry.err = true;
+  } finally {
+    if (app.merge.pages?.[index] === entry) entry.loading = false;
   }
 }
 
@@ -295,13 +338,20 @@ function isImageFile(file) {
    const seq = ++previewSeq;
    const pages = [];
    const size = PAGE_DIMS[app.pageSize] ?? PAGE_DIMS.A4;
+   let cumPdf = 0;
    for (const f of files) {
      if (!isImageFile(f)) {
        try {
          const doc = await openPdf(f);
-         for (let i = 1; i <= doc.count; i++) {
+         if (cumPdf + doc.count > LIMITS.pdfPages) {
+           flash("error", `More than ${LIMITS.pdfPages} pages — the overflow was dropped.`);
+           cumPdf = LIMITS.pdfPages;
+         }
+         const until = Math.min(doc.count, LIMITS.pdfPages - cumPdf);
+         for (let i = 1; i <= until; i++) {
            pages.push({ kind: "pdf", file: f, page: i, url: null, w: null, h: null, loading: false, err: false });
          }
+         cumPdf += until;
        } catch (err) {
          // A document that cannot be parsed keeps everything else usable.
          console.warn("pdf structure failed:", err);
@@ -564,8 +614,8 @@ if (typeof window !== "undefined") {
     revertImage,
     updateSpec,
     pickPreviewFiles,
-    selectPdfFile,
-    stepPdfFile,
+    selectMergeFile,
+    stepMerge,
     setActivePage,
     setConsent,
     setTheme,
