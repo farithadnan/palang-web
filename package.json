@@ -7,10 +7,12 @@
     "dev": "vite",
     "build": "node scripts/make-version.mjs && vite build && node scripts/copy-static.mjs && node scripts/write-manifest.mjs",
     "build:app": "node scripts/make-version.mjs && vite build --mode app && node scripts/copy-static.mjs && node scripts/write-manifest.mjs",
+    "tauri": "tauri",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.2",
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "@fontsource-variable/inter": "^5.2.5",
