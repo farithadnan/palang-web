@@ -1,0 +1,26 @@
+name: Package EXE (Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      # tauri-action runs `tauri build` (which runs npm run build:app from
+      # tauri.conf.json) and publishes the EXE/MSI to the release on tags.
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: "Palang v__VERSION__"
+          releaseDraft: true
+          prerelease: false

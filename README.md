@@ -132,11 +132,31 @@ Clean separation, mirroring the palang core's layering:
   privacy copy, and the Network activity panel for self-verification.
 - Downloads use branded, timestamped names (e.g. `palang-stamped-2026-09-24.pdf`).
 
+## Desktop & mobile (EXE / APK)
+
+Same codebase, same app-only bundle, wrapped by [Tauri] (Windows/macOS/Linux
+EXE) and [Capacitor] (Android APK). The build runs in GitHub Actions — tag a
+release (`git tag v0.2.8 && git push --tags`) and the workflows produce:
+
+- **Windows EXE/MSI** — `Package EXE (Windows)` workflow (tauri-action), the
+  EXE+MSI land on the GitHub release.
+- **Android APK** — `Package APK (Android)` workflow, debug-signed APK as a
+  build artifact (sideloadable). Play-Store signing needs a keystore — wire
+  `android/app/build.gradle` signingConfig with your keystore secrets before
+  publishing to the Play Console.
+- The bundle already uses relative asset paths, so the same `dist/` works on
+  http hosts and inside `tauri://`/`capacitor://`.
+
+Local Tauri development needs the Rust toolchain (`cargo tauri dev`). The APK
+always builds in CI (Android SDK + Java are setup there).
+
+[Tauri]: https://tauri.app
+[Capacitor]: https://capacitorjs.com
+
 ## Roadmap
 
 - PWA (installable, offline cache)
-- Android APK (Capacitor) and desktop EXE (Tauri) — same codebase
-- Hosted-downloads list on the landing page
+- Play-Store signing + hosted-downloads list on the landing page
 
 ## License
 

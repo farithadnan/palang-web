@@ -14,6 +14,10 @@ import { fileURLToPath } from "node:url";
 export default defineConfig(({ mode }) => {
   const APP_ONLY = mode === "app";
   return {
+    // Relative asset URLs: the same dist works on http hosts AND embedded in
+    // Tauri (tauri://) / Capacitor (capacitor://) where absolute /assets/ paths
+    // would 404.
+    base: "./",
     plugins: [svelte(), tailwindcss()],
     resolve: {
       alias: {
