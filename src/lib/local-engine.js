@@ -105,8 +105,10 @@ async function renderPalang(spec, pageSize) {
   ctx.fillText(text, ox + (wPt * size) / 2, oy + (hPt * size) / 2);
   return {
     bytes: new Uint8Array(await outToBytes(canvas, "image/png")),
-    w: rwPt,
-    h: rhPt,
+    w: wPt, // unrotated frame (the editor's coordinate space)
+    h: hPt,
+    rw: rwPt, // rotated bounding box — what the PDF must draw
+    rh: rhPt,
   };
 }
 
@@ -150,12 +152,16 @@ export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
   if (spec?.armed && images.length + pdfs.length > 0) {
     const palang = await renderPalang(spec, page);
     const png = await doc.embedPng(palang.bytes);
-    const w = palang.w; // rotated box — the full tilted band, no clipping
-    const h = palang.h;
-    const leftPt = spec.leftPt ?? (page.w - w) / 2;
-    const topPt = spec.topPt ?? (page.h - h) / 2;
+    // Anchor by the band's CENTRE, exactly like the preview: the editor
+    // rotates the band around its frame centre, so the rotated PNG must be
+    // drawn centred on that same point — anchoring a rotated box at the
+    // unrotated corner drifts it by (rw-w)/2, (rh-h)/2 (the reported bug).
+    const cx = (spec.leftPt ?? (page.w - palang.w) / 2) + palang.w / 2;
+    const cy = (spec.topPt ?? (page.h - palang.h) / 2) + palang.h / 2;
+    const w = palang.rw;
+    const h = palang.rh;
     for (const p of doc.getPages()) {
-      p.drawImage(png, { x: leftPt, y: page.h - topPt - h, width: w, height: h });
+      p.drawImage(png, { x: cx - w / 2, y: page.h - cy - h / 2, width: w, height: h });
     }
   }
 
