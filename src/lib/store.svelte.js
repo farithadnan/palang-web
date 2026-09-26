@@ -9,6 +9,7 @@ import { APP_VERSION } from "./version.js";
 import { defaultSpec, PAGE_DIMS } from "./domain.js";
 import { toast } from "./toast.svelte.js";
 import { RELEASES_URL } from "./links.js";
+import { saveDocument } from "./save.js";
 
 const THEME_KEY = "palang-theme";
 const LANG_KEY = "palang-lang";
@@ -39,7 +40,7 @@ export const app = $state({
   activePage: 0,
   merge: { pages: [], active: 0 }, // flat ordered page list across all merge PDFs
   busy: false,
-  result: null, // { name, url, size, mode } — the file just produced
+  result: null, // { name, blob, size, mode } — the file just produced
   update: null, // { version } when a newer version.json is published
   lang: initialLang(), // ui language (en | ms)
   requestAdd: 0,
@@ -658,8 +659,9 @@ export async function generate(mode = "convert") {
       await applyCompiled({ onlyMissing: true });
     }
     const blob = await offlineBlob(mode, files);
-    downloadBlob(blob, filename, mode);
-    flash("ok", t(DONE_KEY[mode] ?? DONE_KEY.convert));
+    const how = await saveDocument(blob, filename);
+    app.result = { name: filename, blob, size: blob.size, mode };
+    if (how !== "cancelled") flash("ok", t(DONE_KEY[mode] ?? DONE_KEY.convert));
   } catch (err) {
     // Short state toast first; the reason is appended only when the engine
     // hands us one (an unknown throw must not print "undefined").
@@ -711,37 +713,15 @@ async function offlineBlob(mode, files) {
   return new Blob([out], { type: "application/pdf" });
 }
 
-/** Hand the blob to the browser AND remember it, so the result row can show
- *  the file (name, size, save again) — "where did my file go?" has an answer
- *  in the app instead of only in a colouring-in toast. */
-function downloadBlob(blob, filename, mode = "convert") {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  if (app.result?.url && app.result.url !== url) URL.revokeObjectURL(app.result.url);
-  // The URL is deliberately NOT revoked: the result row keeps it for
-  // "Save again" until the next result replaces it.
-  app.result = { name: filename, url, size: blob.size, mode };
-}
-
 export function clearResult() {
-  if (app.result?.url) URL.revokeObjectURL(app.result.url);
   app.result = null;
 }
 
-/** Save the current result again (native shells use the same path). */
-export function saveResult() {
+/** Save the current result again — the same platform path as the first save. */
+export async function saveResult() {
   if (!app.result) return;
-  const a = document.createElement("a");
-  a.href = app.result.url;
-  a.download = app.result.name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  const how = await saveDocument(app.result.blob, app.result.name);
+  if (how === "shared" || how === "saved") flash("ok", t("msgSaved"));
 }
 
 export function humanSize(bytes) {

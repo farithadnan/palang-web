@@ -30,7 +30,6 @@ const DICT = {
     palang: "Palang",
     merge: "Merge",
 
-    badge: "Offline · Open source · MIT",
     title: "Prepare documents for sharing",
     lede:
       "Palang turns your photos and PDFs into ready-to-share documents — convert, stamp the bank-purpose band, merge — all on your device. Nothing is uploaded. Ever.",
@@ -43,7 +42,6 @@ const DICT = {
       "The official-use band — 'palang' to Malaysians: banks, government offices, companies and more. Drag, rotate and scale it like a real stamp — transparent lines that follow the text, live on the page.",
     featureMergeBody: "Join PDFs in the order you want, straight from your device.",
 
-    howWorks: "How it works",
     step1: "Add your files",
     step1B: "Photos or PDFs from your device.",
     step2: "Arrange the marking",
@@ -67,10 +65,10 @@ const DICT = {
       "Palang places each page onto the page size you chose (A4 by default) and fits the image inside it — the same way banks and offices expect copies. The preview shows exactly this. To fill the page instead, crop the photo or pick a smaller page size.",
 
     // ---- Site pages (landing / install / privacy / per-feature) ----
+    // ---- site: hero + footer ----
+    heroTagline: "Prepare documents for sharing. Everything runs on your device.",
+    privacyPolicy: "Privacy policy",
     getTheApp: "Get the app",
-    navInstall: "Install",
-    dlTitle: "Download",
-    dlSub: "Two builds, same app. Everything runs on your device.",
     dlWinName: "Windows",
     dlWinDesc: "Desktop app (EXE). Works offline.",
     dlApkName: "Android",
@@ -228,6 +226,7 @@ const DICT = {
     cvConvert: "Convert to PDF",
     mgNeedMore: "Add at least 2 PDFs to merge",
     resultHint: "Saved to your Downloads folder",
+    resultHintApp: "Saved or shared on your device",
     resultSave: "Save again",
     resultHide: "Hide",
     aboutUpToDate: "You are on the latest version",
@@ -296,7 +295,6 @@ const DICT = {
     palang: "Palang",
     merge: "Gabung",
 
-    badge: "Luar talian · Sumber terbuka · MIT",
     title: "Sediakan dokumen untuk dikongsi",
     lede:
       "Palang menukar foto dan PDF anda menjadi dokumen sedia kongsi — tukar, setem jalur bank, gabung — semuanya pada peranti anda. Tiada apa yang dimuat naik.",
@@ -309,7 +307,6 @@ const DICT = {
       "Jalur kegunaan rasmi — 'palang' bagi rakyat Malaysia: bank, pejabat kerajaan, syarikat dan banyak lagi. Seret, putar dan saiz seperti setem sebenar — garisan lut sinar yang mengikuti teks, terus pada halaman.",
     featureMergeBody: "Gabungkan PDF mengikut urutan yang anda mahu, terus dari peranti anda.",
 
-    howWorks: "Cara ia berfungsi",
     step1: "Tambah fail anda",
     step1B: "Foto atau PDF daripada peranti anda.",
     step2: "Susun setem",
@@ -332,10 +329,9 @@ const DICT = {
     faq5a:
       "Palang meletakkan setiap halaman pada saiz halaman yang anda pilih (A4 secara lalai) dan memuatkan imej di dalamnya — sama seperti yang bank dan pejabat jangkakan. Pratonton menunjukkan perkara ini dengan tepat. Untuk memenuhi halaman, potong foto atau pilih saiz halaman yang lebih kecil.",
 
+    heroTagline: "Sediakan dokumen untuk dikongsi. Semuanya pada peranti anda.",
+    privacyPolicy: "Dasar privasi",
     getTheApp: "Dapatkan app",
-    navInstall: "Pasang",
-    dlTitle: "Muat turun",
-    dlSub: "Dua binaan, app yang sama. Semuanya berjalan pada peranti anda.",
     dlWinName: "Windows",
     dlWinDesc: "App desktop (EXE). Berfungsi luar talian.",
     dlApkName: "Android",

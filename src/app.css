@@ -57,9 +57,9 @@ h1, h2, h3, h4 { font-weight: 650; letter-spacing: -0.01em; }
 
 /* ---------- app frame ---------- */
 .app { display: flex; flex-direction: column; min-height: 100vh; }
-.app-main { display: flex; flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 0.9rem 1.5rem; }
-.app-body { flex: 1; min-width: 0; padding: 1.1rem 0 2rem; max-width: 880px; }
-aside.side { display: none; width: 216px; flex: none; padding: 1.1rem 0.9rem 0 0; }
+.app-main { display: flex; flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 1.5rem 2rem; gap: 2rem; }
+.app-body { flex: 1; min-width: 0; padding: 2rem 0 3rem; max-width: 820px; }
+aside.side { display: none; width: 232px; flex: none; padding: 1.4rem 0 0; }
 
 /* merge embedded preview editor — one page at a time, like the palang editor */
 .mrg-editor {
@@ -145,7 +145,18 @@ aside.side { display: none; width: 216px; flex: none; padding: 1.1rem 0.9rem 0 0
   font-size: 0.8rem;
   color: var(--muted);
 }
-@media (min-width: 900px) { aside.side { display: block; } }
+aside.side .side-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 0.8rem 0.6rem;
+}
+aside.side nav { display: flex; flex-direction: column; gap: 0.2rem; }
+@media (min-width: 720px) {
+  aside.side { display: block; position: sticky; top: 64px; align-self: flex-start; }
+}
 .side .tool,
 .side .sidefoot {
   display: flex;
@@ -179,7 +190,7 @@ aside.side { display: none; width: 216px; flex: none; padding: 1.1rem 0.9rem 0 0
   border-bottom: 1px solid var(--line);
 }
 .topbar-inner {
-  max-width: 1100px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0.6rem 0.9rem;
   display: flex;
@@ -262,6 +273,7 @@ aside.side { display: none; width: 216px; flex: none; padding: 1.1rem 0.9rem 0 0
   transition: border-color 0.15s;
 }
 .dropzone:hover, .dropzone.drag { border-color: var(--accent); }
+@media (min-width: 720px) { .dropzone { min-height: 300px; } }
 .dropzone .dzicon { color: var(--accent); }
 .dropzone .dzmain { font-weight: 600; font-size: 1.02rem; }
 .dropzone .dzsub { color: var(--muted); font-size: 0.88rem; }
@@ -310,7 +322,7 @@ aside.side { display: none; width: 216px; flex: none; padding: 1.1rem 0.9rem 0 0
 .btn-danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
 .btn-sm { min-height: 38px; padding: 0.35rem 0.85rem; font-size: 0.88rem; }
 
-/* ---------- tabs (top desktop / bottom mobile) ---------- */
+/* ---------- navigation: sidebar at >=720px, bottom tabs below ---------- */
 .tabbtn {
   min-height: 44px;
   display: inline-flex;
@@ -327,11 +339,6 @@ aside.side { display: none; width: 216px; flex: none; padding: 1.1rem 0.9rem 0 0
   cursor: pointer;
 }
 .tabbtn.active { color: var(--accent); }
-.tabs-top { display: none; gap: 0.25rem; border-bottom: 1px solid var(--line); }
-.tabs-top .tabbtn { border-bottom: 2px solid transparent; }
-.tabs-top .tabbtn.active { border-bottom-color: var(--accent); }
-@media (min-width: 640px) and (max-width: 899px) { .tabs-top { display: flex; } }
-
 .tabs-bottom {
   position: fixed;
   bottom: 0;
@@ -345,7 +352,7 @@ aside.side { display: none; width: 216px; flex: none; padding: 1.1rem 0.9rem 0 0
 }
 .tabs-bottom .tabbtn { flex-direction: column; gap: 0.1rem; font-size: 0.7rem; }
 .tabs-bottom .tabbtn svg { width: 20px; height: 20px; }
-@media (min-width: 640px) { .tabs-bottom { display: none; } }
+@media (min-width: 720px) { .tabs-bottom { display: none; } }
 
 /* ---------- forms ---------- */
 .field { margin-bottom: 1rem; }
@@ -585,6 +592,9 @@ input[type="color"] {
 }
 .modal .page-stepper .caption { min-width: 8rem; text-align: center; margin: 0; }
 
+/* About and Settings are reading columns, not full-width lists. */
+.about, .settings { max-width: 34rem; margin: 0 auto; }
+
 /* ---------- toast queue (generic Toast.svelte) ---------- */
 .toastwrap {
   position: fixed;
@@ -665,8 +675,8 @@ input[type="color"] {
 .tb-links a {
   color: var(--muted);
   text-decoration: none;
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 .tb-links a:hover { color: var(--text); }
 .tb-actions {
@@ -746,36 +756,52 @@ input[type="color"] {
 /* inline spinner (buttons, rows) — .spinner centres itself, this one does not */
 .spinner-xs { width: 15px; height: 15px; border-width: 2px; margin: 0; }
 
-/* ---------- public site pages (home / feature / install / privacy) ---------- */
+/* ---------- public site pages (home / feature / install / privacy) ----------
+   Typographic system: Inter, body 16px/1.6, headings 600 weight with -0.02em
+   tracking, calmer and smaller than a marketing page normally shouts. Buttons
+   are 14px pills (38px tall, 20px radius). Reference: the VitePress-derived
+   site whose structure this mirrors. */
 .site-page {
   width: 100%;
-  max-width: 780px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: clamp(2.2rem, 6vh, 3.6rem) 1.4rem;
+  padding: 3rem 1.5rem 4rem;
 }
 .site-page h1 {
-  font-size: clamp(1.9rem, 5vw, 2.7rem);
-  line-height: 1.1;
+  font-size: 1.75rem;
+  line-height: 1.35;
+  font-weight: 600;
   letter-spacing: -0.02em;
-  margin: 0 0 0.7rem;
+  margin: 0 0 0.75rem;
 }
+.site-page h1.with-icon { display: flex; align-items: center; gap: 0.6rem; }
 .site-lede {
   color: var(--muted);
-  font-size: clamp(1rem, 2vw, 1.1rem);
-  line-height: 1.6;
-  margin: 0 0 1.6rem;
-  max-width: 640px;
+  font-size: 1.125rem;
+  line-height: 1.62;
+  margin: 0 0 0.5rem;
+  max-width: 40rem;
 }
-.site-h2 { font-size: 1.22rem; margin: 2.4rem 0 0.7rem; }
-.site-note { color: var(--muted); font-size: 0.92rem; line-height: 1.6; }
+.site-h2 {
+  font-size: 1.5rem;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 3rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.site-h2:first-of-type { margin-top: 2.5rem; }
+.site-note { color: var(--muted); font-size: 0.9375rem; line-height: 1.7; }
 .site-back {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   text-decoration: none;
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.25rem;
 }
 .site-back:hover { color: var(--accent); }
 .site-points { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
@@ -783,58 +809,81 @@ input[type="color"] {
   display: flex;
   gap: 0.7rem;
   align-items: flex-start;
-  padding: 0.85rem 0;
+  padding: 0.75rem 0;
   border-top: 1px solid var(--line);
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--muted);
 }
 .site-points li:last-child { border-bottom: 1px solid var(--line); }
-.site-points svg { color: var(--accent); flex: 0 0 auto; margin-top: 0.15rem; }
-.site-points strong { color: var(--text); margin-right: 0.2rem; }
-.site-steps { list-style: none; counter-reset: sitestep; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.9rem; }
-.site-steps li { display: flex; gap: 0.9rem; align-items: flex-start; }
+.site-points svg { color: var(--accent); flex: 0 0 auto; margin-top: 0.2rem; }
+.site-points strong { color: var(--text); font-weight: 600; margin-right: 0.2rem; }
+.site-steps { list-style: none; counter-reset: sitestep; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; }
+.site-steps li { display: flex; gap: 0.85rem; align-items: flex-start; }
 .site-steps li::before {
   counter-increment: sitestep;
   content: counter(sitestep);
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
+  margin-top: 0.15rem;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--accent);
+  background: var(--accent-soft);
   color: var(--accent);
-  font-weight: 800;
-  font-size: 0.88rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
 }
-.site-steps h3 { margin: 0 0 0.15rem; font-size: 1rem; }
-.site-steps p { margin: 0; color: var(--muted); line-height: 1.55; }
+.site-steps h3 { margin: 0 0 0.15rem; font-size: 1rem; font-weight: 600; }
+.site-steps p { margin: 0; color: var(--muted); line-height: 1.6; }
 .site-rows { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
 .site-rows li {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.9rem 0;
+  padding: 1.1rem 0;
   border-top: 1px solid var(--line);
 }
 .site-rows li:last-child { border-bottom: 1px solid var(--line); }
-.site-row-link { display: flex; align-items: center; gap: 1rem; flex: 1; text-decoration: none; color: inherit; min-width: 0; }
+.site-row-link { display: flex; align-items: center; gap: 0.9rem; flex: 1; text-decoration: none; color: inherit; min-width: 0; }
 .site-row-link:hover .site-row-main b { color: var(--accent); }
-.site-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.18rem; }
-.site-row-main b { font-size: 1.02rem; }
-.site-row-main span { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+.site-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.site-row-main b { font-size: 1rem; font-weight: 600; }
+.site-row-main span { color: var(--muted); font-size: 0.9375rem; line-height: 1.6; }
 .site-chev { color: var(--muted); flex: 0 0 auto; }
-.site-foot { margin-top: auto; border-top: 1px solid var(--line); padding: 1.1rem 1.4rem; }
+.site-foot { margin-top: auto; border-top: 1px solid var(--line); padding: 2rem 1.5rem; }
 .site-footrow {
-  max-width: 780px;
+  max-width: 1152px;
   margin: 0 auto;
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: var(--muted);
 }
-.site-footrow a { text-decoration: none; }
-.site-footrow a:hover { text-decoration: underline; }
+.site-footrow a { color: var(--muted); text-decoration: none; }
+.site-footrow a:hover { color: var(--accent); text-decoration: underline; }
+/* Site buttons: pills, not the app's 44px control. `.btn-lg` is the hero size. */
+.site .btn {
+  min-height: 0;
+  line-height: 38px;
+  padding: 0 20px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.site .btn-lg {
+  line-height: 46px;
+  padding: 0 24px;
+  border-radius: 24px;
+  font-size: 1rem;
+}
+.site .btn-ghost {
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  border-color: transparent;
+  color: var(--text);
+}
+.site .btn-ghost:hover { background: color-mix(in srgb, var(--muted) 20%, transparent); color: var(--text); }

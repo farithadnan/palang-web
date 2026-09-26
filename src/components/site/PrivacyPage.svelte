@@ -6,6 +6,7 @@
   import Icon from "../ui/Icon.svelte";
   import { t } from "../../lib/i18n.js";
   import { GITHUB_URL, ISSUES_URL } from "../../lib/links.js";
+  import { href } from "../../lib/router.js";
 
   const POINTS = [
     { strong: "private1a", rest: "private1b" },
@@ -15,8 +16,13 @@
   ];
 </script>
 
+<svelte:head>
+  <title>{t("privacyTitle")} | Palang</title>
+</svelte:head>
+
+
 <article class="site-page">
-  <a class="site-back" href="#/home">← {t("backHome")}</a>
+  <a class="site-back" href={href("")}>← {t("backHome")}</a>
   <h1>{t("privacyTitle")}</h1>
   <p class="site-lede">{t("privacyLede")}</p>
 

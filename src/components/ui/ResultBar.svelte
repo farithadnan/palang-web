@@ -4,9 +4,11 @@
   import { t } from "../../lib/i18n.js";
   import Icon from "./Icon.svelte";
   import { app, saveResult, clearResult, humanSize } from "../../lib/store.svelte.js";
+  import { isNativeApp } from "../../lib/save.js";
 
+  const HINT = isNativeApp() ? "resultHintApp" : "resultHint";
   const meta = $derived(
-    [humanSize(app.result?.size), t("resultHint")].filter(Boolean).join(" · ")
+    [humanSize(app.result?.size), t(HINT)].filter(Boolean).join(" · ")
   );
 </script>
 
@@ -14,10 +16,10 @@
   <div class="resultbar">
     <span class="rb-icon" aria-hidden="true"><Icon name="download" size={20} /></span>
     <span class="rb-text">
-      <b>{app.result.name}</b>
+      <b title={app.result.name}>{app.result.name}</b>
       <small>{meta}</small>
     </span>
-    <button type="button" class="btn btn-sm" onclick={saveResult}>{t("resultSave")}</button>
+    <button type="button" class="btn btn-sm" onclick={() => void saveResult()}>{t("resultSave")}</button>
     <button type="button" class="iconbtn rb-x" aria-label={t("resultHide")} onclick={clearResult}>
       <Icon name="x" size={16} />
     </button>

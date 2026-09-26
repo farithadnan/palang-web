@@ -1,14 +1,14 @@
 <script>
   /** Two variants, one source (the Vite mode decides):
    *
-   *  - web (`vite build`, mode production): the public SITE only. The tools
-   *    ship as the EXE and APK builds, so the tool routes are deliberately not
-   *    served here. Routes: home, features/<id>, install, privacy, docs.
-   *  - app (`vite build --mode app`): the TOOLS only, with the installed-app
-   *    chrome (topbar add button, About, Settings). The landing graph is
-   *    aliased to a stub, so it never enters this bundle. */
+   *  - site (`npm run build`, mode production): the public site. The tools
+   *    ship as the EXE and APK builds, so tool routes are not served here.
+   *    Clean paths: /, /install, /privacy, /features/<id>, /docs.
+   *  - app (`vite build --mode app`): the tools only, with the installed-app
+   *    chrome (topbar add button, About, Settings). Hash routes: #/convert.
+   *    The whole site graph is aliased to a stub and never enters this bundle. */
   import { onMount } from "svelte";
-  import Icon from "./components/ui/Icon.svelte";
+  import ToolIcon from "./components/ui/Icon.svelte";
   import ToastHost from "./components/ui/Toast.svelte";
   import Topbar from "./components/ui/Topbar.svelte";
   import Landing from "$landing"; // the whole public site, or a stub
@@ -20,6 +20,7 @@
   import { app, applyUpdate, checkForUpdate, dismissUpdate, requestAdd } from "./lib/store.svelte.js";
   import { loadLimits } from "./lib/config.js";
   import { t } from "./lib/i18n.js";
+  import { route, goto, subscribe } from "./lib/router.js";
 
   const TOOLS = [
     { id: "convert", label: () => t("convertLabel"), icon: "convert" },
@@ -31,45 +32,39 @@
 
   const HAS_LANDING = import.meta.env.MODE !== "app";
 
-  /** Routes owned by the public site (only exist in web builds). */
+  /** Site routes (served in site builds only) → view name. */
+  const SITE_ROUTES = { "": "home", install: "install", privacy: "privacy", docs: "docs" };
   const SITE_VIEWS = new Set(["home", "install", "privacy", "feature", "docs"]);
-  const HASH_TO_VIEW = {
-    "": "home",
-    home: "home",
-    install: "install",
-    privacy: "privacy",
-    docs: "docs",
-    convert: "convert",
-    palang: "palang",
-    merge: "merge",
-    about: "about",
-    settings: "settings",
-  };
+  const APP_ROUTES = new Set(TOOLS.map((x) => x.id));
 
-  let featureId = $state("convert");
+  let current = $state(route());
 
-  function readHash() {
-    const hash = (typeof location !== "undefined" ? location.hash : "").replace(/^#\/?/, "");
-    if (hash.startsWith("features/")) {
-      featureId = hash.slice("features/".length) || "convert";
-      return "feature";
-    }
-    const v = HASH_TO_VIEW[hash] ?? "home";
-    if (HAS_LANDING) return SITE_VIEWS.has(v) ? v : "home"; // web: site pages only
-    return SITE_VIEWS.has(v) ? "convert" : v; // app: tools only
-  }
+  const isFeature = $derived(current.startsWith("features/"));
+  const featureId = $derived(isFeature ? current.slice("features/".length) || "convert" : "convert");
 
-  let view = $state(readHash());
+  const view = $derived(
+    isFeature
+      ? HAS_LANDING
+        ? "feature"
+        : "convert"
+      : HAS_LANDING
+        ? SITE_ROUTES[current] ?? "home"
+        : APP_ROUTES.has(current)
+          ? current
+          : "convert",
+  );
 
-  /** The canonical hash for a view — feature pages carry their id, so a
-   *  refresh lands on the same page instead of falling back to convert. */
-  function hashFor(v, feature) {
-    return v === "feature" ? "#/features/" + feature : "#/" + v;
-  }
+  const isSiteView = $derived(SITE_VIEWS.has(view));
+
+  // Canonicalise the URL: an unknown path, or a tool route on the site build,
+  // resolves to the right default without a reload.
+  $effect(() => {
+    if (HAS_LANDING && !isSiteView) goto("", { replace: true });
+    else if (!HAS_LANDING && isSiteView) goto("convert", { replace: true });
+  });
 
   $effect(() => {
     app.view = view;
-    if (typeof history !== "undefined") history.replaceState(null, "", hashFor(view, featureId));
   });
 
   $effect(() => {
@@ -81,14 +76,12 @@
   void loadLimits();
 
   onMount(() => {
-    window.addEventListener("hashchange", () => {
-      const v = readHash();
-      if (v !== view) view = v;
-    });
+    const off = subscribe((r) => (current = r));
     void checkForUpdate();
     const onShow = () => void checkForUpdate();
     document.addEventListener("visibilitychange", onShow);
     return () => {
+      off();
       document.removeEventListener("visibilitychange", onShow);
     };
   });
@@ -114,43 +107,30 @@
     </div>
   {/if}
 
-  {#if SITE_VIEWS.has(view)}
+  {#if isSiteView}
     <Landing page={view} feature={featureId} />
   {:else}
     <Topbar context="app" homeTo={null} onAdd={requestAdd} />
 
     <div class="app-main">
       <aside class="side">
+        <div class="side-label">{t("menu")}</div>
         <nav aria-label={t("menu")}>
           {#each TOOLS as tool (tool.id)}
             <button
               type="button"
               class="tool"
               class:active={view === tool.id}
-              onclick={() => (view = tool.id)}
+              onclick={() => goto(tool.id)}
             >
-              <Icon name={tool.icon} size={19} />
+              <ToolIcon name={tool.icon} size={19} />
               {tool.label()}
             </button>
           {/each}
         </nav>
       </aside>
 
-      <div class="app-body">
-        <div class="tabs tabs-top">
-          {#each TOOLS as tool (tool.id)}
-            <button
-              type="button"
-              class="tabbtn"
-              class:active={view === tool.id}
-              onclick={() => (view = tool.id)}
-            >
-              <Icon name={tool.icon} size={18} />
-              {tool.label()}
-            </button>
-          {/each}
-        </div>
-
+      <main class="app-body">
         {#if view === "convert"}
           <ConvertView />
         {:else if view === "palang"}
@@ -162,26 +142,26 @@
         {:else if view === "settings"}
           <SettingsView />
         {/if}
-      </div>
+      </main>
     </div>
   {/if}
 </div>
 
-{#if !SITE_VIEWS.has(view)}
-  <div class="tabs tabs-bottom" aria-label={t("menu")}>
+{#if !isSiteView}
+  <nav class="tabs tabs-bottom" aria-label={t("menu")}>
     {#each TOOLS as tool (tool.id)}
       <button
         type="button"
         class="tabbtn"
         class:active={view === tool.id}
         aria-current={view === tool.id ? "page" : undefined}
-        onclick={() => (view = tool.id)}
+        onclick={() => goto(tool.id)}
       >
-        <Icon name={tool.icon} size={20} />
+        <ToolIcon name={tool.icon} size={20} />
         {tool.label()}
       </button>
     {/each}
-  </div>
+  </nav>
 {/if}
 
 <ToastHost />

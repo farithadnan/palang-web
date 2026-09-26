@@ -5,16 +5,17 @@
    *  collapsible menu on mobile that folds the links + the Open app button. */
   import { app, setLang, setTheme } from "../../lib/store.svelte.js";
   import { nextLang, t } from "../../lib/i18n.js";
+  import { href as routeHref, goto } from "../../lib/router.js";
   import Icon from "./Icon.svelte";
 
   let { context = "landing", children, onOpenApp, onAdd, homeTo = "home", ctaLabel = "" } = $props();
   let open = $state(false);
 
   function go(view) {
-    location.hash = "#/" + view;
+    goto(view);
   }
   function goHome() {
-    go(homeTo);
+    goto(homeTo ?? "");
   }
   function addMedia() {
     if (onAdd) onAdd();
@@ -27,7 +28,7 @@
 
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href={"#/" + homeTo} onclick={(e) => { e.preventDefault(); goHome(); }}>
+    <a class="brand" href={routeHref(homeTo ?? "")} onclick={(e) => { e.preventDefault(); goHome(); }}>
       <span class="brand-mark" aria-hidden="true"></span>
       <b>Palang</b>
     </a>

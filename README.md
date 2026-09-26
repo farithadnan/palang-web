@@ -61,6 +61,28 @@ rebuild).
 PITFALL: both variants write to `dist/` — the last build wins. Always finish a
 packaging pass with the variant you intend to deploy.
 
+## Routing
+
+The router picks its mode at build time (`src/lib/router.js`):
+
+- **Site build** — clean paths (`/install`, `/privacy`, `/features/palang`).
+  `scripts/prerender.mjs` writes one `index.html` per route after the build, so
+  every static host serves them with **no rewrite rule** (a plain nginx,
+  GitHub Pages, `python3 -m http.server`, a CDN) and a deep link never 404s.
+  Same-origin `<a>` clicks are intercepted, so navigation never reloads.
+- **App build** — hash routes (`#/convert`). The native shells have no server
+  to rewrite paths, and the app reloads itself on an update, so a nested path
+  would come back blank.
+
+Components never build a URL by hand: `href(route)` / `goto(route)`.
+
+## Typography
+
+Inter throughout, body 16px at 1.6 line-height, headings 600 weight with
+-0.02em tracking, buttons 14px pills (38px) with a 16px hero variant (46px).
+The public site deliberately reads calmer than a marketing page; the app UI
+keeps its own 44px touch-target controls.
+
 ## Hosting
 
 The site build (`dist/`) is plain static files, so it runs on any static host
@@ -98,6 +120,10 @@ docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro pala
 - `src/lib/i18n.js` — flat EN/BM dictionaries + `t()`; imports nothing from the
   store (cycle-free).
 - `src/lib/links.js` — the project's outbound links, in one place.
+- `src/lib/router.js` — clean paths on the site, hash routes in the app.
+- `scripts/make-icon.mjs` — one description of the brand mark; writes the app
+  icon and the favicon set (a 10% bar is sub-pixel at 16px, so favicons use a
+  chunkier variant).
 - `src/components/ui/*` — generic, presentational components (props in,
   callbacks out): FileBasket, MediaGrid, FullView, CropMode, Dropzone,
   PalangCanvas, Modal, Toast, ResultBar, Icon, fields.

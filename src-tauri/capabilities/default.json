@@ -1,7 +1,20 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default capability for the main window — the app is fully on-device, no plugins beyond the core.",
-  "windows": ["main"],
-  "permissions": ["core:default"]
+  "description": "Default capability for the main window. The app is fully on-device; the only plugins are the Save-as dialog and the file writer used to put the produced PDF where the user asks (a web-view blob download silently fails in the packaged app).",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "dialog:allow-save",
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    }
+  ]
 }

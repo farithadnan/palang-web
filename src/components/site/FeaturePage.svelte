@@ -4,6 +4,7 @@
   import Icon from "../ui/Icon.svelte";
   import SampleDemo from "../SampleDemo.svelte";
   import { t } from "../../lib/i18n.js";
+  import { href } from "../../lib/router.js";
 
   let { id = "convert" } = $props();
 
@@ -39,9 +40,14 @@
   const page = $derived(PAGES[id] ?? PAGES.convert);
 </script>
 
+<svelte:head>
+  <title>{t(page.title)} | Palang</title>
+</svelte:head>
+
+
 <article class="site-page">
-  <a class="site-back" href="#/home">← {t("backHome")}</a>
-  <h1>
+  <a class="site-back" href={href("")}>← {t("backHome")}</a>
+  <h1 class="with-icon">
     <span class="fp-icon"><Icon name={page.icon} size={22} /></span>
     {t(page.title)}
   </h1>
@@ -76,14 +82,14 @@
     <div class="fp-demo"><SampleDemo /></div>
   {/if}
 
-  <p class="fp-cta"><a class="btn btn-primary" href="#/install">{t("getTheApp")}</a></p>
+  <p class="fp-cta"><a class="btn btn-primary" href={href("install")}>{t("getTheApp")}</a></p>
 </article>
 
 <style>
-  h1 { display: flex; align-items: center; gap: 0.6rem; }
+  
   .fp-icon {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     flex: 0 0 auto;
     display: grid;
     place-items: center;

@@ -4,6 +4,7 @@
    *  Docker, static hosting, and the EXE/APK publishing pipeline. */
   import { t } from "../lib/i18n.js";
   import { GITHUB_URL } from "../lib/links.js";
+  import { href } from "../lib/router.js";
 
   const REPOS = [
     {
@@ -19,8 +20,13 @@
   ];
 </script>
 
+<svelte:head>
+  <title>{t("docTitle")} | Palang</title>
+</svelte:head>
+
+
 <article class="site-page docs">
-  <a class="site-back" href="#/home">← {t("backHome")}</a>
+  <a class="site-back" href={href("")}>← {t("backHome")}</a>
   <h2>{t("docTitle")}</h2>
 
   <h3>{t("docRepos")}</h3>

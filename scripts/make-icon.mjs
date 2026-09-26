@@ -1,10 +1,12 @@
 /**
- * Generate the app icon art (app-icon.png + assets/icon-only.png).
+ * Generate the brand assets from ONE description of the mark.
  *
- * WHY THIS EXISTS: the previous icon was a #111 square with a small #fafafa
- * mark — 99.9% dark. At 32px (taskbar / APK launcher) it lost every light
- * pixel and Windows showed a plain dark square. The mark must therefore READ
- * SMALL: a solid accent block with chunky dark bars, no thin lines.
+ * WHY THIS EXISTS: the previous icon art was a #111 square with a small
+ * #fafafa mark — 99.9% dark. At 32px (taskbar / launcher) it lost every light
+ * pixel and Windows showed a plain dark square, and the browser had no favicon
+ * at all. The mark must therefore READ SMALL: a solid accent block with chunky
+ * dark bars, no thin lines. Favicons use an even chunkier variant, because a
+ * 10% bar is sub-pixel at 16px.
  *
  * Run: node scripts/make-icon.mjs
  * Then: npx tauri icon app-icon.png   (regenerates .ico/.icns/png sets)
@@ -12,7 +14,6 @@
 import { deflateSync } from "node:zlib";
 import { writeFileSync, mkdirSync } from "node:fs";
 
-const SIZE = 1024;
 const GOLD = [201, 180, 88];
 const DARK = [17, 17, 17];
 
@@ -27,11 +28,12 @@ function roundAlpha(x, y, size, r) {
   return 1 - (d - (r - 1)) / 2;
 }
 
-function render(size) {
-  const r = size * 0.22;
-  const barW = size * 0.62;
-  const barH = size * 0.1;
-  const gap = size * 0.08;
+/** @param chunky thicker bars, for favicon sizes where 10% is sub-pixel. */
+function render(size, { chunky = false } = {}) {
+  const r = size * (chunky ? 0.24 : 0.22);
+  const barW = size * (chunky ? 0.6 : 0.62);
+  const barH = size * (chunky ? 0.17 : 0.1);
+  const gap = size * (chunky ? 0.13 : 0.08);
   const totalH = barH * 2 + gap;
   const y1 = (size - totalH) / 2;
   const y2 = y1 + barH + gap;
@@ -47,10 +49,7 @@ function render(size) {
         ((y >= y1 && y < y1 + barH) || (y >= y2 && y < y2 + barH));
       if (inBar) {
         // second bar is the same mark at 50% opacity, like the UI brand mark
-        const faded = y >= y2;
-        col = faded
-          ? GOLD.map((c, i) => Math.round(c * 0.5 + DARK[i] * 0.5))
-          : DARK;
+        col = y >= y2 ? GOLD.map((c, i) => Math.round(c * 0.5 + DARK[i] * 0.5)) : DARK;
       }
       const o = (y * size + x) * 4;
       px[o] = col[0];
@@ -99,7 +98,33 @@ function png(size, px) {
   ]);
 }
 
+/** ICO container wrapping one PNG (PNG-in-ICO). */
+function ico(size, pngBuf) {
+  const dir = Buffer.alloc(6);
+  dir.writeUInt16LE(0, 0);
+  dir.writeUInt16LE(1, 2);
+  dir.writeUInt16LE(1, 4);
+  const entry = Buffer.alloc(16);
+  entry[0] = size >= 256 ? 0 : size;
+  entry[1] = size >= 256 ? 0 : size;
+  entry.writeUInt16LE(1, 4); // planes
+  entry.writeUInt16LE(32, 6); // bits per pixel
+  entry.writeUInt32LE(pngBuf.length, 8);
+  entry.writeUInt32LE(22, 12); // data offset
+  return Buffer.concat([dir, entry, pngBuf]);
+}
+
 mkdirSync("assets", { recursive: true });
-writeFileSync("app-icon.png", png(SIZE, render(SIZE)));
-writeFileSync("assets/icon-only.png", png(SIZE, render(SIZE)));
-console.log("wrote app-icon.png + assets/icon-only.png");
+mkdirSync("public", { recursive: true });
+
+const big = png(1024, render(1024));
+writeFileSync("app-icon.png", big);
+writeFileSync("assets/icon-only.png", big);
+
+const fav = (size) => png(size, render(size, { chunky: true }));
+writeFileSync("public/favicon-32x32.png", fav(32));
+writeFileSync("public/favicon-16x16.png", fav(16));
+writeFileSync("public/apple-touch-icon.png", png(180, render(180, { chunky: true })));
+writeFileSync("public/favicon.ico", ico(32, fav(32)));
+
+console.log("wrote app-icon.png, assets/icon-only.png and public/favicon.{ico,16x16,32x32}.png + apple-touch-icon.png");
