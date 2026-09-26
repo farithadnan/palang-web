@@ -1,6 +1,6 @@
 [package]
 name = "palang"
-version = "0.3.0"
+version = "0.3.1"
 description = "Convert, stamp and merge documents — fully offline"
 edition = "2021"
 

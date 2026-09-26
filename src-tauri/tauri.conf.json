@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Palang",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "identifier": "my.faritadnan.palang",
   "build": {
     "beforeBuildCommand": "npm run build:app",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Palang — prepare documents for sharing",
+        "title": "Palang \u2014 prepare documents for sharing",
         "width": 1080,
         "height": 780,
         "minWidth": 420,
