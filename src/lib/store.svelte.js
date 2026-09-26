@@ -46,6 +46,7 @@ export const app = $state({
   requestAdd: 0,
   updateFreq: updateFreqDefault(), // requests the app has made this session (privacy proof panel)
   compiledFiles: new Map(), // file -> Blob with the palang baked in ("second temp")
+  stamp: [], // per-image palang spec, index-aligned with previewFiles (per-image stamps)
 });
 
 // i18n reads the language through this getter (never by importing the store),
@@ -423,8 +424,11 @@ function isImageFile(file) {
    const known = new Set(app.previewFiles.map((f) => f.name));
    const fresh = incoming.filter((f) => !known.has(f.name));
    const files = fresh.length ? [...app.previewFiles, ...fresh] : app.previewFiles;
-   app.previewFiles = files;
-   app.activePage = 0;
+     app.previewFiles = files;
+     // Seed each photo's own palang spec (kept for existing files, default for
+     // new ones) so specFor() stays a pure read below.
+     app.stamp = files.map((f, i) => app.stamp[i] ?? defaultSpec());
+     app.activePage = 0;
    if (!files.length) {
      app.preview = null;
      return;
@@ -438,7 +442,9 @@ function isImageFile(file) {
 
  export function removePreviewFile(index) {
    if (index < 0 || index >= app.previewFiles.length) return;
-   app.compiledFiles.delete(app.previewFiles[index]);
+   const f = app.previewFiles[index];
+   app.compiledFiles.delete(f);
+   app.stamp.splice(index, 1);
    app.previewFiles.splice(index, 1);
    app.activePage = 0;
    if (!app.previewFiles.length) {
@@ -466,7 +472,8 @@ function isImageFile(file) {
 /** Update the ACTIVE spec (the one shown in the palette editor). Any change
  *  invalidates the compiled images, so Stamp can never use a stale bake. */
 export function updateSpec(patch) {
-  const s = app.specs[app.specIndex] ?? app.specs[0];
+  // Per-image stamps: edits target the ACTIVE image's own spec.
+  const s = specFor(activePreviewFile() ?? app.previewFiles[0]);
   if (!s) return;
   Object.assign(s, patch);
   // Field edits implicitly arm the marking; an explicit `armed` in the patch
@@ -514,24 +521,53 @@ export function resetSpec() {
 
 /* ---------- compiled ("second temp") images ---------- */
 
+/** The image/page the user is currently editing in the palang editor. */
+function activePreviewFile() {
+  return app.preview?.pages?.[app.activePage]?.file ?? null;
+}
+function fileIndex(file) {
+  return file ? app.previewFiles.indexOf(file) : -1;
+}
+
+/** Each photo keeps its OWN palang spec (per-image stamps). Lazy-seeds the
+ *  default stamp the first time an image is edited. */
+export function specFor(file) {
+  // Pure read: specs are seeded when files are picked (pickPreviewFiles), so
+  // this never mutates state — calling it from a $derived is safe.
+  const i = file ? app.previewFiles.indexOf(file) : -1;
+  return i >= 0 && app.stamp[i] ? app.stamp[i] : defaultSpec();
+}
+
+/** Remove the palang from ONE image but keep the image: that photo then
+ *  exports unstamped (its compiled copy has no palang baked in). */
+export function removeStamp() {
+  const file = activePreviewFile();
+  const i = file ? app.previewFiles.indexOf(file) : -1;
+  if (i < 0 || !app.stamp[i]) return;
+  app.stamp[i].armed = false;
+  app.compiledFiles.delete(file);
+}
+
 /** Bake the CURRENT spec into every photo in the palang basket (Apply &
  *  save). The editor keeps showing the originals for re-editing; Stamp uses
  *  the compiled blobs — keyed by File — so the A4 fit can never shift the
  *  marking relative to the photo. With onlyMissing it recompiles just the
  *  stale ones (e.g. after re-editing or adding a photo). */
 export async function applyCompiled({ onlyMissing = false } = {}) {
-  if (!app.specs.some((x) => x.armed)) {
-    app.compiledFiles.clear();
-    return;
-  }
   for (const f of app.previewFiles) {
     if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) continue;
     if (onlyMissing && app.compiledFiles.has(f)) continue;
+    // Per-image: bake THIS photo with ITS own stamp (or none if removed). Every
+    // photo is always compiled, so the output honours each image's
+    // stamped / not-stamped state instead of the old document-wide specs.
+    const i = fileIndex(f);
+    const s = i >= 0 ? app.stamp[i] : null;
+    const specs = s && s.armed ? [s] : [];
     try {
       const out = await compileStampedImage(
         { bytes: () => f.arrayBuffer(), mime: f.type, setting: null },
         app.pageSize,
-        app.specs
+        specs
       );
       app.compiledFiles.set(f, new Blob([out.bytes], { type: "image/png" }));
     } catch (err) {
@@ -640,8 +676,8 @@ export async function generate(mode = "convert") {
     return;
   }
   if (mode === "palang") {
-    const missing = app.specs.some(
-      (x) => x.armed && x.mode === "band" && !(x.text || "").trim()
+    const missing = app.stamp.some(
+      (x) => x && x.armed && x.mode === "band" && !(x.text || "").trim()
     );
     if (missing) {
       flash("error", t("msgPurpose"));
@@ -658,10 +694,9 @@ export async function generate(mode = "convert") {
         : `palang-converted-${stamp}.pdf`;
   app.busy = true;
   try {
-    if (mode === "palang" && app.specs.some((x) => x.armed)) {
-      // The two-temp contract: Stamp uses the compiled images; anything not
-      // yet compiled (add/change after the last Apply) is compiled now so a
-      // stale bake is impossible.
+    if (mode === "palang") {
+      // Bake every photo with ITS OWN stamp (or none, when removed). Images are
+      // all pre-compiled, so a later page-space pass never re-stamps them.
       await applyCompiled({ onlyMissing: true });
     }
     const blob = await offlineBlob(mode, files);
@@ -714,7 +749,9 @@ async function offlineBlob(mode, files) {
     images: setup.filter((s) => !s.isPdf),
     pdfs: setup.filter((s) => s.isPdf),
     pageSize: app.pageSize,
-    specs: mode === "palang" ? app.specs : [],
+    // Images are pre-compiled per image; this spec list only pages-stamps PDF
+    // pages (a per-file concern for the image case is handled by the bake).
+    specs: mode === "palang" ? app.stamp.filter((s) => s && s.armed) : [],
   });
   return new Blob([out], { type: "application/pdf" });
 }
@@ -753,6 +790,7 @@ if (typeof window !== "undefined") {
     stepMerge,
     setActivePage,
     applyCompiled,
+    removeStamp,
     setTheme,
     setLang,
     generate,

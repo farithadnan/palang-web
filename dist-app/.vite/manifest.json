@@ -8,7 +8,7 @@
     "name": "index"
   },
   "index.html": {
-    "file": "assets/index-BHlEiT7d.js",
+    "file": "assets/index-C2R88cb7.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -19,7 +19,7 @@
       "node_modules/@tauri-apps/plugin-fs/dist-js/index.js"
     ],
     "css": [
-      "assets/index-BN-8jyRC.css"
+      "assets/index-DCjn1N_U.css"
     ],
     "assets": [
       "assets/pdf.worker-ByF8NTMy.mjs",
@@ -33,7 +33,7 @@
     ]
   },
   "node_modules/@capacitor/filesystem/dist/esm/index.js": {
-    "file": "assets/index-BCgLr5rO.js",
+    "file": "assets/index-BiBgDzIe.js",
     "name": "index",
     "src": "node_modules/@capacitor/filesystem/dist/esm/index.js",
     "isDynamicEntry": true,
@@ -46,7 +46,7 @@
     ]
   },
   "node_modules/@capacitor/filesystem/dist/esm/web.js": {
-    "file": "assets/web-BDYA6rzO.js",
+    "file": "assets/web-BpwF5TKq.js",
     "name": "web",
     "src": "node_modules/@capacitor/filesystem/dist/esm/web.js",
     "isDynamicEntry": true,
@@ -57,7 +57,7 @@
     ]
   },
   "node_modules/@capacitor/share/dist/esm/index.js": {
-    "file": "assets/index-CounUdCD.js",
+    "file": "assets/index-73BhSMFO.js",
     "name": "index",
     "src": "node_modules/@capacitor/share/dist/esm/index.js",
     "isDynamicEntry": true,

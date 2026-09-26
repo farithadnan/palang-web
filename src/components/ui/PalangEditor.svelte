@@ -1,13 +1,13 @@
 <script>
-  /** Full-screen palang editor (mobile AND desktop). The image fills the
-   *  window over a dark stage, the marking stays editable on top (drag /
-   *  rotate knob / corner scale / wheel or pinch zoom), and a bottom toolbar
-   *  holds the stamp actions. The old bottom form (text, purpose, colour) is
-   *  gone — the colour lives in a swatch popover above the toolbar, shown
-   *  only when a stamp is actually present.
+  /** Full-screen palang editor (mobile AND desktop). ONE palang per image: the
+   *  image fills the window over a dark stage, the marking is editable on top
+   *  (drag / rotate knob / corner scale / wheel or pinch zoom), a bottom
+   *  toolbar holds the stamp actions, and double-clicking the stamp text edits
+   *  it inline (a transparent field on the page).
    *
-   *  Top bar: close · mode label (+ page / stamp steppers) · Revert · Save.
-   *  Toolbar: Add stamp · Reset position · Fit view · Color · Delete.
+   *  Top bar: close · mode label (+ page stepper) · Revert · Save.
+   *  Toolbar: Reset position · Fit view · Colour (when the stamp is selected)
+   *           · Remove this palang (per image) · Remove this image.
    */
   import { t } from "../../lib/i18n.js";
   import Icon from "./Icon.svelte";
@@ -16,10 +16,8 @@
     app,
     setActivePage,
     updateSpec,
-    addSpec,
-    removeSpecAt,
-    setSpecIndex,
-    resetSpec,
+    specFor,
+    removeStamp,
     removePreviewFile,
     applyCompiled,
     flash,
@@ -28,36 +26,35 @@
   let { onClose } = $props();
 
   const active = $derived(app.preview?.pages?.[app.activePage] ?? null);
+  const activeFile = $derived(active?.file ?? null);
+  const spec = $derived(specFor(activeFile));
+  // Read armed off the reactive map directly (a chained $derived on the spec
+  // object caches by reference, so nested armed mutations don't re-run it).
+  const armed = $derived(!!app.stamp[app.previewFiles.indexOf(activeFile)]?.armed);
   const pageUrl = $derived(active?.url ?? "");
   const pageReady = $derived(!!(active?.w && active?.h));
   const pages = $derived(app.preview?.pages ?? []);
-  const spec = $derived(app.specs[app.specIndex] ?? app.specs[0]);
-  const anyArmed = $derived(app.specs.some((s) => s.armed));
-  const multi = $derived(app.specs.length > 1);
 
-  // PalangCanvas writes fitView()/resetPosition() into this object on mount.
   let canvasApi = $state({});
-
   let colorOpen = $state(false);
-  // The stamp must be clicked/tapped before the colour and delete actions
-  // appear (PalangCanvas reports selection through onSelect).
   let stampSelected = $state(false);
   const COLORS = ["#000000", "#1a3a8f", "#b3261e", "#7a1210", "#1e7b46", "#6b4f16"];
 
-  function add() {
-    addSpec(); // the new stamp is auto-selected, per the design
+  function addPalang() {
     colorOpen = false;
+    updateSpec({ armed: true, topPt: null, leftPt: null, rotationDeg: 0 });
+    stampSelected = true;
+    canvasApi.resetPosition?.();
   }
 
-  function del() {
+  function removePalang() {
     colorOpen = false;
-    // With more than one stamp, delete the selected stamp.
-    if (app.specs.length > 1) {
-      removeSpecAt(app.specIndex);
-      return;
-    }
-    // With a single stamp, delete the whole image (and its stamp) instead of
-    // leaving a blank page you cannot get rid of.
+    removeStamp(); // this image keeps, but exports unstamped
+    stampSelected = false;
+  }
+
+  function removeImage() {
+    colorOpen = false;
     const pg = app.preview?.pages?.[app.activePage];
     const fileIdx = pg ? app.previewFiles.indexOf(pg.file) : -1;
     if (fileIdx >= 0) {
@@ -68,12 +65,8 @@
 
   function revert() {
     colorOpen = false;
-    if (app.specs.length > 1 || !anyArmed) {
-      resetSpec(); // back to one default stamp
-    } else {
-      updateSpec({ armed: true, topPt: null, leftPt: null, rotationDeg: 0, color: COLORS[0] });
-      canvasApi.resetPosition?.();
-    }
+    updateSpec({ armed: true, topPt: null, leftPt: null, rotationDeg: 0, color: COLORS[0] });
+    canvasApi.resetPosition?.();
   }
 
   function save() {
@@ -91,34 +84,35 @@
 
     {#if pages.length > 1}
       <span class="pedit-step" role="group" aria-label={t("pagePrev")}>
-        <button type="button" class="iconbtn iconbtn-xs" aria-label={t("pagePrev")} disabled={app.activePage === 0} onclick={() => setActivePage(app.activePage - 1)}>
+        <button
+          type="button"
+          class="iconbtn iconbtn-xs"
+          aria-label={t("pagePrev")}
+          disabled={app.activePage === 0}
+          onclick={() => setActivePage(app.activePage - 1)}
+        >
           <Icon name="chevL" size={18} />
         </button>
         <span class="pedit-stepcap">Page {app.activePage + 1} of {pages.length}</span>
-        <button type="button" class="iconbtn iconbtn-xs" aria-label={t("pageNext")} disabled={app.activePage >= pages.length - 1} onclick={() => setActivePage(app.activePage + 1)}>
+        <button
+          type="button"
+          class="iconbtn iconbtn-xs"
+          aria-label={t("pageNext")}
+          disabled={app.activePage >= pages.length - 1}
+          onclick={() => setActivePage(app.activePage + 1)}
+        >
           <Icon name="chevR" size={18} />
-        </button>
-      </span>
-    {/if}
-    {#if multi}
-      <span class="pedit-step" role="group" aria-label={t("plStamps")}>
-        <button type="button" class="iconbtn iconbtn-xs" aria-label={t("plStampPrev")} disabled={app.specIndex === 0} onclick={() => setSpecIndex(app.specIndex - 1)}>
-          <Icon name="chevL" size={16} />
-        </button>
-        <span class="pedit-stepcap">Stamp {app.specIndex + 1} of {app.specs.length}</span>
-        <button type="button" class="iconbtn iconbtn-xs" aria-label={t("plStampNext")} disabled={app.specIndex >= app.specs.length - 1} onclick={() => setSpecIndex(app.specIndex + 1)}>
-          <Icon name="chevR" size={16} />
         </button>
       </span>
     {/if}
 
     <span class="pedit-spacer"></span>
-    <button type="button" class="btn btn-sm" onclick={revert} disabled={!anyArmed}>{t("cmRevert")}</button>
+    <button type="button" class="btn btn-sm" onclick={revert} disabled={!armed}>{t("cmRevert")}</button>
     <button type="button" class="btn btn-sm btn-primary" onclick={save}>{t("cmSave")}</button>
   </header>
 
   <div class="pedit-stage">
-    {#key app.activePage}
+    {#key app.activePage + "-" + (armed ? "1" : "0")}
       {#if pageUrl && pageReady}
         <PalangCanvas
           class="pedit-canvas"
@@ -132,6 +126,13 @@
           onChange={(patch) => updateSpec(patch)}
           onSelect={(sel) => (stampSelected = sel)}
         />
+        {#if !armed}
+          <button type="button" class="pedit-add" onclick={addPalang}>
+            <Icon name="plus" size={20} />
+            {t("plStampAdd")}
+          </button>
+          <p class="pedit-addcap">{t("plNoPalangHere")}</p>
+        {/if}
       {:else if active?.loading}
         <div class="pv-loading" role="status">
           <div class="spinner"></div>
@@ -145,7 +146,7 @@
     {/key}
   </div>
 
-  {#if colorOpen && stampSelected && anyArmed}
+  {#if colorOpen && stampSelected && armed}
     <div class="pedit-colors" role="group" aria-label={t("plColor")}>
       {#each COLORS as c (c)}
         <button
@@ -162,28 +163,36 @@
   {/if}
 
   <div class="pedit-toolbar" role="toolbar" aria-label={t("plStamps")}>
-    <button type="button" class="pedit-tbtn" aria-label={t("plStampAdd")} onclick={add}>
-      <Icon name="plus" size={22} />
-      <span class="pedit-tlabel">{t("plStampAdd")}</span>
-    </button>
-    <button type="button" class="pedit-tbtn" aria-label={t("pcReset")} onclick={() => canvasApi.resetPosition?.()}>
-      <Icon name="reset" size={22} />
-      <span class="pedit-tlabel">{t("pcReset")}</span>
-    </button>
-    <button type="button" class="pedit-tbtn" aria-label={t("pcWhole")} onclick={() => canvasApi.fitView?.()}>
-      <Icon name="fit" size={22} />
-      <span class="pedit-tlabel">{t("pcWhole")}</span>
-    </button>
-    {#if stampSelected && anyArmed}
-      <button type="button" class="pedit-tbtn" class:on={colorOpen} aria-label={t("plColor")} onclick={() => (colorOpen = !colorOpen)}>
-        <Icon name="colorwell" size={22} />
-        <span class="pedit-tlabel">{t("plColor")}</span>
+    {#if armed}
+      <button type="button" class="pedit-tbtn" aria-label={t("pcReset")} onclick={() => canvasApi.resetPosition?.()}>
+        <Icon name="reset" size={22} />
+        <span class="pedit-tlabel">{t("pcReset")}</span>
       </button>
-      <button type="button" class="pedit-tbtn pedit-del" aria-label={t("delete")} onclick={del}>
-        <Icon name="trash" size={22} />
-        <span class="pedit-tlabel">{t("delete")}</span>
+      <button type="button" class="pedit-tbtn" aria-label={t("pcWhole")} onclick={() => canvasApi.fitView?.()}>
+        <Icon name="fit" size={22} />
+        <span class="pedit-tlabel">{t("pcWhole")}</span>
+      </button>
+      {#if stampSelected}
+        <button
+          type="button"
+          class="pedit-tbtn"
+          class:on={colorOpen}
+          aria-label={t("plColor")}
+          onclick={() => (colorOpen = !colorOpen)}
+        >
+          <Icon name="colorwell" size={22} />
+          <span class="pedit-tlabel">{t("plColor")}</span>
+        </button>
+      {/if}
+      <button type="button" class="pedit-tbtn pedit-del" aria-label={t("plRemoveStamp")} onclick={removePalang}>
+        <Icon name="palang" size={22} />
+        <span class="pedit-tlabel">{t("plRemoveStamp")}</span>
       </button>
     {/if}
+    <button type="button" class="pedit-tbtn pedit-del" aria-label={t("plRemoveImage")} onclick={removeImage}>
+      <Icon name="trash" size={22} />
+      <span class="pedit-tlabel">{t("plRemoveImage")}</span>
+    </button>
   </div>
 </div>
 
@@ -236,21 +245,11 @@
     display: flex;
     flex-direction: column;
     background: #12151b;
-    /* clip zoomed-in overflow so content can never float over the toolbar */
     overflow: hidden;
     position: relative;
   }
   .pedit-stage .pv-loading { border: 0; background: transparent; }
-  .pedit-canvas {
-    position: absolute;
-    inset: 0;
-    display: block;
-  }
   :global(.pedit-canvas > .canvas-frame) {
-    /* fill the stage exactly: an absolutely positioned frame is bounded by the
-       stage, so its clientHeight is the available space, never the page content.
-       An auto/flex-height frame grew with the zoomed page, re-fitted against a
-       bigger frame, and "fit view" did nothing. */
     position: absolute;
     inset: 0;
     min-height: 0;
@@ -259,6 +258,35 @@
     border: 0;
     border-radius: 0;
     background: transparent;
+  }
+  .pedit-add {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1.1rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .pedit-addcap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50% + 2.6rem);
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin: 0;
   }
 
   .pedit-colors {
@@ -292,6 +320,7 @@
     padding: 0.5rem 0.8rem calc(0.5rem + env(safe-area-inset-bottom));
     background: var(--panel);
     border-top: 1px solid var(--line);
+    flex-wrap: wrap;
   }
   .pedit-tbtn {
     display: flex;
@@ -299,7 +328,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.15rem;
-    min-width: 3.4rem;
+    min-width: 3.6rem;
     padding: 0.35rem 0.5rem;
     border: 0;
     border-radius: 10px;

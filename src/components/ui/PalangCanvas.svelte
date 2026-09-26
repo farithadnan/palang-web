@@ -50,6 +50,22 @@ import { onMount } from "svelte";
   const fontPt = $derived(spec.fontSize ?? 18); // text size drives the whole lines band
   const MIN_SIDE = 24; // pt
   let labelEl; // plain let: bind:this on $state miscompiles in this child
+  let editEl;
+  let editingText = $state(false);
+  let editVal = "";
+
+  function commitText() {
+    if (!editingText) return;
+    editingText = false;
+    const v = editVal.trim();
+    if (v && v !== (spec.text || "")) onChange?.({ text: v });
+  }
+  $effect(() => {
+    if (editingText) {
+      editEl?.focus();
+      editEl?.select?.();
+    }
+  });
   // The real rendered text width (pt), measured at the current scale. The
   // clamp must use what the user actually SEES — the estimated line length
   // can differ from the browser's glyph metrics, and rotation doubles the
@@ -519,7 +535,40 @@ import { onMount } from "svelte";
             aria-label={lines ? t("pcLine") : t("pcMarking")}
           >
             {#if lines}
-              <span bind:this={labelEl} class="overlay-label" style={labelStyle}>{spec.text || ""}</span>
+              {#if editingText}
+                <input
+                  bind:this={editEl}
+                  class="overlay-edit"
+                  type="text"
+                  value={editVal}
+                  oninput={(e) => (editVal = e.currentTarget.value)}
+                  style={labelStyle}
+                  onpointerdown={(e) => e.stopPropagation()}
+                  onkeydown={(e) => {
+                    if (e.key === "Enter") commitText();
+                    else if (e.key === "Escape") editingText = false;
+                  }}
+                  onblur={commitText}
+                />
+              {:else}
+                <span
+                  bind:this={labelEl}
+                  class="overlay-label"
+                  class:editable={lines && armed && selected}
+                  role="textbox"
+                  tabindex="0"
+                  aria-label={t("pcDblEdit")}
+                  ondblclick={(e) => {
+                    if (!lines) return;
+                    e.stopPropagation();
+                    editVal = spec.text || "";
+                    editingText = true;
+                  }}
+                  style={labelStyle}
+                >
+                  {spec.text || ""}
+                </span>
+              {/if}
             {/if}
             {#if showHandles && !lines}
               <div class="handle h-midb" role="button" tabindex="-1" aria-label={t("pcResizeH")} onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>

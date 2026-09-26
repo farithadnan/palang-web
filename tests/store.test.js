@@ -20,30 +20,57 @@ beforeEach(() => {
   app.images = [];
 });
 
-describe("updateSpec (active spec)", () => {
-  it("merges a patch into the active spec", () => {
+function seedActiveImage() {
+  const file = new File(["x"], "a.png", { type: "image/png" });
+  app.previewFiles = [file];
+  app.stamp = [defaultSpec()];
+  app.preview = {
+    count: 1,
+    client: true,
+    pages: [{ kind: "img", file, page: 1, url: "blob:x", w: 595, h: 842 }],
+  };
+  app.activePage = 0;
+}
+
+describe("updateSpec (active image's own palang)", () => {
+  it("merges a patch into the active image's spec", () => {
+    seedActiveImage();
     updateSpec({ fontSize: 26 });
-    expect(app.specs[0].fontSize).toBe(26);
-    expect(app.specs[0].text).toBe("UNTUK KEGUNAAN BANK SAHAJA"); // untouched fields stay
+    expect(app.stamp[0].fontSize).toBe(26);
+    expect(app.stamp[0].text).toBe("UNTUK KEGUNAAN BANK SAHAJA"); // untouched fields stay
   });
 
   it("arms the marking on field edits", () => {
-    app.specs[0].armed = false;
+    seedActiveImage();
+    app.stamp[0].armed = false;
     updateSpec({ fontSize: 26 });
-    expect(app.specs[0].armed).toBe(true);
+    expect(app.stamp[0].armed).toBe(true);
   });
 
-  it("honours an explicit armed flag (Delete keeps the marking hidden)", () => {
-    app.specs[0].armed = true;
+  it("honours an explicit armed flag (Remove keeps the marking hidden)", () => {
+    seedActiveImage();
+    app.stamp[0].armed = true;
     updateSpec({ armed: false });
-    expect(app.specs[0].armed).toBe(false);
+    expect(app.stamp[0].armed).toBe(false);
   });
 
-  it("edits whichever spec is active", () => {
-    addSpec();
+  it("edits only the active image; the other image's palang stays untouched", () => {
+    const f1 = new File(["a"], "a.png", { type: "image/png" });
+    const f2 = new File(["b"], "b.png", { type: "image/png" });
+    app.previewFiles = [f1, f2];
+    app.stamp = [defaultSpec(), defaultSpec()];
+    app.preview = {
+      count: 2,
+      client: true,
+      pages: [
+        { kind: "img", file: f1, page: 1, url: "blob:1", w: 595, h: 842 },
+        { kind: "img", file: f2, page: 1, url: "blob:2", w: 595, h: 842 },
+      ],
+    };
+    app.activePage = 0;
     updateSpec({ text: "UNTUK KEGUNAAN KERAJAAN SAHAJA" });
-    expect(app.specs[1].text).toBe("UNTUK KEGUNAAN KERAJAAN SAHAJA");
-    expect(app.specs[0].text).toBe("UNTUK KEGUNAAN BANK SAHAJA");
+    expect(app.stamp[0].text).toBe("UNTUK KEGUNAAN KERAJAAN SAHAJA");
+    expect(app.stamp[1].text).toBe("UNTUK KEGUNAAN BANK SAHAJA");
   });
 });
 

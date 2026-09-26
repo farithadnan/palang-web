@@ -541,6 +541,22 @@ input[type="color"] {
   justify-content: center;
 }
 .overlay-label { font-weight: 400; white-space: nowrap; line-height: 1; }
+.overlay-label.editable { cursor: text; border-bottom: 1px dashed color-mix(in srgb, currentColor 45%, transparent); }
+/* inline text editor: a transparent field replacing the stamp's text (double-click the stamp to open it) */
+.overlay-edit {
+  border: 1px dashed var(--accent);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0 2px;
+  outline: none;
+  border-radius: 2px;
+  line-height: 1;
+}
 .overlay-box .handle {
   position: absolute;
   width: 20px; height: 20px;
