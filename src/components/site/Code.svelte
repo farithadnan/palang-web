@@ -35,18 +35,30 @@
 
   async function copy() {
     const text = String(code).replace(/\s+$/, "");
+    let ok = false;
     try {
       await navigator.clipboard.writeText(text);
-      copied = true;
-      setTimeout(() => (copied = false), 1600);
+      ok = true;
     } catch {
-      // Clipboard blocked (older webview, no permission): select it instead so
-      // the user can copy with the keyboard.
+      /* older webview or blocked permission: fall through to the legacy path */
+    }
+    if (!ok) {
+      // Select the block AND try the legacy copy command, so the button never
+      // looks like it did nothing.
       const range = document.createRange();
       range.selectNodeContents(preEl);
       const sel = getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
+      try {
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
+      }
+    }
+    if (ok) {
+      copied = true;
+      setTimeout(() => (copied = false), 1600);
     }
   }
 </script>

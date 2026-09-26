@@ -2,5 +2,5 @@
 // dist/version.json (from write-manifest.mjs) is what the update check,
 // and later the native APK/EXE updaters, poll for newer versions.
 export const APP_VERSION = "0.3.0";
-export const APP_BUILT_AT = "2026-09-26T04:24:43.588Z";
+export const APP_BUILT_AT = "2026-09-26T04:28:14.267Z";
 export const APP_CHANNEL = "stable";
