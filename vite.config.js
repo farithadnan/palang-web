@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => {
         ),
       },
     },
-    build: { outDir: "dist", emptyOutDir: false },
+    // manifest: prune-assets.mjs needs the authoritative file list
+    build: { outDir: "dist", emptyOutDir: false, manifest: true },
   };
 });

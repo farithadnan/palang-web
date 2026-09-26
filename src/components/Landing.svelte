@@ -3,7 +3,6 @@
    *  app-only build (EXE/APK) tree-shakes every page out of the bundle.
    *  Routes: / (home), /install, /privacy, /features/<id>, /docs. */
   import Topbar from "./ui/Topbar.svelte";
-  import Icon from "./ui/Icon.svelte";
   import HomePage from "./site/HomePage.svelte";
   import FeaturePage from "./site/FeaturePage.svelte";
   import InstallPage from "./site/InstallPage.svelte";
@@ -24,20 +23,14 @@
 </svelte:head>
 
 <div class="site">
-  <Topbar context="landing" ctaLabel={t("getTheApp")} onOpenApp={() => goto("install")}>
+  <Topbar
+    context="landing"
+    ctaLabel={t("getTheApp")}
+    github={GITHUB_URL}
+    onOpenApp={() => goto("install")}
+  >
     {#snippet children()}
       <a href={href("docs")}>{t("docTitle")}</a>
-      <a
-        class="tb-github"
-        href={GITHUB_URL}
-        target="_blank"
-        rel="noopener"
-        title="GitHub"
-        aria-label="GitHub"
-      >
-        <Icon name="github" size={18} />
-        <span class="tb-github-text">GitHub</span>
-      </a>
     {/snippet}
   </Topbar>
 

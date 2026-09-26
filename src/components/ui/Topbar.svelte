@@ -8,7 +8,7 @@
   import { href as routeHref, goto } from "../../lib/router.js";
   import Icon from "./Icon.svelte";
 
-  let { context = "landing", children, onOpenApp, homeTo = "home", ctaLabel = "" } = $props();
+  let { context = "landing", children, onOpenApp, homeTo = "home", ctaLabel = "", github = "" } = $props();
   let open = $state(false);
 
   function go(view) {
@@ -42,6 +42,11 @@
           <Icon name="home" size={16} />
           <span>{t("home")}</span>
         </button>
+      {/if}
+      {#if github}
+        <a class="iconbtn tb-github" href={github} target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">
+          <Icon name="github" size={18} />
+        </a>
       {/if}
       {#if context !== "app"}
         <button

@@ -13,6 +13,24 @@
 </head>
 <body>
   <div id="app"></div>
+  <noscript>
+    <p style="font:16px/1.6 system-ui;padding:3rem 1.5rem;text-align:center">
+      Palang needs JavaScript. Please enable it and reload this page.
+    </p>
+  </noscript>
+  <script>
+    // A static SPA shows nothing at all when its bundle cannot load (a stale
+    // asset after a deploy, or an offline first visit). Never leave a blank
+    // page: if the app has not rendered by now, say so and offer a reload.
+    setTimeout(function () {
+      var el = document.getElementById('app');
+      if (el && !el.childElementCount) {
+        el.innerHTML =
+          '<p style="font:16px/1.6 system-ui;padding:3rem 1.5rem;text-align:center">' +
+          'This page could not load. Please <a href="">reload</a>.</p>';
+      }
+    }, 8000);
+  </script>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

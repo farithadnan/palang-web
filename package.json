@@ -1,12 +1,12 @@
 {
   "name": "palang-web",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/make-version.mjs && vite build && node scripts/copy-static.mjs && node scripts/prerender.mjs && node scripts/write-manifest.mjs",
-    "build:app": "node scripts/make-version.mjs && vite build --mode app && node scripts/copy-static.mjs && node scripts/write-manifest.mjs",
+    "build": "node scripts/make-version.mjs && vite build && node scripts/copy-static.mjs && node scripts/prune-assets.mjs && node scripts/prerender.mjs && node scripts/finalize-dist.mjs && node scripts/write-manifest.mjs",
+    "build:app": "node scripts/make-version.mjs && vite build --mode app && node scripts/copy-static.mjs && node scripts/prune-assets.mjs && node scripts/finalize-dist.mjs && node scripts/write-manifest.mjs",
     "tauri": "tauri",
     "preview": "vite preview",
     "test": "vitest run"
@@ -32,5 +32,10 @@
   "dependencies": {
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.10.38"
+  },
+  "overrides": {
+    "sharp": "^0.35.4",
+    "tar": "^7.5.22",
+    "uuid": "^11.1.1"
   }
 }

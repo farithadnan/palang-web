@@ -29,6 +29,39 @@ jobs:
           releaseName: ${{ startsWith(github.ref, 'refs/tags/') && 'Palang v__VERSION__' || '' }}
           releaseDraft: ${{ startsWith(github.ref, 'refs/tags/') }}
           prerelease: false
+          releaseBody: |
+            Prepare documents for sharing: convert photos to one PDF, stamp a
+            palang purpose band, and merge PDFs. Everything runs on your device.
+            Nothing is uploaded, nothing is stored on a server, and there are no
+            accounts.
+
+            ## Downloads
+
+            | File | What it is |
+            | --- | --- |
+            | `Palang_x.x.x_x64-setup.exe` | Windows installer (recommended) |
+            | `Palang_x.x.x_x64_en-US.msi` | Windows installer for managed / silent installs |
+            | `app-debug.apk` | Android app. Debug-signed, so Android asks you to allow installs from this source |
+
+            ## Install notes
+
+            - **Windows:** run the installer and follow the prompts, then open
+              Palang from the Start menu. It works offline.
+            - **Android:** open the APK on the device that will run it, allow the
+              install when asked, and open Palang. It works offline.
+            - Both builds are packaged from the same codebase and the same
+              on-device PDF engine, so the documents they produce are identical.
+
+            ## Updates
+
+            The app checks a small version file when it opens and offers to
+            update when a newer build exists. It is the only network request the
+            app makes; your documents never leave the device.
+
+            ## License
+
+            MIT. The source, the issue tracker and this release live in the same
+            repository.
       # tauri-action only uploads when publishing a release; on dispatch runs
       # the bundle must be surfaced explicitly so it can be tested.
       - name: Upload bundle
