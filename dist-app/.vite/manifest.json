@@ -1,0 +1,131 @@
+{
+  "_core-Cfh-QHsP.js": {
+    "file": "assets/core-Cfh-QHsP.js",
+    "name": "core"
+  },
+  "_index-CwBqPpwS.js": {
+    "file": "assets/index-CwBqPpwS.js",
+    "name": "index"
+  },
+  "index.html": {
+    "file": "assets/index-BHlEiT7d.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "dynamicImports": [
+      "node_modules/@capacitor/filesystem/dist/esm/index.js",
+      "node_modules/@capacitor/share/dist/esm/index.js",
+      "node_modules/@tauri-apps/plugin-dialog/dist-js/index.js",
+      "node_modules/@tauri-apps/plugin-fs/dist-js/index.js"
+    ],
+    "css": [
+      "assets/index-BN-8jyRC.css"
+    ],
+    "assets": [
+      "assets/pdf.worker-ByF8NTMy.mjs",
+      "assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2",
+      "assets/inter-cyrillic-wght-normal-DqGufNeO.woff2",
+      "assets/inter-greek-ext-wght-normal-DlzME5K_.woff2",
+      "assets/inter-greek-wght-normal-CkhJZR-_.woff2",
+      "assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2",
+      "assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2",
+      "assets/inter-latin-wght-normal-Dx4kXJAl.woff2"
+    ]
+  },
+  "node_modules/@capacitor/filesystem/dist/esm/index.js": {
+    "file": "assets/index-BCgLr5rO.js",
+    "name": "index",
+    "src": "node_modules/@capacitor/filesystem/dist/esm/index.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_index-CwBqPpwS.js"
+    ],
+    "dynamicImports": [
+      "node_modules/@capacitor/filesystem/dist/esm/web.js"
+    ]
+  },
+  "node_modules/@capacitor/filesystem/dist/esm/web.js": {
+    "file": "assets/web-BDYA6rzO.js",
+    "name": "web",
+    "src": "node_modules/@capacitor/filesystem/dist/esm/web.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-CwBqPpwS.js",
+      "node_modules/@capacitor/filesystem/dist/esm/index.js",
+      "index.html"
+    ]
+  },
+  "node_modules/@capacitor/share/dist/esm/index.js": {
+    "file": "assets/index-CounUdCD.js",
+    "name": "index",
+    "src": "node_modules/@capacitor/share/dist/esm/index.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_index-CwBqPpwS.js"
+    ],
+    "dynamicImports": [
+      "node_modules/@capacitor/share/dist/esm/web.js"
+    ]
+  },
+  "node_modules/@capacitor/share/dist/esm/web.js": {
+    "file": "assets/web-DlQElDK-.js",
+    "name": "web",
+    "src": "node_modules/@capacitor/share/dist/esm/web.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-CwBqPpwS.js"
+    ]
+  },
+  "node_modules/@fontsource-variable/inter/files/inter-cyrillic-ext-wght-normal.woff2": {
+    "file": "assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-cyrillic-ext-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2": {
+    "file": "assets/inter-cyrillic-wght-normal-DqGufNeO.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/inter/files/inter-greek-ext-wght-normal.woff2": {
+    "file": "assets/inter-greek-ext-wght-normal-DlzME5K_.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-greek-ext-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/inter/files/inter-greek-wght-normal.woff2": {
+    "file": "assets/inter-greek-wght-normal-CkhJZR-_.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-greek-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2": {
+    "file": "assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2": {
+    "file": "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/inter/files/inter-vietnamese-wght-normal.woff2": {
+    "file": "assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2",
+    "src": "node_modules/@fontsource-variable/inter/files/inter-vietnamese-wght-normal.woff2"
+  },
+  "node_modules/@tauri-apps/plugin-dialog/dist-js/index.js": {
+    "file": "assets/index-BmjFP0ha.js",
+    "name": "index",
+    "src": "node_modules/@tauri-apps/plugin-dialog/dist-js/index.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_core-Cfh-QHsP.js"
+    ]
+  },
+  "node_modules/@tauri-apps/plugin-fs/dist-js/index.js": {
+    "file": "assets/index-BPcN09ks.js",
+    "name": "index",
+    "src": "node_modules/@tauri-apps/plugin-fs/dist-js/index.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_core-Cfh-QHsP.js"
+    ]
+  },
+  "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs": {
+    "file": "assets/pdf.worker-ByF8NTMy.mjs",
+    "src": "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"
+  }
+}

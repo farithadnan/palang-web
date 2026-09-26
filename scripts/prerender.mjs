@@ -11,16 +11,17 @@ import { mkdirSync, copyFileSync, existsSync } from "node:fs";
 import { dirname } from "node:path";
 
 const ROUTES = ["install", "privacy", "docs", "features/convert", "features/palang", "features/merge"];
+const OUT = process.env.PALANG_OUT || "dist";
 
-if (!existsSync("dist/index.html")) {
-  console.error("prerender: dist/index.html missing — run vite build first");
+if (!existsSync(`${OUT}/index.html`)) {
+  console.error(`prerender: ${OUT}/index.html missing — run vite build first`);
   process.exit(1);
 }
 
 for (const r of ROUTES) {
-  const out = `dist/${r}/index.html`;
+  const out = `${OUT}/${r}/index.html`;
   mkdirSync(dirname(out), { recursive: true });
-  copyFileSync("dist/index.html", out);
+  copyFileSync(`${OUT}/index.html`, out);
 }
 
 console.log(`prerendered ${ROUTES.length} route(s): ${ROUTES.join(", ")}`);

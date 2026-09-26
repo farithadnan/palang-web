@@ -18,7 +18,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const dist = join(root, "dist");
+const OUT = process.env.PALANG_OUT || "dist";
+const dist = join(root, OUT);
 
 // ---------- 1. strip crossorigin from every emitted HTML ----------
 const htmlFiles = ["index.html"];

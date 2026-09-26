@@ -34,6 +34,6 @@ export default defineConfig(({ mode }) => {
       },
     },
     // manifest: prune-assets.mjs needs the authoritative file list
-    build: { outDir: "dist", emptyOutDir: false, manifest: true },
+    build: { outDir: APP_ONLY ? "dist-app" : "dist", emptyOutDir: false, manifest: true },
   };
 });

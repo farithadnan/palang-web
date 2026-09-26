@@ -1,7 +1,7 @@
 {
   "appId": "my.faritadnan.palang",
   "appName": "Palang",
-  "webDir": "dist",
+  "webDir": "dist-app",
   "server": {
     "androidScheme": "https"
   }

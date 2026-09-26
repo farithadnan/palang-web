@@ -16,7 +16,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const dist = join(root, "dist");
+const OUT = process.env.PALANG_OUT || "dist";
+const dist = join(root, OUT);
 const assetsDir = join(dist, "assets");
 const manifestPath = join(dist, ".vite/manifest.json");
 const historyPath = join(dist, ".bundle-history.json");

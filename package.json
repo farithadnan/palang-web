@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/make-version.mjs && vite build && node scripts/copy-static.mjs && node scripts/prune-assets.mjs && node scripts/prerender.mjs && node scripts/finalize-dist.mjs && node scripts/write-manifest.mjs",
-    "build:app": "node scripts/make-version.mjs && vite build --mode app && node scripts/copy-static.mjs && node scripts/prune-assets.mjs && node scripts/finalize-dist.mjs && node scripts/write-manifest.mjs",
+    "build:app": "node scripts/make-version.mjs && PALANG_OUT=dist-app vite build --mode app && PALANG_OUT=dist-app node scripts/copy-static.mjs && PALANG_OUT=dist-app node scripts/prune-assets.mjs && PALANG_OUT=dist-app node scripts/finalize-dist.mjs && PALANG_OUT=dist-app node scripts/write-manifest.mjs",
     "tauri": "tauri",
     "preview": "vite preview",
     "test": "vitest run"
