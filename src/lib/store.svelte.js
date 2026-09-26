@@ -7,6 +7,7 @@ import { openPdf, renderPdfPage } from "./pdf-preview.js";
 import { LIMITS, loadLimits } from "./config.js";
 import { APP_VERSION } from "./version.js";
 import { defaultSpec, PAGE_DIMS } from "./domain.js";
+import { toast } from "./toast.svelte.js";
 
 const THEME_KEY = "palang-theme";
 const LANG_KEY = "palang-lang";
@@ -37,7 +38,7 @@ export const app = $state({
   activePage: 0,
   merge: { pages: [], active: 0 }, // flat ordered page list across all merge PDFs
   busy: false,
-  message: null, // { kind: "ok" | "error", text }
+  result: null, // { name, url, size, mode } — the file just produced
   update: null, // { version } when a newer version.json is published
   lang: initialLang(), // ui language (en | ms)
   network: [],
@@ -83,7 +84,6 @@ export function setView(view) {
   app.view = view;
 }
 
-let messageSeq = 0;
 function updateFreqDefault() {
   try {
     return (typeof localStorage !== "undefined" && localStorage.getItem("palang-updfreq")) || "daily";
@@ -106,11 +106,8 @@ export function requestAdd() {
 }
 
 export function flash(kind, text) {
-  const seq = ++messageSeq;
-  app.message = { kind, text };
-  setTimeout(() => {
-    if (messageSeq === seq) app.message = null;
-  }, 6000);
+  // Every outcome in the app goes through the ONE toast service.
+  toast(kind, text);
 }
 
 /* ---------- images ---------- */
@@ -540,15 +537,22 @@ export async function applyCompiled({ onlyMissing = false } = {}) {
 /* ---------- updates ---------- */
 
 const UPDATE_KEY = "palang-update-dismissed";
+const RELEASES_URL = "https://github.com/farithadnan/palang-web/releases/latest";
 
+/** Read the published manifest. Returns the remote version or null. */
+async function fetchRemoteVersion() {
+  const res = await fetch(`version.json?t=${Date.now()}`, { cache: "no-store" });
+  if (!res.ok) return null;
+  const manifest = await res.json();
+  const remote = String(manifest.version ?? "");
+  return remote && remote !== APP_VERSION ? remote : null;
+}
+
+/** Background check (boot, visibilitychange, cadence). Silent when current. */
 export async function checkForUpdate() {
   try {
-    const res = await fetch(`version.json?t=${Date.now()}`, { cache: "no-store" });
-    if (!res.ok) return;
-    const manifest = await res.json();
-    const remote = String(manifest.version ?? "");
-    const local = APP_VERSION;
-    if (!remote || remote === local) {
+    const remote = await fetchRemoteVersion();
+    if (!remote) {
       app.update = null;
       return;
     }
@@ -563,6 +567,23 @@ export async function checkForUpdate() {
   } catch {
     /* offline or static host unreachable: updates are best-effort */
   }
+}
+
+/** Manual check (About page). Always reports a result, even for a dismissed
+ *  version, and never leaves the caller guessing: "latest" | "update" | "error". */
+export async function checkNow() {
+  try {
+    const remote = await fetchRemoteVersion();
+    if (!remote) return { state: "latest" };
+    app.update = { version: remote };
+    return { state: "update", version: remote };
+  } catch {
+    return { state: "error" };
+  }
+}
+
+export function releaseUrl() {
+  return RELEASES_URL;
 }
 
 export function applyUpdate() {
@@ -589,6 +610,14 @@ export function canGenerate() {
   return app.images.length + app.pdfs.length > 0 && !app.busy;
 }
 
+/** Merge needs at least TWO PDFs — one file is not a merge. */
+export function canMerge() {
+  return app.pdfs.length >= 2 && !app.busy;
+}
+
+const DONE_KEY = { convert: "msgDoneConvert", palang: "msgDonePalang", merge: "msgDoneMerge" };
+const FAIL_KEY = { convert: "msgFailConvert", palang: "msgFailPalang", merge: "msgFailMerge" };
+
 export async function generate(mode = "convert") {
   const files =
     mode === "merge"
@@ -598,6 +627,10 @@ export async function generate(mode = "convert") {
         : app.images.map((im) => im.file);
   if (!files.length) {
     flash("error", t("msgAddFirst"));
+    return;
+  }
+  if (mode === "merge" && files.length < 2) {
+    flash("error", t("mgNeedMore"));
     return;
   }
   if (mode === "palang") {
@@ -626,10 +659,13 @@ export async function generate(mode = "convert") {
       await applyCompiled({ onlyMissing: true });
     }
     const blob = await offlineBlob(mode, files);
-    downloadBlob(blob, filename);
-    flash("ok", t("dlReady", { name: filename }));
+    downloadBlob(blob, filename, mode);
+    flash("ok", t(DONE_KEY[mode] ?? DONE_KEY.convert));
   } catch (err) {
-    flash("error", err.message);
+    // Short state toast first; the reason is appended only when the engine
+    // hands us one (an unknown throw must not print "undefined").
+    const reason = typeof err?.message === "string" && err.message ? " · " + err.message.slice(0, 90) : "";
+    flash("error", (t(FAIL_KEY[mode] ?? FAIL_KEY.convert) + reason).trim());
   } finally {
     app.busy = false;
   }
@@ -676,7 +712,10 @@ async function offlineBlob(mode, files) {
   return new Blob([out], { type: "application/pdf" });
 }
 
-function downloadBlob(blob, filename) {
+/** Hand the blob to the browser AND remember it, so the result row can show
+ *  the file (name, size, save again) — "where did my file go?" has an answer
+ *  in the app instead of only in a colouring-in toast. */
+function downloadBlob(blob, filename, mode = "convert") {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -684,7 +723,33 @@ function downloadBlob(blob, filename) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  if (app.result?.url && app.result.url !== url) URL.revokeObjectURL(app.result.url);
+  // The URL is deliberately NOT revoked: the result row keeps it for
+  // "Save again" until the next result replaces it.
+  app.result = { name: filename, url, size: blob.size, mode };
+}
+
+export function clearResult() {
+  if (app.result?.url) URL.revokeObjectURL(app.result.url);
+  app.result = null;
+}
+
+/** Save the current result again (native shells use the same path). */
+export function saveResult() {
+  if (!app.result) return;
+  const a = document.createElement("a");
+  a.href = app.result.url;
+  a.download = app.result.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+export function humanSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
 /* Test/verification hook: lets headless checks read and drive the store. */
@@ -706,5 +771,9 @@ if (typeof window !== "undefined") {
     setTheme,
     setLang,
     generate,
+    canMerge,
+    saveResult,
+    clearResult,
+    checkNow,
   };
 }

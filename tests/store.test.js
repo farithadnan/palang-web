@@ -1,5 +1,17 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { app, setTheme, updateSpec, addSpec, removeSpecAt, setSpecIndex, resetSpec } from "../src/lib/store.svelte.js";
+import {
+  app,
+  setTheme,
+  setLang,
+  updateSpec,
+  addSpec,
+  removeSpecAt,
+  setSpecIndex,
+  resetSpec,
+  canMerge,
+  humanSize,
+} from "../src/lib/store.svelte.js";
+import { nextLang } from "../src/lib/i18n.js";
 import { defaultSpec } from "../src/lib/domain.js";
 
 beforeEach(() => {
@@ -76,5 +88,39 @@ describe("theme", () => {
   it("setTheme updates the theme", () => {
     setTheme("dark");
     expect(app.theme).toBe("dark");
+  });
+});
+
+describe("merge validation", () => {
+  it("needs at least two PDFs (one file is not a merge)", () => {
+    app.pdfs = [];
+    expect(canMerge()).toBe(false);
+    app.pdfs = [{ id: "pdf-1" }];
+    expect(canMerge()).toBe(false);
+    app.pdfs = [{ id: "pdf-1" }, { id: "pdf-2" }];
+    expect(canMerge()).toBe(true);
+    app.busy = true;
+    expect(canMerge()).toBe(false);
+    app.busy = false;
+    app.pdfs = [];
+  });
+});
+
+describe("humanSize", () => {
+  it("humanises bytes for the result row", () => {
+    expect(humanSize(0)).toBe("");
+    expect(humanSize(512)).toBe("512 B");
+    expect(humanSize(2048)).toBe("2 KB");
+    expect(humanSize(3 * 1024 * 1024)).toBe("3.0 MB");
+  });
+});
+
+describe("language toggle", () => {
+  it("nextLang returns the target language (never throws)", () => {
+    setLang("ms");
+    expect(nextLang()).toBe("en");
+    setLang("en");
+    expect(nextLang()).toBe("ms");
+    setLang("ms");
   });
 });

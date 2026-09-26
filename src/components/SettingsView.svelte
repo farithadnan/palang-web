@@ -1,5 +1,7 @@
 <script>
-  /** Settings page: language, theme, and the update-check cadence. */
+  /** Settings page: language, theme, and the update-check cadence.
+   *  Each setting is a full-width row of pills (the pill group spans the
+   *  whole width, so the choice is obvious on a phone). */
   import { app, setLang, setTheme, setUpdateFreq } from "../lib/store.svelte.js";
   import { t } from "../lib/i18n.js";
 
@@ -10,7 +12,7 @@
   ];
 </script>
 
-<section class="panel flat settings" style="max-width: 34rem">
+<section class="panel flat settings">
   <h2>{t("settings")}</h2>
 
   <div class="kv">
@@ -45,19 +47,22 @@
   .kv {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    padding: 0.7rem 0;
+    gap: 0.5rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--line);
   }
-  .kv dt { font-size: 0.85rem; opacity: 0.75; }
-  .kv dd { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0; }
-  .kv dd:last-child { padding-bottom: 1rem; }
+  .kv:last-child { border-bottom: 0; }
+  .kv dt { font-size: 0.82rem; color: var(--muted); }
+  .kv dd { display: flex; gap: 0.45rem; margin: 0; }
   .seg {
-    border: 1px solid var(--border, rgba(128,128,128,.35));
+    flex: 1;
+    border: 1px solid var(--line);
     background: transparent;
     color: var(--text);
-    padding: 0.45rem 1rem;
+    padding: 0.6rem 1rem;
     border-radius: 999px;
     font-size: 0.92rem;
+    font-weight: 600;
     cursor: pointer;
   }
   .seg.on { background: var(--accent, #c9b458); border-color: transparent; color: #111; }

@@ -1,18 +1,21 @@
 <script>
-  /** Full-screen crop mode (Samsung-style): the crop window is FIXED and
-   *  centered with a rule-of-thirds grid; pinching/dragging/zooming moves the
-   *  IMAGE underneath it. Revert resets the view, Save applies the crop
-   *  (or a swipe-right on the bottom strip confirms). Emits fractions
-   *  {l,t,r,b} (0..1) in the same format the store's crop path expects. */
+  /** Full-screen crop mode. The crop window is a real, resizable frame:
+   *  four round corner handles drag it, dragging inside it moves it, and the
+   *  image underneath pans/pinches/wheel-zooms. Save lives in the TOP TOOLBAR
+   *  (the swipe-to-confirm strip was removed — it read as a mystery button).
+   *  Emits fractions {l,t,r,b} (0..1), the format the store's crop path uses. */
   import { t } from "../../lib/i18n.js";
   import Icon from "./Icon.svelte";
 
   let { url, filter = "none", crop = null, onClose, onSave } = $props();
 
-  let stageEl;
-  let imgEl;
   const ZMIN = 1;
   const ZMAX = 8;
+  const MIN_WIN = 0.14; // window may not shrink below 14% of the stage
+  const clamp01 = (v) => Math.min(1, Math.max(0, v));
+
+  let stageEl;
+  let imgEl;
 
   let natW = 0;
   let natH = 0;
@@ -20,99 +23,140 @@
   let z = $state(1);
   let tx = $state(0);
   let ty = $state(0);
-  let changed = $state(false);
 
-  // swipe-to-confirm
-  let swTrack;
-  let swX = $state(0);
-  let swW = 1;
-  let swFrom = 0;
-  const SW_OK = 0.75;
+  // Crop window as fractions of the stage box.
+  let win = $state({ x: 0.17, y: 0.17, w: 0.66, h: 0.66 });
+  let winMoved = false;
 
-  const imgTransform = $derived(
-    `translate(${tx}px, ${ty}px) scale(${z})`
+  const imgTransform = $derived(`translate(${tx}px, ${ty}px) scale(${z})`);
+  const winStyle = $derived(
+    `left:${win.x * 100}%;top:${win.y * 100}%;width:${win.w * 100}%;height:${win.h * 100}%`
   );
+  const changed = $derived(winMoved || Math.abs(z - 1) > 0.001 || Math.abs(tx) > 0.5 || Math.abs(ty) > 0.5);
+
+  function stageRect() {
+    return stageEl?.getBoundingClientRect() ?? { left: 0, top: 0, width: 1, height: 1 };
+  }
+
+  /** Keep the image covering the crop window (industrial-standard crop feel):
+   *  the window can never look at empty background. */
+  function clampPan() {
+    const r = stageRect();
+    const dispW = natW * baseScale * z;
+    const dispH = natH * baseScale * z;
+    const cx = win.x + win.w / 2;
+    const cy = win.y + win.h / 2;
+    const lo = win.x * r.width - r.width / 2 + dispW / 2;
+    const hi = (win.x + win.w) * r.width - r.width / 2 - dispW / 2;
+    tx = lo > hi ? (win.x + win.w / 2) * r.width - r.width / 2 : Math.min(hi, Math.max(lo, tx));
+    const loY = win.y * r.height - r.height / 2 + dispH / 2;
+    const hiY = (win.y + win.h) * r.height - r.height / 2 - dispH / 2;
+    ty = loY > hiY ? cy * r.height - r.height / 2 : Math.min(hiY, Math.max(loY, ty));
+  }
 
   function onImgLoad() {
     natW = imgEl.naturalWidth;
     natH = imgEl.naturalHeight;
-    const r = stageEl.getBoundingClientRect();
-    baseScale = r.width && r.height && natW && natH
-      ? Math.max(r.width / natW, r.height / natH)
-      : 1;
+    const r = stageRect();
+    baseScale = r.width && r.height && natW && natH ? Math.max(r.width / natW, r.height / natH) : 1;
     if (crop) {
-      // Frame the existing crop region in the window.
-      const fw = crop.r - crop.l;
-      const fh = crop.b - crop.t;
-      z = Math.min(ZMAX, Math.max(ZMIN, 1 / Math.max(fw, fh, 0.2)));
-      const dispW = natW * baseScale * z;
-      const dispH = natH * baseScale * z;
-      const winL = r.left + r.width * 0.17;
-      const winT = r.top + r.height * 0.17;
-      const cw = r.width * 0.66;
-      const ch = r.height * 0.66;
-      tx = winL - crop.l * dispW - (r.left + r.width / 2 - dispW / 2);
-      ty = winT - crop.t * dispH - (r.top + r.height / 2 - dispH / 2);
+      // Re-open on the existing crop region.
+      win = { x: crop.l, y: crop.t, w: Math.max(MIN_WIN, crop.r - crop.l), h: Math.max(MIN_WIN, crop.b - crop.t) };
+      winMoved = true;
     }
+    clampPan();
   }
 
-  function stageRect() {
-    return stageEl.getBoundingClientRect();
-  }
-
-  /** Crop fractions the fixed window sees over the transformed image. */
+  /** Crop fractions the window sees over the transformed image. */
   function compute() {
     const r = stageRect();
-    const cw = r.width * 0.66;
-    const ch = r.height * 0.66;
-    const winL = r.left + (r.width - cw) / 2;
-    const winT = r.top + (r.height - ch) / 2;
+    const cw = win.w * r.width;
+    const ch = win.h * r.height;
+    const winL = r.left + win.x * r.width;
+    const winT = r.top + win.y * r.height;
     const dispW = natW * baseScale * z;
     const dispH = natH * baseScale * z;
     const imgL = r.left + r.width / 2 - dispW / 2 + tx;
     const imgT = r.top + r.height / 2 - dispH / 2 + ty;
-    const cl = (x) => Math.min(1, Math.max(0, x));
     const rect = {
-      l: cl((winL - imgL) / dispW),
-      t: cl((winT - imgT) / dispH),
-      r: cl((winL + cw - imgL) / dispW),
-      b: cl((winT + ch - imgT) / dispH),
+      l: clamp01((winL - imgL) / dispW),
+      t: clamp01((winT - imgT) / dispH),
+      r: clamp01((winL + cw - imgL) / dispW),
+      b: clamp01((winT + ch - imgT) / dispH),
     };
-    return rect.r - rect.l > 0.06 && rect.b - rect.t > 0.06 ? rect : null;
-  }
-
-  function markChanged() {
-    changed = Math.abs(z - 1) > 0.001 || Math.abs(tx) > 0.5 || Math.abs(ty) > 0.5;
+    return rect.r - rect.l > 0.04 && rect.b - rect.t > 0.04 ? rect : null;
   }
 
   function revert() {
     z = 1;
     tx = 0;
     ty = 0;
-    changed = false;
-  }
-
-  function saveSwipe() {
-    if (swX / swW >= SW_OK) finish();
-    else swX = 0;
+    win = { x: 0.17, y: 0.17, w: 0.66, h: 0.66 };
+    winMoved = false;
+    clampPan();
   }
 
   function finish() {
-    const moved = Math.abs(z - 1) > 0.001 || Math.abs(tx) > 0.5 || Math.abs(ty) > 0.5;
-    onSave?.(moved ? compute() : null);
+    onSave?.(changed ? compute() : null);
   }
 
-  /* ---------- pan / pinch ---------- */
+  /* ---------- crop window: move + corner resize ---------- */
+  let drag = null;
+
+  function winDown(e, mode) {
+    const r = stageRect();
+    drag = { mode, sx: e.clientX, sy: e.clientY, box: { ...win }, rw: r.width, rh: r.height };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  function winMove(e) {
+    if (!drag) return;
+    const dx = (e.clientX - drag.sx) / (drag.rw || 1);
+    const dy = (e.clientY - drag.sy) / (drag.rh || 1);
+    const b = drag.box;
+    if (drag.mode === "move") {
+      win = {
+        x: Math.max(0, Math.min(b.x + dx, 1 - win.w)),
+        y: Math.max(0, Math.min(b.y + dy, 1 - win.h)),
+        w: win.w,
+        h: win.h,
+      };
+    } else {
+      // corner handles: 'nw','ne','sw','se'
+      const left = drag.mode.includes("w");
+      const top = drag.mode.includes("n");
+      let x1 = b.x;
+      let y1 = b.y;
+      let x2 = b.x + b.w;
+      let y2 = b.y + b.h;
+      if (left) x1 = Math.min(b.x + dx, x2 - MIN_WIN);
+      else x2 = Math.max(b.x + b.w + dx, x1 + MIN_WIN);
+      if (top) y1 = Math.min(b.y + dy, y2 - MIN_WIN);
+      else y2 = Math.max(b.y + b.h + dy, y1 + MIN_WIN);
+      win = { x: Math.max(0, x1), y: Math.max(0, y1), w: Math.min(1, x2) - Math.max(0, x1), h: Math.min(1, y2) - Math.max(0, y1) };
+    }
+    winMoved = true;
+    e.stopPropagation();
+  }
+
+  function winUp(e) {
+    drag = null;
+    clampPan();
+    e?.stopPropagation?.();
+  }
+
+  /* ---------- image: pan / pinch (background only) ---------- */
   const ptrs = new Map();
-  let pz = 1, pdist = 0, pmx = 0, pmy = 0;
+  let pz = 1;
+  let pdist = 0;
 
   function pDown(e) {
     stageEl.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
     pz = z;
     pdist = 0;
-    pmx = e.clientX;
-    pmy = e.clientY;
     e.preventDefault();
   }
 
@@ -128,10 +172,9 @@
       const d = Math.hypot(a.x - b.x, a.y - b.y);
       const mx = (a.x + b.x) / 2;
       const my = (a.y + b.y) / 2;
-      if (pdist && pmx !== undefined) {
+      if (pdist) {
         const nz = Math.min(ZMAX, Math.max(ZMIN, pz * (d / (pdist || 1))));
         const k = nz / z;
-        // zoom around the midpoint so the image point under the fingers stays put
         const r = stageRect();
         const dispW = natW * baseScale * z;
         const dispH = natH * baseScale * z;
@@ -142,16 +185,14 @@
         z = nz;
       }
       pdist = d;
-      pmx = mx;
-      pmy = my;
     }
-    markChanged();
+    clampPan();
   }
 
   function pUp(e) {
     ptrs.delete(e.pointerId);
     if (ptrs.size < 2) pdist = 0;
-    markChanged();
+    clampPan();
   }
 
   function wheel(e) {
@@ -167,23 +208,8 @@
     tx = cx - (cx - imgL) * (nz / z) - (r.width / 2 - (dispW * (nz / z)) / 2);
     ty = cy - (cy - imgT) * (nz / z) - (r.height / 2 - (dispH * (nz / z)) / 2);
     z = nz;
-    markChanged();
+    clampPan();
     e.preventDefault();
-  }
-
-  /* ---------- swipe-to-confirm ---------- */
-  function swDown(e) {
-    swFrom = e.clientX;
-    swW = Math.max(swTrack?.getBoundingClientRect().width ?? 1, 1);
-    swTrack?.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  }
-  function swMove(e) {
-    swX = Math.min(swW, Math.max(0, swX + (e.clientX - swFrom)));
-    swFrom = e.clientX;
-  }
-  function swUp() {
-    saveSwipe();
   }
 </script>
 
@@ -217,13 +243,22 @@
         style={filter && filter !== "none" ? "filter:" + filter : ""}
       />
     </div>
-    <div class="cm-win" aria-hidden="true"></div>
-  </div>
 
-  <div class="cm-swipe" bind:this={swTrack} onpointerdown={swDown} onpointermove={swMove} onpointerup={swUp} onpointercancel={swUp}>
-    <span class="cm-swipe-track">
-      <span class="cm-knob" style="transform:translateX({swX}px)">→</span>
-    </span>
+    <div class="cm-win" style={winStyle} onpointerdown={(e) => winDown(e, "move")} onpointermove={winMove} onpointerup={winUp} onpointercancel={winUp}>
+      <span class="cm-grid" aria-hidden="true"></span>
+      {#each ["nw", "ne", "sw", "se"] as corner (corner)}
+        <span
+          class="cm-handle cm-{corner}"
+          role="button"
+          tabindex="-1"
+          aria-label={t("pcResizeH")}
+          onpointerdown={(e) => winDown(e, corner)}
+          onpointermove={winMove}
+          onpointerup={winUp}
+          onpointercancel={winUp}
+        ></span>
+      {/each}
+    </div>
   </div>
 </div>
 
@@ -267,44 +302,34 @@
     user-select: none;
     -webkit-user-drag: none;
   }
-  /* fixed crop window: thirds grid + dim outside */
   .cm-win {
     position: absolute;
-    width: 66%;
-    height: 66%;
-    left: 17%;
-    top: 17%;
-    border: 1px solid rgba(255, 255, 255, 0.85);
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.35) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.35) 1px, transparent 1px);
-    background-size: 33.333% 33.333%;
-    pointer-events: none;
-  }
-  .cm-swipe { padding: 0.7rem 0.9rem 1.2rem; background: var(--panel); }
-  .cm-swipe-track {
-    display: block;
-    height: 2.6rem;
-    border-radius: 999px;
-    background: var(--line);
-    position: relative;
-    overflow: hidden;
-  }
-  .cm-knob {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 2.6rem;
-    border-radius: 50%;
-    background: var(--accent, #c9b458);
-    color: #111;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    cursor: move;
     touch-action: none;
-    cursor: grab;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
   }
+  .cm-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+    background-size: 33.333% 33.333%;
+  }
+  .cm-handle {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid var(--accent, #c9b458);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+    touch-action: none;
+  }
+  .cm-nw { left: -11px; top: -11px; cursor: nwse-resize; }
+  .cm-ne { right: -11px; top: -11px; cursor: nesw-resize; }
+  .cm-sw { left: -11px; bottom: -11px; cursor: nesw-resize; }
+  .cm-se { right: -11px; bottom: -11px; cursor: nwse-resize; }
 </style>

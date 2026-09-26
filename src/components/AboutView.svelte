@@ -1,13 +1,15 @@
 <script>
-  /** About tab: app identity + settings. Logo centered, version with build
-   *  date + channel, links as icons, update check as a label, and the
-   *  language/theme toggles that used to live in the topbar. Presentational. */
+  /** About tab: app identity + update check. Logo centered, version with build
+   *  date + channel, links as icon buttons, and an explicit update flow
+   *  (button -> spinner -> result row -> download button) so "checking" is
+   *  never indistinguishable from "nothing happened". Presentational. */
   import { APP_VERSION, APP_BUILT_AT, APP_CHANNEL } from "../lib/version.js";
-  import { app, applyUpdate, checkForUpdate } from "../lib/store.svelte.js";
+  import { app, applyUpdate, checkNow, releaseUrl } from "../lib/store.svelte.js";
   import { t } from "../lib/i18n.js";
   import Icon from "./ui/Icon.svelte";
 
   let checking = $state(false);
+  let status = $state(""); // "" | "latest" | "update" | "error"
 
   function fmtDate(iso) {
     try {
@@ -27,7 +29,9 @@
   async function check() {
     if (checking) return;
     checking = true;
-    await checkForUpdate();
+    status = "";
+    const r = await checkNow();
+    status = r.state;
     checking = false;
   }
 </script>
@@ -38,13 +42,35 @@
 
   <dl class="about-kv">
     <div class="kv"><dt>{t("aboutVersion")}</dt><dd>v{APP_VERSION}</dd></div>
-    <div class="kv">
-      <dt>{t("aboutDate")}</dt>
-      <dd>{fmtDate(APP_BUILT_AT)}</dd>
-    </div>
+    <div class="kv"><dt>{t("aboutDate")}</dt><dd>{fmtDate(APP_BUILT_AT)}</dd></div>
     <div class="kv"><dt>{t("aboutChannel")}</dt><dd>{APP_CHANNEL}</dd></div>
     <div class="kv"><dt>{t("aboutLicense")}</dt><dd>MIT</dd></div>
   </dl>
+
+  <div class="about-update">
+    <button type="button" class="btn about-check" disabled={checking} onclick={() => void check()}>
+      {#if checking}
+        <span class="spinner spinner-xs" aria-hidden="true"></span>
+        {t("aboutChecking")}
+      {:else}
+        <Icon name="download" size={17} />
+        {t("aboutCheckUpdate")}
+      {/if}
+    </button>
+
+    {#if status && !checking}
+      <p class="about-status" class:bad={status === "error"}>
+        {status === "latest" ? t("aboutUpToDate") : status === "error" ? t("aboutCheckFailed") : t("aboutUpdateFound", { version: app.update?.version ?? "" })}
+      </p>
+    {/if}
+
+    {#if app.update}
+      <a class="btn btn-primary about-download" href={releaseUrl()} target="_blank" rel="noopener">
+        {t("aboutDownload")}
+      </a>
+      <button type="button" class="link about-reload" onclick={applyUpdate}>{t("updateNow")}</button>
+    {/if}
+  </div>
 
   <div class="about-links">
     <a class="iconbtn" href="https://palang.oh-alam.my" target="_blank" rel="noopener" aria-label={t("aboutWebsite")}>
@@ -56,17 +82,6 @@
     <a class="iconbtn" href="https://github.com/farithadnan/palang-web/issues" target="_blank" rel="noopener" aria-label={t("aboutIssues")}>
       <Icon name="bug" size={20} />
     </a>
-  </div>
-
-  <div class="about-update">
-    <button type="button" class="link" onclick={() => void check()} disabled={checking}>
-      {checking ? t("aboutChecking") : t("aboutCheckUpdate")}
-    </button>
-    {#if app.update}
-      <button type="button" class="link" onclick={applyUpdate}>
-        {t("updateAvailable", { version: app.update.version })} — {t("updateNow")}
-      </button>
-    {/if}
   </div>
 </section>
 
@@ -92,31 +107,53 @@
     background: #111;
   }
   .about-logo span:nth-child(2) { opacity: 0.5; }
-  .about-name { text-align: center; margin: 0; }
+  .about-name { text-align: center; margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
 
-  .about-kv, .about-settings { margin-top: 1.2rem; }
+  .about-kv { margin: 1.4rem 0 0; }
   .kv {
     display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border, rgba(128,128,128,.22));
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--line);
   }
-  .kv dt { font-size: 0.78rem; opacity: 0.65; text-transform: uppercase; letter-spacing: 0.04em; }
-  .kv dd { margin: 0; font-size: 0.95rem; }
+  .kv dt {
+    font-size: 0.82rem;
+    color: var(--muted);
+    letter-spacing: 0.01em;
+  }
+  .kv dd {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .about-update {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+  }
+  .about-check { width: 100%; gap: 0.5rem; }
+  .about-status {
+    margin: 0;
+    text-align: center;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+  .about-status.bad { color: var(--bad); }
+  .about-download { width: 100%; text-decoration: none; }
+  .about-reload { align-self: center; font-size: 0.9rem; }
 
   .about-links {
     display: flex;
     justify-content: center;
     gap: 0.7rem;
-    margin-top: 1.2rem;
+    margin-top: 1.4rem;
   }
-  .about-update {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1rem;
-    font-size: 0.95rem;
-  }
-  .about-update .link:disabled { opacity: 0.6; }
 </style>

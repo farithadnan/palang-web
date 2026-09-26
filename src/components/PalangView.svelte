@@ -4,6 +4,7 @@
   import { t } from "../lib/i18n.js";
   import FileBasket from "./ui/FileBasket.svelte";
   import Modal from "./ui/Modal.svelte";
+  import ResultBar from "./ui/ResultBar.svelte";
   import PalangCanvas from "./ui/PalangCanvas.svelte";
   import PalangSpecFields from "./ui/PalangSpecFields.svelte";
   import {
@@ -103,6 +104,7 @@
       {app.busy ? t("plWorking") : t("plStamp")}
     </button>
   </div>
+  <ResultBar />
 </div>
 
 {#if editing && active}
@@ -200,7 +202,7 @@
           // second temp") — the editor keeps the originals for re-editing,
           // and Stamp will use the compiled images.
           editing = false;
-          void applyCompiled().then(() => flash("ok", t("plReadyToast")));
+          void applyCompiled().then(() => flash("ok", t("msgReady")));
         }}
       >
         Apply &amp; save

@@ -2,7 +2,14 @@
   /** Generic media gallery with Samsung-style selection:
    *  single tap = open an item, LONG-PRESS = selection mode (per-item radio
    *  overlays, top selection bar with select-all + count + cancel, floating
-   *  delete pill), plus an add tile. Shared by Convert and Palang. */
+   *  delete pill). Shared by Convert and Palang.
+   *
+   *  Gesture rules learned the hard way:
+   *  - a press is only cancelled after the finger MOVES past a threshold; any
+   *    pointermove cancelled it before, so a long-press with 2px of jitter
+   *    never armed and a tap with jitter did nothing at all.
+   *  - the released-tap path is gated on the long-press flag set by the timer,
+   *    or the up event toggles the just-selected item back off. */
   import { t } from "../../lib/i18n.js";
   import Icon from "./Icon.svelte";
 
@@ -14,14 +21,19 @@
     onRemove,
   } = $props();
 
+  const MOVE_SLOP = 12; // px of finger drift still counted as a press
+
   let selecting = $state(false);
   let selected = $state([]); // ids, immutable updates for reactivity
-  let pressTimer = $state(0);
+  let pressTimer = 0;
   let pressId = $state(null);
   let longPress = $state(false); // release after a long-press must not toggle
+  let downX = 0;
+  let downY = 0;
 
   function cancelPress() {
     clearTimeout(pressTimer);
+    pressTimer = 0;
     pressId = null;
     longPress = false;
   }
@@ -29,6 +41,8 @@
   function down(e, id) {
     cancelPress();
     pressId = id;
+    downX = e.clientX;
+    downY = e.clientY;
     pressTimer = setTimeout(() => {
       if (!selecting) selecting = true;
       if (!selected.includes(id)) selected = [...selected, id];
@@ -52,8 +66,10 @@
     }
   }
 
-  function move() {
-    cancelPress();
+  /** Only a real drag cancels the press (scrolling the gallery, not a tap). */
+  function move(e) {
+    if (!pressId) return;
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > MOVE_SLOP) cancelPress();
   }
 
   function cancelSelection() {
@@ -85,13 +101,14 @@
       type="button"
       class="mtile"
       class:sel={selected.includes(item.id)}
+      class:paper={!!frameAspect}
       style={frameAspect ? "aspect-ratio:" + frameAspect : ""}
       aria-label={item.name}
       aria-pressed={selecting ? selected.includes(item.id) : undefined}
       onpointerdown={(e) => down(e, item.id)}
       onpointerup={() => up(item.id)}
       onpointermove={move}
-      onpointerleave={move}
+      onpointercancel={cancelPress}
       oncontextmenu={(e) => e.preventDefault()}
     >
       {#if selectable}
@@ -101,14 +118,13 @@
         <img
           src={item.url}
           alt={item.name}
-          style={(frameAspect ? "object-fit:contain;" : "object-fit:cover;") + (item.filter && item.filter !== "none" ? "filter:" + item.filter : "")}
+          style={(frameAspect ? "object-fit:contain;" : "object-fit:contain;") + (item.filter && item.filter !== "none" ? "filter:" + item.filter : "")}
           loading="lazy"
           draggable="false"
         />
       {:else}
-        <span class="gfileicon"><Icon name={item.icon || "file"} size={26} /></span>
+        <span class="gfileicon"><Icon name={item.icon || "file"} size={30} /></span>
       {/if}
-      <span class="mname">{item.name}</span>
     </button>
   {/each}
 </div>
@@ -133,21 +149,20 @@
 <style>
   .mgrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0.55rem;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 0.7rem;
     margin-top: 0.4rem;
   }
-  @media (max-width: 640px) {
-    .mgrid { grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+  /* Two big tiles per row on a phone — the image is the point of the view. */
+  @media (max-width: 700px) {
+    .mgrid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
   }
   .mtile {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    padding: 0.35rem;
+    display: block;
+    padding: 0;
     border: 1px solid var(--line);
-    background: var(--panel);
+    background: color-mix(in srgb, var(--muted) 6%, transparent);
     border-radius: 12px;
     overflow: hidden;
     touch-action: none;
@@ -157,37 +172,38 @@
   }
   .mtile img {
     width: 100%;
-    aspect-ratio: 4 / 3;
-    border-radius: 8px;
-    background: var(--line);
-    pointer-events: none;
+    height: 100%;
+    display: block;
+    object-fit: contain;
   }
+  /* Natural shape (page size = fit): the tile takes the photo's own ratio. */
+  .mtile:not(.paper) img { height: auto; }
   .mtile.sel { border-color: var(--accent); }
-  .mname {
-    font-size: 0.72rem;
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: center;
-  }
-  .gfileicon { padding: 1rem 0; text-align: center; color: var(--muted); }
 
-  /* selection overlays */
+  .gfileicon { display: flex; align-items: center; justify-content: center; padding: 2.2rem 0; color: var(--muted); }
+
+  /* Selection overlay: a normal radio — white circle, blue dot when picked. */
   .mradio {
     position: absolute;
-    top: 0.55rem;
-    left: 0.55rem;
-    width: 1.15rem;
-    height: 1.15rem;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: 1.3rem;
+    height: 1.3rem;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
     display: none;
     z-index: 2;
   }
   .mgrid.selecting .mradio { display: block; }
-  .mradio.on { background: var(--accent); border-color: var(--accent); }
+  .mradio.on::after {
+    content: "";
+    position: absolute;
+    inset: 0.22rem;
+    border-radius: 50%;
+    background: #1a73e8;
+  }
   .mselbar {
     position: fixed;
     top: 0;
@@ -201,7 +217,7 @@
     background: var(--panel);
     border-bottom: 1px solid var(--line);
   }
-  .mselbar .mradio { position: static; display: block; }
+  .mselbar .mradio { position: relative; display: block; top: 0; left: 0; }
   .msel-all { display: flex; align-items: center; gap: 0.5rem; background: none; border: 0; color: var(--text); font-size: 0.95rem; }
   .msel-count { flex: 1; font-size: 0.95rem; }
   .mselpill {

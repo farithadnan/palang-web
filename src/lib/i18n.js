@@ -237,6 +237,28 @@ const DICT = {
     msgPurpose: "Add the purpose text for the bar.",
     dlReady: "Done — {name} is downloading (check your Downloads folder).",
 
+    // ---- short toasts: state only, one line. The file itself lives in the
+    // result row (name + size + save again), so the toast never recites it.
+    msgDoneConvert: "Converted",
+    msgDonePalang: "Palang stamped",
+    msgDoneMerge: "Merged",
+    msgFailConvert: "Convert failed",
+    msgFailPalang: "Stamp failed",
+    msgFailMerge: "Merge failed",
+    msgSaved: "Saved",
+    msgReady: "Ready — stamp the PDF when you are done.",
+    working: "Working…",
+    cvConvert: "Convert to PDF",
+    mgNeedMore: "Add at least 2 PDFs to merge",
+    resultTitle: "Your file",
+    resultHint: "Saved to your Downloads folder",
+    resultSave: "Save again",
+    resultHide: "Hide",
+    aboutUpToDate: "You are on the latest version",
+    aboutUpdateFound: "Version {version} is available",
+    aboutCheckFailed: "Could not check for updates",
+    aboutDownload: "Download update",
+
     // ---- Developer guide page (route #/docs) + slim landing dev section ----
     devSlim: "One repository — the app (Svelte 5). Its engine runs in the browser; nothing else ships.",
     devCTA: "Open the developer guide",
@@ -531,6 +553,26 @@ const DICT = {
     msgPurpose: "Tambah teks tujuan untuk bar.",
     dlReady: "Selesai — {name} sedang dimuat turun (semak folder Muat Turun anda).",
 
+    msgDoneConvert: "Berjaya ditukar",
+    msgDonePalang: "Palang dicap",
+    msgDoneMerge: "Berjaya digabung",
+    msgFailConvert: "Gagal ditukar",
+    msgFailPalang: "Gagal dicap",
+    msgFailMerge: "Gagal digabung",
+    msgSaved: "Disimpan",
+    msgReady: "Sedia — cap PDF apabila anda selesai.",
+    working: "Memproses…",
+    cvConvert: "Tukar ke PDF",
+    mgNeedMore: "Tambah sekurang-kurangnya 2 PDF untuk digabung",
+    resultTitle: "Fail anda",
+    resultHint: "Disimpan ke folder Muat Turun",
+    resultSave: "Simpan lagi",
+    resultHide: "Sembunyi",
+    aboutUpToDate: "Anda menggunakan versi terkini",
+    aboutUpdateFound: "Versi {version} tersedia",
+    aboutCheckFailed: "Gagal menyemak kemas kini",
+    aboutDownload: "Muat turun kemas kini",
+
     seeItLive: "Cuba lihat sendiri",
 
     // ---- Halaman panduan pembangun (laluan #/docs) + bahagian dev yang ringkas ----
@@ -619,5 +661,8 @@ export function t(key, vars) {
 
 /** The language to switch to next (toggle button shows the target). */
 export function nextLang() {
-  return app.lang === "en" ? "ms" : "en";
+  // Must read the bound getter: i18n deliberately imports NOTHING from the
+  // store (a store <-> i18n cycle breaks at boot). Reading `app` here was a
+  // ReferenceError that killed the language toggle.
+  return langOf() === "en" ? "ms" : "en";
 }

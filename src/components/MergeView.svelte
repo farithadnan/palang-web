@@ -1,20 +1,26 @@
 <script>
-  /** Merge tab: dropzone + ordered PDF list (tap a row to jump its first
-   *  page) + an embedded preview editor at the bottom. The preview walks the
-   *  WHOLE merged output — every file's pages, in merge order — rendering
-   *  one page at a time, so a 1000-page document never triggers bulk work. */
+  /** Merge tab: dropzone + ordered PDF list + a fullscreen page viewer opened
+   *  by tapping a row. The preview walks the WHOLE merged output — every
+   *  file's pages, in merge order — one page at a time, so a 1000-page
+   *  document never triggers bulk work. */
   import Dropzone from "./ui/Dropzone.svelte";
   import OrderedList from "./ui/OrderedList.svelte";
   import Icon from "./ui/Icon.svelte";
+  import ResultBar from "./ui/ResultBar.svelte";
   import { t } from "../lib/i18n.js";
-  import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate } from "../lib/store.svelte.js";
+  import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate, canMerge } from "../lib/store.svelte.js";
 
-  let mergeInput;
+  let mergeInput = $state(null);
   let fsOpen = $state(false); // fullscreen page preview
 
-  // Topbar "+\" triggers this picker (same wiring as the other tabs).
+  // The topbar "+" is a counter: open the picker only when it CHANGES, or
+  // every mount re-opens the chooser by itself.
+  let handledTick = 0;
   $effect(() => {
-    if (app.requestAdd) mergeInput?.click();
+    const tick = app.requestAdd;
+    if (!tick || tick === handledTick) return;
+    handledTick = tick;
+    mergeInput?.click();
   });
 
   function openFs(id) {
@@ -47,6 +53,19 @@
 <div class="panel flat">
   <h2>{t("mergeLabel")}</h2>
 
+  <input
+    bind:this={mergeInput}
+    class="hidden-input"
+    id="merge-more"
+    type="file"
+    accept=".pdf"
+    multiple
+    onchange={(e) => {
+      if (e.currentTarget.files?.length) addPdfs(e.currentTarget.files);
+      e.currentTarget.value = "";
+    }}
+  />
+
   {#if !app.pdfs.length}
     <Dropzone
       id="merge-files"
@@ -56,6 +75,7 @@
       sub={t("mgPickHint")}
       icon="merge"
       onPick={addPdfs}
+      onRequest={() => mergeInput?.click()}
     />
   {:else}
     <OrderedList
@@ -65,36 +85,26 @@
       onRemove={removePdf}
       empty=""
     />
-    <input
-      bind:this={mergeInput}
-      class="hidden-input"
-      id="merge-more"
-      type="file"
-      accept=".pdf"
-      multiple
-      onchange={(e) => {
-        if (e.currentTarget.files?.length) addPdfs(e.currentTarget.files);
-        e.currentTarget.value = "";
-      }}
-    />
+    {#if app.pdfs.length < 2}
+      <p class="caption merge-hint">{t("mgNeedMore")}</p>
+    {/if}
   {/if}
 
   <div class="actbar">
-    <span class="caption">
-      {app.pdfs.length ? t("mgSummary", { n: app.pdfs.length, s: app.pdfs.length > 1 ? "s" : "" }) : t("mgEmpty")}
-    </span>
     <button
       type="button"
       class="btn btn-primary"
-      disabled={!app.pdfs.length || app.busy}
+      disabled={!canMerge()}
       onclick={() => generate("merge")}
     >
-      {app.busy ? t("plWorking") : t("mergeLabel")}
+      {app.busy ? t("working") : t("mergeLabel")}
     </button>
   </div>
+  <ResultBar />
 </div>
 
 <style>
+  .merge-hint { text-align: center; margin: 0.6rem 0 0; }
   .mgfs {
     position: fixed;
     inset: 0;
@@ -157,7 +167,7 @@
       <span style="width:2.2rem"></span>
     </div>
     <div class="mgfs-stage">
-      {#if mergePage.img || mergePage.url}
+      {#if mergePage.url}
         <img src={mergePage.url} alt={fileContext()} />
       {:else if mergePage.loading}
         <div class="spinner" role="status" aria-label={t("mgRendering")}></div>

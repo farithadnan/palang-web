@@ -7,6 +7,7 @@
   import FileBasket from "./ui/FileBasket.svelte";
   import FullView from "./ui/FullView.svelte";
   import CropMode from "./ui/CropMode.svelte";
+  import ResultBar from "./ui/ResultBar.svelte";
   import { PAGE_DIMS, PAGE_SIZES } from "../lib/domain.js";
   import { t } from "../lib/i18n.js";
   import {
@@ -55,7 +56,7 @@
     if (rect && cropOpen) {
       updateImage(cropOpen, { crop: rect });
       cropPreview(cropOpen, rect);
-      flash("ok", t("cvSaved"));
+      flash("ok", t("msgSaved"));
     }
     cropOpen = null;
     if (ret && app.images.some((im) => im.id === ret)) viewing = ret; // back to the viewer
@@ -89,20 +90,16 @@
   </Field>
 
   <div class="actbar">
-    <span class="caption">
-      {app.images.length
-        ? app.images.length + " photo" + (app.images.length > 1 ? "s" : "") + " → one PDF"
-        : t("cvEmpty")}
-    </span>
     <button
       type="button"
       class="btn btn-primary"
       disabled={!app.images.length || app.busy}
       onclick={() => generate("convert")}
     >
-      {app.busy ? "Working…" : "Convert to PDF"}
+      {app.busy ? t("working") : t("cvConvert")}
     </button>
   </div>
+  <ResultBar />
 </div>
 
 

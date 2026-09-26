@@ -6,6 +6,7 @@
   import { onMount } from "svelte";
   import Icon from "./components/ui/Icon.svelte";
   import Topbar from "./components/ui/Topbar.svelte";
+  import ToastHost from "./components/ui/Toast.svelte";
   import Landing from "$landing"; // variant switch: stub in app-only builds
   import DevDocs from "./components/DevDocs.svelte"; // full-site builds only (#/docs)
   import AboutView from "./components/AboutView.svelte";
@@ -242,8 +243,4 @@
   </aside>
 {/if}
 
-{#if app.message}
-  <div class="toast" class:error={app.message.kind === "error"} role="status">
-    {app.message.text}
-  </div>
-{/if}
+<ToastHost />
