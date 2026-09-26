@@ -42,6 +42,7 @@
 </section>
 
 <div class="site-page">
+  <h2 class="site-h2">{t("features")}</h2>
   <ul class="site-rows">
     {#each FEATURES as f (f.id)}
       <li>
@@ -101,8 +102,6 @@
   .hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; }
   @media (min-width: 900px) { .hero-actions { justify-content: flex-start; } }
   .hero-visual { display: flex; flex-direction: column; align-items: center; gap: 0.7rem; }
-  .hero-visual :global(.samplewrap) { width: min(300px, 100%); }
-  .hero-visual :global(.sampletools) { justify-content: center; }
   .hero-hint { margin: 0; font-size: 0.8125rem; color: var(--muted); }
   .row-icon {
     flex: 0 0 auto;

@@ -10,7 +10,7 @@ there are no accounts.
 
 [pdf-lib]: https://github.com/Hopding/pdf-lib
 
-- Site: <https://palang.oh-alam.my> (landing, install, privacy, feature pages)
+- Site: <https://farithadnan.github.io/palang-web/> (landing, install, privacy, feature pages)
 - Source: <https://github.com/farithadnan/palang-web>
 - Builds are published on the repository's releases page
 
@@ -61,6 +61,21 @@ rebuild).
 PITFALL: both variants write to `dist/` — the last build wins. Always finish a
 packaging pass with the variant you intend to deploy.
 
+## Publishing (GitHub Pages)
+
+The site is published by `.github/workflows/pages.yml` on every push to `main`
+(and on demand): it runs the tests, builds the site, and deploys `dist/` to
+GitHub Pages.
+
+A project repo is served from `/<repo>/`, so the build roots its assets and
+routes there by default (`SITE_BASE` in `vite.config.js`, currently
+`/palang-web/`). Serving from a domain root (a custom domain, or a
+user/organisation Pages repo) only needs `SITE_BASE=/` in that workflow — the
+router reads Vite's `BASE_URL`, so no code changes.
+
+Deep links work because the build pre-renders one `index.html` per route; see
+Routing below.
+
 ## Routing
 
 The router picks its mode at build time (`src/lib/router.js`):
@@ -86,7 +101,7 @@ keeps its own 44px touch-target controls.
 ## Hosting
 
 The site build (`dist/`) is plain static files, so it runs on any static host
-(Vercel, Cloudflare Pages, GitHub Pages, or a plain nginx) for free.
+(GitHub Pages, Cloudflare Pages, Vercel, or a plain nginx) for free.
 
 ### Docker (single static image)
 

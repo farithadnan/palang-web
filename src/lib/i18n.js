@@ -32,20 +32,20 @@ const DICT = {
 
     title: "Prepare documents for sharing",
     lede:
-      "Palang turns your photos and PDFs into ready-to-share documents — convert, stamp the bank-purpose band, merge — all on your device. Nothing is uploaded. Ever.",
+      "Palang turns your photos and PDFs into ready-to-share documents: convert, stamp the bank-purpose band, merge. Everything runs on your device, and nothing is uploaded.",
     viewGitHub: "View on GitHub",
 
     whatItDoes: "What it does",
     featureConvertBody:
-      "Photos into a single PDF — per-image crop and light enhance, your choice of page size, previewed instantly.",
+      "Photos into one PDF, with a crop and a light enhance for each image, and your choice of page size.",
     featurePalangBody:
-      "The official-use band — 'palang' to Malaysians: banks, government offices, companies and more. Drag, rotate and scale it like a real stamp — transparent lines that follow the text, live on the page.",
+      "The official-use band: the palang that banks, government offices and companies ask for. Drag it, rotate it and scale it like a real stamp. The lines follow your text and stay transparent.",
     featureMergeBody: "Join PDFs in the order you want, straight from your device.",
 
     step1: "Add your files",
     step1B: "Photos or PDFs from your device.",
     step2: "Arrange the marking",
-    step2B: "Drag the band where it belongs — rotate it, size it, watch it live.",
+    step2B: "Drag the band where it belongs, rotate it, size it, and watch it change as you go.",
     step3: "Download the PDF",
     step3B: "One file ready to share. Nothing was sent anywhere.",
 
@@ -58,11 +58,11 @@ const DICT = {
     private4b: "The only network request is a small update check.",
     private5a: "PDPA-aware by design.",
     private5b:
-      "Malaysia's PDPA 2010 governs how those who collect personal data must handle it. We don't collect it: nothing is stored, nothing is uploaded — so there is nothing to protect, leak, or lose.",
+      "Malaysia's PDPA 2010 governs how those who collect personal data must handle it. Palang does not collect it: nothing is stored and nothing is uploaded, so there is nothing to protect, leak or lose.",
 
     faq5q: "Why does my photo have a white border in the PDF?",
     faq5a:
-      "Palang places each page onto the page size you chose (A4 by default) and fits the image inside it — the same way banks and offices expect copies. The preview shows exactly this. To fill the page instead, crop the photo or pick a smaller page size.",
+      "Palang places each page onto the page size you chose (A4 by default) and fits the image inside it, the same way banks and offices expect copies. The preview shows exactly this. To fill the page instead, crop the photo or pick a smaller page size.",
 
     // ---- Site pages (landing / install / privacy / per-feature) ----
     // ---- site: hero + footer ----
@@ -121,14 +121,14 @@ const DICT = {
     cvTitle: "Convert images to PDF",
     cvChoose: "Choose images to convert",
     cvPageOwn: "Each photo becomes a full page at its own size.",
-    cvPageFit: "Each photo becomes one page in this size — the thumbnails show the proportion.",
+    cvPageFit: "Each photo becomes one page in this size. The thumbnails show the proportion.",
     cvPaperSize: "Paper size",
     cvRemoveConfirm: "Remove this photo from the list? This cannot be undone.",
 
     mgChoose: "Choose PDFs to merge",
-    mgPickHint: "Pick the files — the result follows the order in the list, which you can rearrange",
+    mgPickHint: "Pick the files. The result follows the order in the list, which you can rearrange.",
     mgRendering: "Rendering page",
-    mgNoPreview: "This page can't be previewed — it will still be merged as-is.",
+    mgNoPreview: "This page cannot be previewed. It will still be merged as it is.",
     mgPrevUnavail: "preview unavailable",
 
     plTitle: "Add a palang watermark",
@@ -203,12 +203,14 @@ const DICT = {
 
     sdBigger: "Bigger",
     sdSmaller: "Smaller",
+    sdRotate: "Rotate the marking 15 degrees",
+    sdReset: "Reset",
     sdAria: "Interactive Palang sample document",
 
     msgMaxImages: "Maximum {n} photos per session.",
     msgOverMb: "{name} is over the {n} MB limit.",
     msgMaxFiles: "Maximum {n} files per document.",
-    msgOverflow: "More than {n} pages — the overflow was dropped.",
+    msgOverflow: "More than {n} pages, so the overflow was dropped.",
     msgAddFirst: "Add the files you want to process first.",
     msgPurpose: "Add the purpose text for the bar.",
 
@@ -221,7 +223,7 @@ const DICT = {
     msgFailPalang: "Stamp failed",
     msgFailMerge: "Merge failed",
     msgSaved: "Saved",
-    msgReady: "Ready — stamp the PDF when you are done.",
+    msgReady: "Ready. Stamp the PDF when you are done.",
     working: "Working…",
     cvConvert: "Convert to PDF",
     mgNeedMore: "Add at least 2 PDFs to merge",
@@ -237,27 +239,27 @@ const DICT = {
     // ---- Developer guide page (route #/docs) + slim landing dev section ----
     docTitle: "Developer guide",
     docRepos: "Repository",
-    docRepo: "the app (Svelte 5) — the whole product; its engine (pdf-lib) runs on the device",
+    docRepo: "the app (Svelte 5), the whole product; its engine (pdf-lib) runs on the device",
     docDev: "Local development",
     docVariants: "Build variants",
     docRun: "Run",
     docShips: "Ships",
-    docVarFull: "the public site — landing, install, privacy and the per-feature pages",
-    docVarApp: "the tools only, no site — the bundle the EXE and APK are packaged from",
+    docVarFull: "the public site: landing, install, privacy and the per-feature pages",
+    docVarApp: "the tools only, no site: the bundle the EXE and APK are packaged from",
     docConfig: "Configuration",
     docConfigBody:
       "One dotenv source: .env.production holds the committed defaults, .env.local (gitignored) holds your overrides (e.g. a staging domain).",
-    docLimits: "Runtime operator caps live in public/limits.json — adjustable without a rebuild.",
+    docLimits: "Runtime operator caps live in public/limits.json and can be changed without a rebuild.",
     docEngine: "Engine",
     docEngineA:
       "Everything runs on the device: the PDF engine (pdf-lib) is bundled into the app. Convert, stamp and merge never leave it.",
     docEngineB:
-      "The same engine powers the Windows and Android builds — one codebase, identical output.",
+      "The same engine powers the Windows and Android builds: one codebase, identical output.",
     docEngineC:
       "Servers never do the work: a static host only serves the site files; processing is always on the device.",
     docDocker: "Docker",
     docDockerBody:
-      "One image: nginx serving the site build. Only needed when you want to run the site yourself — any static host is a free alternative.",
+      "One image: nginx serving the site build. Only needed when you want to run the site yourself; any static host is a free alternative.",
     docDockerLimits:
       "Override limits.json without rebuilding: docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro palang-web",
     docHosting: "Hosting",
@@ -265,14 +267,18 @@ const DICT = {
       "The site is plain static files, so it runs free on Vercel, Cloudflare Pages or any static host. The apps do all the work on the device.",
     docPackaging: "EXE & APK pipeline",
     docPackBody:
-      "Tag a release and CI builds everything — the workflows run on GitHub Actions (Windows runner for the EXE, Android SDK in CI for the APK), nothing to install locally.",
-    docPackExe: "Windows EXE/MSI via Tauri — published to the GitHub release.",
-    docPackApk: "Android APK via Capacitor — sideloadable debug-signed artifact.",
-    docPlaySign:
-      "Play-Store release needs your keystore wired into the signing config (documented in the README).",
-    docCi: "CI",
-    docCiBody:
-      "CI builds both variants, runs the unit tests, and the packaging workflows run on tags only.",
+      "Tag a release and CI builds everything. The workflows run on GitHub Actions: a Windows runner for the EXE, and the Android SDK for the APK. Nothing to install locally.",
+    docPackWin: "Windows (EXE and MSI)",
+    docPackWinBody: "Built by Tauri on a Windows runner, then attached to the GitHub release.",
+    docPackApk: "Android (APK)",
+    docPackApkBody: "Built by Capacitor, debug-signed so it can be installed straight away.",
+    docPackSign:
+      "Publishing to the Play Store needs your keystore wired into the Android signing config.",
+    docLede: "How the site and the two app builds are produced, from one codebase.",
+    docPublishingBody:
+      "Push to main and the Pages workflow builds the site and deploys it to GitHub Pages. A custom domain can serve it from the root by setting SITE_BASE=/ in that workflow.",
+    codeCopy: "Copy",
+    codeCopied: "Copied",
 
     mitLicense: "MIT License",
     networkActivity: "Network activity",
@@ -297,20 +303,20 @@ const DICT = {
 
     title: "Sediakan dokumen untuk dikongsi",
     lede:
-      "Palang menukar foto dan PDF anda menjadi dokumen sedia kongsi — tukar, setem jalur bank, gabung — semuanya pada peranti anda. Tiada apa yang dimuat naik.",
+      "Palang menukar foto dan PDF anda menjadi dokumen sedia kongsi: tukar, setem jalur bank, gabung. Semuanya pada peranti anda, dan tiada apa yang dimuat naik.",
     viewGitHub: "Lihat di GitHub",
 
     whatItDoes: "Apa yang ia lakukan",
     featureConvertBody:
-      "Foto menjadi satu PDF — potong dan cerahkan setiap imej, pilih saiz halaman, pratonton serta-merta.",
+      "Foto menjadi satu PDF, dengan potongan dan pencahayaan untuk setiap imej, serta pilihan saiz halaman.",
     featurePalangBody:
-      "Jalur kegunaan rasmi — 'palang' bagi rakyat Malaysia: bank, pejabat kerajaan, syarikat dan banyak lagi. Seret, putar dan saiz seperti setem sebenar — garisan lut sinar yang mengikuti teks, terus pada halaman.",
+      "Jalur kegunaan rasmi: palang yang diminta oleh bank, pejabat kerajaan dan syarikat. Seret, putar dan ubah saiznya seperti setem sebenar. Garisan mengikuti teks dan kekal lut sinar.",
     featureMergeBody: "Gabungkan PDF mengikut urutan yang anda mahu, terus dari peranti anda.",
 
     step1: "Tambah fail anda",
     step1B: "Foto atau PDF daripada peranti anda.",
     step2: "Susun setem",
-    step2B: "Seret jalur ke tempatnya — putar, saizkan, lihat secara langsung.",
+    step2B: "Seret jalur ke tempatnya, putar, ubah saiz, dan lihat perubahan serta-merta.",
     step3: "Muat turun PDF",
     step3B: "Satu fail sedia dikongsi. Tiada apa yang dihantar ke mana-mana.",
 
@@ -323,11 +329,11 @@ const DICT = {
     private4b: "Satu-satunya permintaan rangkaian ialah fail manifest versi yang kecil.",
     private5a: "Sedar PDPA.",
     private5b:
-      "Akta Perlindungan Data Peribadi 2010 (PDPA) mengawal cara data peribadi dikendalikan oleh pihak yang mengumpulnya. Kami tidak mengumpul: tiada yang disimpan, tiada yang dimuat naik — jadi tiada apa untuk dilindungi, dibocorkan, atau hilang.",
+      "Akta Perlindungan Data Peribadi 2010 (PDPA) mengawal cara data peribadi dikendalikan oleh pihak yang mengumpulnya. Palang tidak mengumpulnya: tiada yang disimpan dan tiada yang dimuat naik, jadi tiada apa untuk dilindungi, dibocorkan atau hilang.",
 
     faq5q: "Mengapa foto saya ada sempadan putih dalam PDF?",
     faq5a:
-      "Palang meletakkan setiap halaman pada saiz halaman yang anda pilih (A4 secara lalai) dan memuatkan imej di dalamnya — sama seperti yang bank dan pejabat jangkakan. Pratonton menunjukkan perkara ini dengan tepat. Untuk memenuhi halaman, potong foto atau pilih saiz halaman yang lebih kecil.",
+      "Palang meletakkan setiap halaman pada saiz halaman yang anda pilih (A4 secara lalai) dan memuatkan imej di dalamnya, sama seperti yang bank dan pejabat jangkakan. Pratonton menunjukkan perkara ini dengan tepat. Untuk memenuhi halaman, potong foto atau pilih saiz halaman yang lebih kecil.",
 
     heroTagline: "Sediakan dokumen untuk dikongsi. Semuanya pada peranti anda.",
     privacyPolicy: "Dasar privasi",
@@ -384,14 +390,14 @@ const DICT = {
     cvTitle: "Tukar imej kepada PDF",
     cvChoose: "Pilih imej untuk ditukar",
     cvPageOwn: "Setiap foto menjadi satu halaman penuh pada saiz asalnya.",
-    cvPageFit: "Setiap foto menjadi satu halaman dalam saiz ini — thumbnail menunjukkan perkadaran.",
+    cvPageFit: "Setiap foto menjadi satu halaman dalam saiz ini. Thumbnail menunjukkan perkadaran.",
     cvPaperSize: "Saiz kertas",
     cvRemoveConfirm: "Buang foto ini dari senarai? Tindakan ini tidak boleh dibatalkan.",
 
     mgChoose: "Pilih PDF untuk digabung",
-    mgPickHint: "Pilih fail — hasil mengikut susunan dalam senarai, yang boleh anda susun semula",
+    mgPickHint: "Pilih fail. Hasil mengikut susunan dalam senarai, yang boleh anda susun semula.",
     mgRendering: "Memaparkan halaman",
-    mgNoPreview: "Halaman ini tidak dapat dipratonton — ia tetap akan digabung seperti asal.",
+    mgNoPreview: "Halaman ini tidak dapat dipratonton. Ia tetap akan digabung seperti asal.",
     mgPrevUnavail: "pratonton tidak tersedia",
 
     plTitle: "Tambah tanda palang",
@@ -466,12 +472,14 @@ const DICT = {
 
     sdBigger: "Besar",
     sdSmaller: "Kecil",
+    sdRotate: "Putar tanda 15 darjah",
+    sdReset: "Set semula",
     sdAria: "Dokumen sampel palang interaktif",
 
     msgMaxImages: "Maksimum {n} foto setiap sesi.",
     msgOverMb: "{name} melebihi had {n} MB.",
     msgMaxFiles: "Maksimum {n} fail setiap dokumen.",
-    msgOverflow: "Lebih daripada {n} halaman — lebihan digugurkan.",
+    msgOverflow: "Lebih daripada {n} halaman, jadi lebihan digugurkan.",
     msgAddFirst: "Tambah fail yang anda mahu proses terlebih dahulu.",
     msgPurpose: "Tambah teks tujuan untuk bar.",
 
@@ -482,7 +490,7 @@ const DICT = {
     msgFailPalang: "Gagal dicap",
     msgFailMerge: "Gagal digabung",
     msgSaved: "Disimpan",
-    msgReady: "Sedia — cap PDF apabila anda selesai.",
+    msgReady: "Sedia. Cap PDF apabila anda selesai.",
     working: "Memproses…",
     cvConvert: "Tukar ke PDF",
     mgNeedMore: "Tambah sekurang-kurangnya 2 PDF untuk digabung",
@@ -497,27 +505,27 @@ const DICT = {
     // ---- Halaman panduan pembangun (laluan #/docs) + bahagian dev yang ringkas ----
     docTitle: "Panduan pembangun",
     docRepos: "Repositori",
-    docRepo: "app (Svelte 5) — keseluruhan produk; enjinnya (pdf-lib) berjalan pada peranti",
+    docRepo: "app (Svelte 5), keseluruhan produk; enjinnya (pdf-lib) berjalan pada peranti",
     docDev: "Pembangunan tempatan",
     docVariants: "Varian binaan",
     docRun: "Jalankan",
     docShips: "Dihantar",
-    docVarFull: "laman awam — landing, pasang, privasi dan halaman setiap ciri",
-    docVarApp: "alatan sahaja, tanpa laman — bundle yang dibungkus menjadi EXE dan APK",
+    docVarFull: "laman awam: landing, pasang, privasi dan halaman setiap ciri",
+    docVarApp: "alatan sahaja, tanpa laman: bundle yang dibungkus menjadi EXE dan APK",
     docConfig: "Konfigurasi",
     docConfigBody:
       "Satu sumber dotenv: .env.production menyimpan lalai yang dikomit, .env.local (tidak dalam git) untuk overriding anda (cth. domain pentas).",
-    docLimits: "Had pengendali masa jalan ada dalam public/limits.json — boleh ubah tanpa binaan semula.",
+    docLimits: "Had pengendali masa jalan ada dalam public/limits.json dan boleh diubah tanpa binaan semula.",
     docEngine: "Enjin",
     docEngineA:
       "Semua berjalan pada peranti: enjin PDF (pdf-lib) dibungkus dalam app. Tukar, cap dan gabung tidak pernah meninggalkannya.",
     docEngineB:
-      "Enjin yang sama menggerakkan binaan Windows dan Android — satu kod, output yang sama.",
+      "Enjin yang sama menggerakkan binaan Windows dan Android: satu kod, output yang sama.",
     docEngineC:
       "Pelayan tidak pernah melakukan kerja: hos statik hanya menyajikan fail laman; pemprosesan sentiasa pada peranti.",
     docDocker: "Docker",
     docDockerBody:
-      "Satu imej: nginx menyajikan binaan laman. Hanya diperlukan jika anda mahu menjalankan laman sendiri — mana-mana hos statik adalah alternatif percuma.",
+      "Satu imej: nginx menyajikan binaan laman. Hanya diperlukan jika anda mahu menjalankan laman sendiri; mana-mana hos statik adalah alternatif percuma.",
     docDockerLimits:
       "Ubah limits.json tanpa binaan semula: docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro palang-web",
     docHosting: "Pengehosan",
@@ -525,14 +533,18 @@ const DICT = {
       "Laman ini fail statik biasa, jadi ia berjalan percuma di Vercel, Cloudflare Pages atau mana-mana hos statik. App melakukan semua kerja pada peranti.",
     docPackaging: "Saluran EXE & APK",
     docPackBody:
-      "Tag satu release dan CI membina segala-galanya — aliran kerja berjalan di GitHub Actions (runner Windows untuk EXE, SDK Android dalam CI untuk APK), tiada perlu pasang tempatan.",
-    docPackExe: "EXE/MSI Windows melalui Tauri — diterbitkan ke release GitHub.",
-    docPackApk: "APK Android melalui Capacitor — artifak debug-signed boleh dipasang.",
-    docPlaySign:
-      "Release Play Store perlukan keystore anda dalam konfigurasi tanda tangan (didokumenkan dalam README).",
-    docCi: "CI",
-    docCiBody:
-      "CI membina kedua-dua varian, menjalankan ujian unit, dan aliran kerja pembungkusan hanya berjalan pada tag.",
+      "Tag satu release dan CI membina segala-galanya. Aliran kerja berjalan di GitHub Actions: runner Windows untuk EXE, SDK Android untuk APK. Tiada perlu pasang tempatan.",
+    docPackWin: "Windows (EXE dan MSI)",
+    docPackWinBody: "Dibina oleh Tauri pada runner Windows, kemudian dilampirkan pada release GitHub.",
+    docPackApk: "Android (APK)",
+    docPackApkBody: "Dibina oleh Capacitor, debug-signed supaya boleh dipasang terus.",
+    docPackSign:
+      "Terbitan ke Play Store memerlukan keystore anda disambungkan pada konfigurasi penandatanganan Android.",
+    docLede: "Cara laman dan dua binaan app dihasilkan, daripada satu kod.",
+    docPublishingBody:
+      "Tolak ke main dan aliran kerja Pages membina laman dan menerbitkannya ke GitHub Pages. Domain tersendiri boleh menyajikannya dari akar dengan menetapkan SITE_BASE=/ dalam aliran kerja itu.",
+    codeCopy: "Salin",
+    codeCopied: "Disalin",
 
     mitLicense: "Lesen MIT",
     networkActivity: "Aktiviti rangkaian",

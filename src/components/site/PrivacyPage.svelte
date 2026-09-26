@@ -5,7 +5,7 @@
    *  wording: there is no hosted web app. */
   import Icon from "../ui/Icon.svelte";
   import { t } from "../../lib/i18n.js";
-  import { GITHUB_URL, ISSUES_URL } from "../../lib/links.js";
+  import SiteLinks from "./SiteLinks.svelte";
   import { href } from "../../lib/router.js";
 
   const POINTS = [
@@ -39,14 +39,5 @@
   <h2 class="site-h2">{t("networkActivity")}</h2>
   <p class="site-note">{t("privacySite")}</p>
 
-  <p class="pp-links">
-    <a class="link" href={GITHUB_URL} target="_blank" rel="noopener">{t("viewGitHub")}</a>
-    <span class="footdot">·</span>
-    <a class="link" href={ISSUES_URL} target="_blank" rel="noopener">{t("privacyContact")}</a>
-  </p>
-  <p class="site-note">{t("mitLicense")} · Palang</p>
+  <SiteLinks />
 </article>
-
-<style>
-  .pp-links { display: flex; gap: 0.6rem; align-items: center; margin: 2.2rem 0 0.4rem; }
-</style>

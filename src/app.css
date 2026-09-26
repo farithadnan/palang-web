@@ -679,6 +679,13 @@ input[type="color"] {
   font-weight: 500;
 }
 .tb-links a:hover { color: var(--text); }
+/* The GitHub nav entry is the mark; the label only shows in the collapsed
+   mobile menu, where an icon alone would be a guess. Same specificity, so
+   the menu rule comes second on purpose. */
+.tb-links a.tb-github { display: inline-flex; align-items: center; gap: 0.4rem; }
+.tb-links a.tb-github .tb-github-text { display: none; }
+.tb-menu a.tb-github { display: inline-flex; align-items: center; gap: 0.4rem; }
+.tb-menu a.tb-github .tb-github-text { display: inline; }
 .tb-actions {
   display: flex;
   align-items: center;

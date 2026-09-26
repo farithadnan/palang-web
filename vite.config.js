@@ -12,12 +12,16 @@ import { fileURLToPath } from "node:url";
 //                             Tauri and Capacitor package into the EXE/APK.
 export default defineConfig(({ mode }) => {
   const APP_ONLY = mode === "app";
+  // GitHub Pages serves a project repo from /<repo>/, so the site's assets and
+  // routes are rooted there. Set SITE_BASE=/ when a custom domain (or a
+  // user/organisation Pages repo) serves it from the domain root instead.
+  const SITE_BASE = process.env.SITE_BASE || "/palang-web/";
   return {
-    // The site is served from a domain root and pre-renders one index.html per
-    // route, so its assets must be root-absolute. The native shells (tauri://,
+    // The site pre-renders one index.html per route, so its assets must be
+    // rooted (under SITE_BASE on Pages). The native shells (tauri://,
     // capacitor://) have no root to be absolute against, so the app build uses
     // relative URLs — /assets/ would 404 there.
-    base: APP_ONLY ? "./" : "/",
+    base: APP_ONLY ? "./" : SITE_BASE,
     plugins: [svelte(), tailwindcss()],
     resolve: {
       alias: {

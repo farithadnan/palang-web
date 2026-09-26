@@ -98,8 +98,6 @@
     color: var(--accent);
     background: var(--panel);
   }
-  .fp-demo { max-width: 330px; }
-  .fp-demo :global(.sampletools) { margin-top: 0.7rem; }
-  .fp-demo :global(.sampletools .btn) { padding: 0.3rem 0.7rem; font-size: 0.82rem; }
+  .fp-demo { display: flex; justify-content: center; }
   .fp-cta { margin-top: 2.4rem; }
 </style>
