@@ -8,6 +8,7 @@ import { LIMITS, loadLimits } from "./config.js";
 import { APP_VERSION } from "./version.js";
 import { defaultSpec, PAGE_DIMS } from "./domain.js";
 import { toast } from "./toast.svelte.js";
+import { RELEASES_URL } from "./links.js";
 
 const THEME_KEY = "palang-theme";
 const LANG_KEY = "palang-lang";
@@ -41,7 +42,6 @@ export const app = $state({
   result: null, // { name, url, size, mode } — the file just produced
   update: null, // { version } when a newer version.json is published
   lang: initialLang(), // ui language (en | ms)
-  network: [],
   requestAdd: 0,
   updateFreq: updateFreqDefault(), // requests the app has made this session (privacy proof panel)
   compiledFiles: new Map(), // file -> Blob with the palang baked in ("second temp")
@@ -537,7 +537,6 @@ export async function applyCompiled({ onlyMissing = false } = {}) {
 /* ---------- updates ---------- */
 
 const UPDATE_KEY = "palang-update-dismissed";
-const RELEASES_URL = "https://github.com/farithadnan/palang-web/releases/latest";
 
 /** Read the published manifest. Returns the remote version or null. */
 async function fetchRemoteVersion() {

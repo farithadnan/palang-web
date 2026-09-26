@@ -16,7 +16,8 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm test
-      - run: npm run build
-      # The app-only variant (no landing page) must stay green too -
-      # it is what Docker / APK / EXE and third-party hosting ship.
+      # Both variants must stay green: the app variant is what the EXE and APK
+      # are packaged from, the site is what deploys. The site goes LAST because
+      # both write to dist/ (the last build wins).
       - run: npm run build:app
+      - run: npm run build

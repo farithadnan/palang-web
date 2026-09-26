@@ -6,6 +6,7 @@
   import { APP_VERSION, APP_BUILT_AT, APP_CHANNEL } from "../lib/version.js";
   import { app, applyUpdate, checkNow, releaseUrl } from "../lib/store.svelte.js";
   import { t } from "../lib/i18n.js";
+  import { GITHUB_URL, ISSUES_URL, SITE_URL } from "../lib/links.js";
   import Icon from "./ui/Icon.svelte";
 
   let checking = $state(false);
@@ -73,13 +74,13 @@
   </div>
 
   <div class="about-links">
-    <a class="iconbtn" href="https://palang.oh-alam.my" target="_blank" rel="noopener" aria-label={t("aboutWebsite")}>
+    <a class="iconbtn" href={SITE_URL} target="_blank" rel="noopener" aria-label={t("aboutWebsite")}>
       <Icon name="globe" size={20} />
     </a>
-    <a class="iconbtn" href="https://github.com/farithadnan/palang-web" target="_blank" rel="noopener" aria-label={t("aboutGithub")}>
+    <a class="iconbtn" href={GITHUB_URL} target="_blank" rel="noopener" aria-label={t("aboutGithub")}>
       <Icon name="github" size={20} />
     </a>
-    <a class="iconbtn" href="https://github.com/farithadnan/palang-web/issues" target="_blank" rel="noopener" aria-label={t("aboutIssues")}>
+    <a class="iconbtn" href={ISSUES_URL} target="_blank" rel="noopener" aria-label={t("aboutIssues")}>
       <Icon name="bug" size={20} />
     </a>
   </div>

@@ -7,7 +7,7 @@
   import { nextLang, t } from "../../lib/i18n.js";
   import Icon from "./Icon.svelte";
 
-  let { context = "landing", children, onOpenApp, onAdd, homeTo = "home" } = $props();
+  let { context = "landing", children, onOpenApp, onAdd, homeTo = "home", ctaLabel = "" } = $props();
   let open = $state(false);
 
   function go(view) {
@@ -37,7 +37,7 @@
     <div class="tb-actions">
       {#if context === "landing"}
         <button type="button" class="btn btn-sm btn-primary tb-open" onclick={openApp}>
-          {t("openApp")}
+          {ctaLabel || t("openApp")}
         </button>
       {:else if homeTo}
         <button type="button" class="btn btn-sm tb-home" onclick={goHome}>
@@ -89,7 +89,7 @@
       {@render children?.()}
       {#if context === "landing"}
         <button type="button" class="btn btn-primary tb-menu-cta" onclick={openApp}>
-          {t("openApp")}
+          {ctaLabel || t("openApp")}
         </button>
       {/if}
     </div>

@@ -634,16 +634,7 @@ input[type="color"] {
   to { opacity: 1; transform: none; }
 }
 
-/* ---------- consent + privacy ---------- */
-.consent {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 0.75rem 0.95rem;
-  margin: 0.9rem 0;
-  background: color-mix(in srgb, var(--muted) 6%, transparent);
-  font-size: 0.92rem;
-}
-.consent p { margin: 0 0 0.5rem; }
+/* ---------- links + prose ---------- */
 .link {
   background: none; border: 0; padding: 0;
   color: var(--accent); font-weight: 600; font-size: inherit;
@@ -736,66 +727,6 @@ input[type="color"] {
 .update-banner .btn { background: #fff; color: var(--accent); border: 0; }
 .update-banner .btn-primary { background: #111; color: #fff; }
 
-/* ---------- network activity panel (privacy proof) ---------- */
-.netpanel {
-  position: fixed;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 30;
-  max-height: 46vh;
-  overflow: auto;
-  background: var(--panel);
-  border-top: 1px solid var(--line);
-  padding: 0.8rem 1.2rem 1.2rem;
-  box-shadow: 0 -8px 30px color-mix(in srgb, #000 14%, transparent);
-}
-.netpanel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.2rem;
-}
-.net-empty {
-  color: var(--muted);
-  border: 1px dashed var(--line);
-  border-radius: 10px;
-  padding: 1rem;
-  text-align: center;
-}
-.net-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.85rem;
-}
-.net-list li {
-  display: flex;
-  gap: 0.6rem;
-  align-items: baseline;
-  font-family: ui-monospace, monospace;
-}
-.net-method { font-weight: 700; color: var(--accent); min-width: 3.4em; }
-.net-url { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
-.net-status { color: #0a7d3c; font-weight: 700; }
-.net-status.err { color: #c33; }
-
-/* ---------- footer ---------- */
-footer.sitefoot {
-  border-top: 1px solid var(--line);
-  background: var(--panel);
-  padding: 1rem 0.9rem calc(4.6rem + env(safe-area-inset-bottom));
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-@media (min-width: 640px) { footer.sitefoot { padding-bottom: 1.2rem; } }
-footer.sitefoot .wrap { max-width: 1100px; margin: 0 auto; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; justify-content: center; }
-footer.sitefoot a.link { text-decoration: none; }
-footer.sitefoot a.link:hover { text-decoration: underline; }
-.footdot { color: var(--line); user-select: none; }
-
 .caption { font-size: 0.85rem; color: var(--muted); margin: 0.35rem 0; }
 .divider { border-top: 1px solid var(--line); margin: 1.3rem 0; }
 .retrycard {
@@ -814,3 +745,96 @@ footer.sitefoot a.link:hover { text-decoration: underline; }
 @keyframes spin { to { transform: rotate(360deg); } }
 /* inline spinner (buttons, rows) — .spinner centres itself, this one does not */
 .spinner-xs { width: 15px; height: 15px; border-width: 2px; margin: 0; }
+
+/* ---------- public site pages (home / feature / install / privacy) ---------- */
+.site-page {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: clamp(2.2rem, 6vh, 3.6rem) 1.4rem;
+}
+.site-page h1 {
+  font-size: clamp(1.9rem, 5vw, 2.7rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.7rem;
+}
+.site-lede {
+  color: var(--muted);
+  font-size: clamp(1rem, 2vw, 1.1rem);
+  line-height: 1.6;
+  margin: 0 0 1.6rem;
+  max-width: 640px;
+}
+.site-h2 { font-size: 1.22rem; margin: 2.4rem 0 0.7rem; }
+.site-note { color: var(--muted); font-size: 0.92rem; line-height: 1.6; }
+.site-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+  margin-bottom: 1.1rem;
+}
+.site-back:hover { color: var(--accent); }
+.site-points { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.site-points li {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--line);
+  line-height: 1.55;
+  color: var(--muted);
+}
+.site-points li:last-child { border-bottom: 1px solid var(--line); }
+.site-points svg { color: var(--accent); flex: 0 0 auto; margin-top: 0.15rem; }
+.site-points strong { color: var(--text); margin-right: 0.2rem; }
+.site-steps { list-style: none; counter-reset: sitestep; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.9rem; }
+.site-steps li { display: flex; gap: 0.9rem; align-items: flex-start; }
+.site-steps li::before {
+  counter-increment: sitestep;
+  content: counter(sitestep);
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 0.88rem;
+}
+.site-steps h3 { margin: 0 0 0.15rem; font-size: 1rem; }
+.site-steps p { margin: 0; color: var(--muted); line-height: 1.55; }
+.site-rows { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.site-rows li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--line);
+}
+.site-rows li:last-child { border-bottom: 1px solid var(--line); }
+.site-row-link { display: flex; align-items: center; gap: 1rem; flex: 1; text-decoration: none; color: inherit; min-width: 0; }
+.site-row-link:hover .site-row-main b { color: var(--accent); }
+.site-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.18rem; }
+.site-row-main b { font-size: 1.02rem; }
+.site-row-main span { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+.site-chev { color: var(--muted); flex: 0 0 auto; }
+.site-foot { margin-top: auto; border-top: 1px solid var(--line); padding: 1.1rem 1.4rem; }
+.site-footrow {
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.site-footrow a { text-decoration: none; }
+.site-footrow a:hover { text-decoration: underline; }

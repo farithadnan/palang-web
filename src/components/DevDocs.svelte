@@ -3,11 +3,12 @@
    *  Everything a developer needs: repos, local dev, build variants, config,
    *  Docker, static hosting, and the EXE/APK publishing pipeline. */
   import { t } from "../lib/i18n.js";
+  import { GITHUB_URL } from "../lib/links.js";
 
   const REPOS = [
     {
       name: "palang-web",
-      url: "https://github.com/farithadnan/palang-web",
+      url: GITHUB_URL,
       role: () => t("docRepo"),
     },
   ];
@@ -18,7 +19,8 @@
   ];
 </script>
 
-<section class="panel docs" style="max-width: 46rem">
+<article class="site-page docs">
+  <a class="site-back" href="#/home">← {t("backHome")}</a>
   <h2>{t("docTitle")}</h2>
 
   <h3>{t("docRepos")}</h3>
@@ -32,7 +34,7 @@
   </ul>
 
   <h3>{t("docDev")}</h3>
-  <pre class="ld-code">git clone https://github.com/farithadnan/palang-web
+  <pre class="ld-code">git clone {GITHUB_URL}
 cd palang-web
 npm install
 npm run dev            # local editor, in-browser engine, no server needed</pre>
@@ -53,9 +55,6 @@ npm run dev            # local editor, in-browser engine, no server needed</pre>
 
   <h3>{t("docConfig")}</h3>
   <p>{t("docConfigBody")}</p>
-  <pre class="ld-code"># .env.local — personal / environment overrides (never committed)
-VITE_HOST_URL=https://staging.example.com</pre>
-  <p>{t("docMode")}</p>
   <p>{t("docLimits")}</p>
 
   <h3>{t("docEngine")}</h3>
@@ -85,12 +84,21 @@ docker compose up --build   # app + engine on http://localhost:8000</pre>
 
   <h3>{t("docCi")}</h3>
   <p>{t("docCiBody")}</p>
-</section>
+</article>
 
 <style>
+  .docs h2 { margin: 0 0 1rem; }
   .docs h3 { margin-top: 2rem; }
   .docs li { margin: 0.3rem 0; }
   .ld-table { border-collapse: collapse; width: 100%; margin: 0.6rem 0; }
-  .ld-table th, .ld-table td { border: 1px solid var(--border, #555); padding: 0.45rem 0.6rem; text-align: left; }
-  .ld-code { overflow-x: auto; }
+  .ld-table th, .ld-table td { border: 1px solid var(--line); padding: 0.45rem 0.6rem; text-align: left; }
+  .ld-code {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    overflow-x: auto;
+  }
 </style>

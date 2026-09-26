@@ -1,9 +1,9 @@
 # palang-web — Docker image.
 #
-# Single-purpose static image: stage 1 builds the APP-ONLY bundle
-# (VITE_MODE app: no landing page, users land straight in Convert), stage 2
-# serves it with nginx. Processing always happens in the visitor's browser —
-# the container only ships files. No backend, no engine, no tokens.
+# Single-purpose static image: stage 1 builds the PUBLIC SITE (landing,
+# install, privacy, feature pages), stage 2 serves it with nginx. The tools
+# ship as the EXE and APK builds only; the container only ships files. No
+# backend, no engine, no tokens.
 #
 # Build:   docker build -t palang-web .
 # Run:     docker run -p 8000:80 palang-web
@@ -21,7 +21,7 @@ COPY public ./public
 COPY scripts ./scripts
 COPY vite.config.js ./
 COPY index.html ./
-RUN npm run build:app
+RUN npm run build
 
 FROM nginx:1.27-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
