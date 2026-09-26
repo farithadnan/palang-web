@@ -29,7 +29,8 @@ export const app = $state({
   theme: initialTheme(),
   images: [],
   pdfs: [],
-  spec: defaultSpec(),
+  specs: [defaultSpec()],
+  specIndex: 0,
   preview: null, // { count, pages: [{kind,file,page,url,w,h,loading,err}] }
   previewFiles: [],
   previewLoading: false,
@@ -464,18 +465,46 @@ function isImageFile(file) {
    void buildPreviewMeta(app.previewFiles);
  }
 
+/** Update the ACTIVE spec (the one shown in the palette editor). Any change
+ *  invalidates the compiled images, so Stamp can never use a stale bake. */
 export function updateSpec(patch) {
-  Object.assign(app.spec, patch);
+  const s = app.specs[app.specIndex] ?? app.specs[0];
+  if (!s) return;
+  Object.assign(s, patch);
   // Field edits implicitly arm the marking; an explicit `armed` in the patch
   // (delete, re-add) is honoured as-is.
-  if (!Object.prototype.hasOwnProperty.call(patch, "armed")) app.spec.armed = true;
-  // The compiled ("second temp") images are bound to the spec — any change
-  // invalidates them so Stamp can never use a stale bake.
+  if (!Object.prototype.hasOwnProperty.call(patch, "armed")) s.armed = true;
+  app.compiledFiles.clear();
+}
+
+export function setSpecIndex(i) {
+  if (i >= 0 && i < app.specs.length) {
+    app.specIndex = i;
+    app.compiledFiles.clear();
+  }
+}
+
+/** Add another palang marking (multi-stamp). A new band stacks below the
+ *  previous one when that one is centred, so it is visible immediately. */
+export function addSpec() {
+  const base = defaultSpec();
+  const prev = app.specs[app.specs.length - 1];
+  base.topPt = (prev && prev.topPt != null ? prev.topPt : 60) + (prev?.heightPt ?? 48) + 16;
+  app.specs = [...app.specs, base];
+  app.specIndex = app.specs.length - 1;
+  app.compiledFiles.clear();
+}
+
+export function removeSpecAt(i) {
+  if (i < 0 || i >= app.specs.length || app.specs.length <= 1) return;
+  app.specs = app.specs.filter((_, k) => k !== i);
+  app.specIndex = Math.min(Math.max(0, app.specIndex === i ? i - 1 : app.specIndex), app.specs.length - 1);
   app.compiledFiles.clear();
 }
 
 export function resetSpec() {
-  app.spec = defaultSpec();
+  app.specs = [defaultSpec()];
+  app.specIndex = 0;
   app.compiledFiles.clear();
 }
 
@@ -487,7 +516,7 @@ export function resetSpec() {
  *  marking relative to the photo. With onlyMissing it recompiles just the
  *  stale ones (e.g. after re-editing or adding a photo). */
 export async function applyCompiled({ onlyMissing = false } = {}) {
-  if (!app.spec.armed) {
+  if (!app.specs.some((x) => x.armed)) {
     app.compiledFiles.clear();
     return;
   }
@@ -498,7 +527,7 @@ export async function applyCompiled({ onlyMissing = false } = {}) {
       const out = await compileStampedImage(
         { bytes: () => f.arrayBuffer(), mime: f.type, setting: null },
         app.pageSize,
-        app.spec
+        app.specs
       );
       app.compiledFiles.set(f, new Blob([out.bytes], { type: "image/png" }));
     } catch (err) {
@@ -571,9 +600,14 @@ export async function generate(mode = "convert") {
     flash("error", t("msgAddFirst"));
     return;
   }
-  if (mode === "palang" && app.spec.armed && app.spec.mode === "band" && !(app.spec.text || "").trim()) {
-    flash("error", t("msgPurpose"));
-    return;
+  if (mode === "palang") {
+    const missing = app.specs.some(
+      (x) => x.armed && x.mode === "band" && !(x.text || "").trim()
+    );
+    if (missing) {
+      flash("error", t("msgPurpose"));
+      return;
+    }
   }
 
   const stamp = new Date().toISOString().slice(0, 10);
@@ -585,7 +619,7 @@ export async function generate(mode = "convert") {
         : `palang-converted-${stamp}.pdf`;
   app.busy = true;
   try {
-    if (mode === "palang" && app.spec.armed) {
+    if (mode === "palang" && app.specs.some((x) => x.armed)) {
       // The two-temp contract: Stamp uses the compiled images; anything not
       // yet compiled (add/change after the last Apply) is compiled now so a
       // stale bake is impossible.
@@ -637,7 +671,7 @@ async function offlineBlob(mode, files) {
     images: setup.filter((s) => !s.isPdf),
     pdfs: setup.filter((s) => s.isPdf),
     pageSize: app.pageSize,
-    spec: mode === "palang" ? app.spec : { armed: false },
+    specs: mode === "palang" ? app.specs : [],
   });
   return new Blob([out], { type: "application/pdf" });
 }

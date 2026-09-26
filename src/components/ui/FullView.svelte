@@ -16,6 +16,8 @@
 
   let active = $state(start);
   let stripEl;
+  let comparing = $state(false); // hold the enhance pill to see the original
+  let holdTimer = 0;
 
   const item = $derived(items[active] ?? null);
 
@@ -35,6 +37,24 @@
     if (items.length <= 1) onClose?.();
     else if (active >= last) active = last - 1;
   }
+
+  // Hold the enhance pill: show the ORIGINAL while held (compare), release
+  // without firing; a quick tap toggles enhance as before.
+  function enDown() {
+    holdTimer = setTimeout(() => (comparing = true), 350);
+  }
+  function enUp() {
+    clearTimeout(holdTimer);
+    if (comparing) comparing = false; // release after a compare: keep state
+  }
+  function enTap() {
+    if (comparing) return;
+    onEnhance?.(item.id);
+  }
+
+  const stageFilter = $derived(
+    comparing ? "none" : item?.filter && item.filter !== "none" ? item.filter : "none"
+  );
 </script>
 
 <div class="fview" role="dialog" aria-modal="true" aria-label={item?.name ?? ""}>
@@ -52,7 +72,7 @@
         src={item.url}
         alt={item.name}
         draggable="false"
-        style={item.filter && item.filter !== "none" ? "filter:" + item.filter : ""}
+        style={stageFilter !== "none" ? "filter:" + stageFilter : ""}
       />
     {:else}
       <span class="gfileicon"><Icon name={item?.icon || "file"} size={48} /></span>
@@ -82,7 +102,17 @@
     <button type="button" class="fpill-btn" aria-label={t("viewCrop")} onclick={() => onCrop?.(item.id)}>
       <Icon name="crop" size={20} />
     </button>
-    <button type="button" class="fpill-btn" aria-label={t("viewEnhance")} onclick={() => onEnhance?.(item.id)}>
+    <button
+      type="button"
+      class="fpill-btn"
+      aria-label={t("viewEnhance")}
+      onclick={enTap}
+      onpointerdown={enDown}
+      onpointerup={enUp}
+      onpointercancel={enUp}
+      onpointerleave={enUp}
+      style={comparing ? "opacity:.6" : ""}
+    >
       <Icon name="sun" size={20} />
     </button>
     <button type="button" class="fpill-btn fpill-del" aria-label={t("delete")} onclick={del}>

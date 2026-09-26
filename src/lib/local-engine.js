@@ -208,35 +208,37 @@ export function imageStampRect(imageW, imageH, pageW, pageH, w, h, cx, cy) {
   };
 }
 
-/** Draw the stamped image: photo (+crop/enhance, EXIF-normalised) with the
- *  palang baked on at the preview's exact position, returned as PNG bytes. */
-async function bakePalang(img, palang, palangImg, page, spec) {
-  const c = document.createElement("canvas");
-  c.width = img.width;
-  c.height = img.height;
+/** Draw the palang marking on an existing canvas (used by the compile path).
+ *  One call per stamp — multi-palang is just this per-spec routine in a loop,
+ *  so preview↔output parity holds per stamp exactly as with a single band.
+ *  The base photo is drawn ONCE by the caller, never here, or each stamp
+ *  would erase the previous one. */
+async function drawStamped(c, page, spec) {
   const ctx = c.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-  const cx = (spec.leftPt ?? (page.w - palang.w) / 2) + palang.w / 2;
-  const cy = (spec.topPt ?? (page.h - palang.h) / 2) + palang.h / 2;
-  const r = imageStampRect(img.width, img.height, page.w, page.h, palang.rw, palang.rh, cx, cy);
-  ctx.drawImage(palangImg, r.x, r.y, r.w, r.h);
-  return new Uint8Array(await outToBytes(c, "image/png"));
-}
-
-/** Compile ONE photo into its stamped form (the "second temp": the palang
- *  is baked in and can no longer move). The editor keeps showing the
- *  original photo for re-editing. The compiled image is capped at
- *  MAX_COMPILE_PX on its longest side — it is only ever embedded on an A4
- *  page (~340 dpi at 2400 px); a 24 MP bake would be memory-heavy and
- *  bloat the PDF for zero visible gain. The cap is applied AT DECODE via
- *  createImageBitmap's native resize (No full-resolution rasterisation). */
-export const MAX_COMPILE_PX = 2400;
-
-export async function compileStampedImage(input, pageSize, spec) {
-  const bytes = new Uint8Array(await input.bytes());
-  const page = PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
   const palang = await renderPalang(spec, page);
   const palangImg = await decodeImage(palang.bytes);
+  const cx = (spec.leftPt ?? (page.w - palang.w) / 2) + palang.w / 2;
+  const cy = (spec.topPt ?? (page.h - palang.h) / 2) + palang.h / 2;
+  const r = imageStampRect(c.width, c.height, page.w, page.h, palang.rw, palang.rh, cx, cy);
+  ctx.drawImage(palangImg, r.x, r.y, r.w, r.h);
+}
+
+/** Compile ONE photo into its stamped form (the "second temp": every armed
+ *  palang is baked in and can no longer move). The editor keeps showing the
+ *  original photo for re-editing. The compiled image is capped at
+ *  MAX_COMPILE_PX on its longest side — it is only ever embedded on an A4
+ *  page (~340 dpi at 2400 px); a 24 MP bake would be memory-heavy and bloat
+ *  the PDF for zero visible gain. The cap is applied AT DECODE via
+ *  createImageBitmap's native resize (no full-resolution rasterisation).
+ *  `specs` is an ARRAY — the multi-stamp loop runs the exact same per-spec
+ *  routine, so parity with the preview holds for every band. */
+export const MAX_COMPILE_PX = 2400;
+
+export async function compileStampedImage(input, pageSize, specs) {
+  const bytes = new Uint8Array(await input.bytes());
+  const page = PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
+  const armed = (specs ?? []).filter((s) => s?.armed);
+  const c = document.createElement("canvas");
   let img;
   const dims = jpegDims(bytes);
   if (dims && dims.w > MAX_COMPILE_PX) {
@@ -252,7 +254,11 @@ export async function compileStampedImage(input, pageSize, spec) {
   } else {
     img = await decodeImage(bytes);
   }
-  return { bytes: await bakePalang(img, palang, palangImg, page, spec), mime: "image/png" };
+  c.width = img.width;
+  c.height = img.height;
+  c.getContext("2d").drawImage(img, 0, 0); // base photo once — stamps layer on top
+  for (const spec of armed) await drawStamped(c, page, spec);
+  return { bytes: new Uint8Array(await outToBytes(c, "image/png")), mime: "image/png" };
 }
 
 function textWidthApprox(text, fontPt) {
@@ -261,10 +267,11 @@ function textWidthApprox(text, fontPt) {
 }
 
 /** The full offline pipeline: images (+optional pdfs) → one PDF with the
- *  palang marking stamped, exactly like /api/process with merge=true.
+ *  palang marking(s) stamped, exactly like /api/process with merge=true.
  *  All pages are stamped in page space with per-native-size + /Rotate-aware
- *  placement (see palangDrawRect). */
-export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
+ *  placement (see palangDrawRect). `specs` is an ARRAY: each armed spec is
+ *  rendered and drawn on every page that isn't already compiled. */
+export async function processOffline({ images, pdfs, pageSize = "A4", specs }) {
   const page = PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
   const doc = await PDFDocument.create();
   const imagePages = new Set(); // pre-stamped (compiled) pages skip the stamp loop
@@ -286,23 +293,26 @@ export async function processOffline({ images, pdfs, pageSize = "A4", spec }) {
     for (const pg of pages) doc.addPage(pg);
   }
 
-  if (spec?.armed && images.length + pdfs.length > 0) {
-    const palang = await renderPalang(spec, page);
-    const png = await doc.embedPng(palang.bytes);
-    const w = palang.rw;
-    const h = palang.rh;
+  const armed = (specs ?? []).filter((s) => s?.armed);
+  if (armed.length && images.length + pdfs.length > 0) {
     for (const p of doc.getPages()) {
       if (imagePages.has(p)) continue; // compiled image: palang already baked in
       // Each page has its OWN size: image pages are the chosen page size,
       // but pages copied from a source PDF keep their native geometry
       // (Letter, landscape, photo-size…).
       const { width: pw, height: ph } = p.getSize();
-      const cx = (spec.leftPt ?? (pw - palang.w) / 2) + palang.w / 2;
-      const cy = (spec.topPt ?? (ph - palang.h) / 2) + palang.h / 2;
-      // Visual space (what the preview shows, pdf.js applies /Rotate) →
-      // user space (pdf-lib draws unrotated): rotation-aware mapping.
-      const rect = palangDrawRect(pw, ph, p.getRotation().angle, cx - w / 2, cy - h / 2, w, h);
-      p.drawImage(png, rect);
+      for (const spec of armed) {
+        const palang = await renderPalang(spec, page);
+        const png = await doc.embedPng(palang.bytes);
+        const w = palang.rw;
+        const h = palang.rh;
+        const cx = (spec.leftPt ?? (pw - palang.w) / 2) + palang.w / 2;
+        const cy = (spec.topPt ?? (ph - palang.h) / 2) + palang.h / 2;
+        // Visual space (what the preview shows, pdf.js applies /Rotate) →
+        // user space (pdf-lib draws unrotated): rotation-aware mapping.
+        const rect = palangDrawRect(pw, ph, p.getRotation().angle, cx - w / 2, cy - h / 2, w, h);
+        p.drawImage(png, rect);
+      }
     }
   }
 

@@ -13,6 +13,9 @@
     retryPreview,
     setActivePage,
     updateSpec,
+    addSpec,
+    removeSpecAt,
+    setSpecIndex,
     applyCompiled,
     flash,
     generate,
@@ -128,13 +131,13 @@
       </div>
     {/if}
 
-    {#key app.activePage + "-" + app.spec.mode + "-" + app.spec.style + "-" + app.spec.armed}
+    {#key app.activePage + "-" + (app.specs[app.specIndex]?.mode ?? "") + "-" + (app.specs[app.specIndex]?.style ?? "") + "-" + (app.specs[app.specIndex]?.armed ?? false)}
       {#if pageUrl && pageReady}
         <PalangCanvas
           url={pageUrl}
           widthPt={active.w}
           heightPt={active.h}
-          spec={app.spec}
+          spec={app.specs[app.specIndex] ?? app.specs[0]}
           fitContain={!!active.url}
           onChange={(patch) => updateSpec(patch)}
         />
@@ -154,8 +157,38 @@
       Drag the marking to move it · the knob above tilts it · the corner stretches it · wheel or pinch zooms
     </p>
 
-    <div class="divider"></div>
-    <PalangSpecFields spec={app.spec} onChange={(patch) => updateSpec(patch)} />
+    <div class="spec-chips" role="tablist" aria-label={t("plStamps")}>
+      {#each app.specs as s, i (i)}
+        <button
+          type="button"
+          class="chip"
+          class:on={i === app.specIndex}
+          onclick={() => setSpecIndex(i)}
+          aria-label={t("plStampSelect", { n: i + 1 })}
+        >
+          <span class="chip-label">{s.text.trim().slice(0, 18) || t("plStamp") + " " + (i + 1)}</span>
+          {#if app.specs.length > 1}
+            <span
+              role="button"
+              tabindex="-1"
+              class="chip-x"
+              aria-label={t("plStampRemove", { n: i + 1 })}
+              onclick={(e) => {
+                e.stopPropagation();
+                removeSpecAt(i);
+              }}
+            >
+              ×
+            </span>
+          {/if}
+        </button>
+      {/each}
+      <button type="button" class="chip chip-add" onclick={addSpec} aria-label={t("plStampAdd")}>
+        +
+      </button>
+    </div>
+
+    <PalangSpecFields spec={app.specs[app.specIndex] ?? app.specs[0]} onChange={(patch) => updateSpec(patch)} />
 
     <div class="modal-actions modal-actions-sticky">
       <button type="button" class="btn" onclick={() => (editing = false)}>Cancel</button>
@@ -175,3 +208,34 @@
     </div>
   </Modal>
 {/if}
+
+<style>
+  .spec-chips {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    padding: 0.6rem 0 0.9rem;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 100%;
+    border: 1px solid var(--border, rgba(128,128,128,.35));
+    background: transparent;
+    color: var(--text);
+    border-radius: 999px;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.86rem;
+    cursor: pointer;
+  }
+  .chip.on { background: var(--accent, #c9b458); border-color: transparent; color: #111; }
+  .chip-x {
+    font-size: 1.05rem;
+    line-height: 1;
+    padding: 0 0.1rem;
+    opacity: 0.8;
+    cursor: pointer;
+  }
+  .chip-add { font-size: 1.15rem; padding: 0.25rem 0.85rem; }
+</style>

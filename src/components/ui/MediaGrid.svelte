@@ -171,14 +171,6 @@
     text-overflow: ellipsis;
     text-align: center;
   }
-  .mtile-add {
-    align-items: center;
-    justify-content: center;
-    min-height: 6.5rem;
-    border-style: dashed;
-    gap: 0.2rem;
-    color: var(--accent);
-  }
   .gfileicon { padding: 1rem 0; text-align: center; color: var(--muted); }
 
   /* selection overlays */

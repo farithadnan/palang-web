@@ -5,15 +5,22 @@
    *  one page at a time, so a 1000-page document never triggers bulk work. */
   import Dropzone from "./ui/Dropzone.svelte";
   import OrderedList from "./ui/OrderedList.svelte";
+  import Icon from "./ui/Icon.svelte";
   import { t } from "../lib/i18n.js";
   import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate } from "../lib/store.svelte.js";
 
   let mergeInput;
+  let fsOpen = $state(false); // fullscreen page preview
 
-  // Topbar "+" triggers this picker (same wiring as the other tabs).
+  // Topbar "+\" triggers this picker (same wiring as the other tabs).
   $effect(() => {
     if (app.requestAdd) mergeInput?.click();
   });
+
+  function openFs(id) {
+    selectMergeFile(id); // jumps the stepper to that file's first page
+    fsOpen = true;
+  }
 
   const items = $derived(
     app.pdfs.map((p, i) => ({
@@ -53,51 +60,11 @@
   {:else}
     <OrderedList
       items={items}
-      onSelect={selectMergeFile}
+      onSelect={openFs}
       onMove={movePdf}
       onRemove={removePdf}
       empty=""
     />
-    <div class="actionrow">
-      <button type="button" class="btn btn-sm" onclick={() => mergeInput?.click()}>{t('mgAddMore')}</button>
-    </div>
-
-    {#if mergePage}
-      <div class="mrg-editor">
-        <div class="mrg-frame">
-          {#if mergePage.img || mergePage.url}
-            <img src={mergePage.url} alt={fileContext()} />
-          {:else if mergePage.loading}
-            <div class="spinner" role="status" aria-label={t("mgRendering")}></div>
-          {:else}
-            <p class="caption">{t("mgNoPreview")}</p>
-          {/if}
-        </div>
-        <div class="page-stepper">
-          <button
-            type="button"
-            class="btn btn-sm"
-            aria-label="Previous page"
-            disabled={app.merge.active <= 0}
-            onclick={() => stepMerge(-1)}
-          >
-            ←
-          </button>
-          <span class="caption" title={fileContext()}>
-            {fileContext()} — Page {app.merge.active + 1} of {total}
-          </span>
-          <button
-            type="button"
-            class="btn btn-sm"
-            aria-label="Next page"
-            disabled={app.merge.active >= total - 1}
-            onclick={() => stepMerge(1)}
-          >
-            →
-          </button>
-        </div>
-      </div>
-    {/if}
     <input
       bind:this={mergeInput}
       class="hidden-input"
@@ -126,3 +93,98 @@
     </button>
   </div>
 </div>
+
+<style>
+  .mgfs {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--bg, #111);
+    display: flex;
+    flex-direction: column;
+    color: var(--text);
+  }
+  .mgfs-top {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .mgfs-name {
+    flex: 1;
+    font-size: 0.95rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .mgfs-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem;
+  }
+  .mgfs-stage img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+  .mgfs-bar {
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.3rem 0.9rem;
+    margin-bottom: 1.4rem;
+    box-shadow: var(--shadow);
+  }
+</style>
+
+{#if fsOpen && mergePage}
+  <div class="mgfs" role="dialog" aria-modal="true" aria-label={t("mergeLabel")}>
+    <div class="mgfs-top">
+      <button type="button" class="iconbtn" aria-label={t("close")} onclick={() => (fsOpen = false)}>
+        <Icon name="x" size={22} />
+      </button>
+      <span class="mgfs-name" title={fileContext()}>{fileContext()}</span>
+      <span style="width:2.2rem"></span>
+    </div>
+    <div class="mgfs-stage">
+      {#if mergePage.img || mergePage.url}
+        <img src={mergePage.url} alt={fileContext()} />
+      {:else if mergePage.loading}
+        <div class="spinner" role="status" aria-label={t("mgRendering")}></div>
+      {:else}
+        <p class="caption">{t("mgNoPreview")}</p>
+      {/if}
+    </div>
+    <div class="mgfs-bar">
+      <button
+        type="button"
+        class="fpill-btn"
+        aria-label={t("pagePrev")}
+        disabled={app.merge.active <= 0}
+        onclick={() => stepMerge(-1)}
+      >
+        <Icon name="chevL" size={20} />
+      </button>
+      <span class="caption">Page {app.merge.active + 1} of {total}</span>
+      <button
+        type="button"
+        class="fpill-btn"
+        aria-label={t("pageNext")}
+        disabled={app.merge.active >= total - 1}
+        onclick={() => stepMerge(1)}
+      >
+        <Icon name="chevR" size={20} />
+      </button>
+    </div>
+  </div>
+{/if}
