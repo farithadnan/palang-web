@@ -31,7 +31,10 @@
     if (checking) return;
     checking = true;
     status = "";
-    const r = await checkNow();
+    // The manifest fetch returns in a blink, which read as a flicker instead of
+    // work. Hold the spinner long enough that the check reads as doing
+    // something (min ~0.6s), then show the result.
+    const [r] = await Promise.all([checkNow(), new Promise((res) => setTimeout(res, 600))]);
     status = r.state;
     checking = false;
   }

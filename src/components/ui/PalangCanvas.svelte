@@ -9,7 +9,7 @@
 import { onMount } from "svelte";
   import { fittedPageSize, round1 } from "../../lib/domain.js";
 
-  let { url, widthPt, heightPt, spec, onChange, fitContain = false, class: cls = "", bare = false, api = null } = $props();
+  let { url, widthPt, heightPt, spec, onChange, fitContain = false, class: cls = "", bare = false, api = null, onSelect = null } = $props();
 
   let img;
   let wrap;
@@ -19,9 +19,13 @@ import { onMount } from "svelte";
   let zoom = $state(1);
   let box = $state(null); // points; lines band keeps x/y only
   let mode = $state(null); // null | "move" | corners (region) | "midb" (band height)
-  let selected = $state(true);
+  let selected = $state(false);
   let sx = 0, sy = 0, bx = 0, by = 0, bw = 0, bh = 0, sf0 = 18, rotBase = 0;
   let pointers = new Map(); // active background touches (pinch zoom)
+
+  // Report selection upward so the editor can reveal the Colour / Delete
+  // actions only once a stamp is actually clicked.
+  $effect(() => onSelect?.(selected));
 
   const region = $derived(spec.mode === "region");
   const lines = $derived(spec.mode === "band" && spec.style === "lines");

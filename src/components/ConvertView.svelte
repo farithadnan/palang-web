@@ -21,6 +21,7 @@
     updateImage,
     flash,
     generate,
+    requestAdd,
   } from "../lib/store.svelte.js";
 
   let viewing = $state(null); // image id open in the full-page viewer
@@ -72,7 +73,7 @@
 </script>
 
 <div class="panel flat">
-  <ToolHeader title={t("cvTitle")} />
+  <ToolHeader title={t("cvTitle")} onAdd={requestAdd} addLabel={t("addFiles")} />
 
   <FileBasket
     id="convert-files"

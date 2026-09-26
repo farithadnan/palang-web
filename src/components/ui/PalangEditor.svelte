@@ -20,6 +20,7 @@
     removeSpecAt,
     setSpecIndex,
     resetSpec,
+    removePreviewFile,
     applyCompiled,
     flash,
   } from "../../lib/store.svelte.js";
@@ -38,6 +39,9 @@
   let canvasApi = $state({});
 
   let colorOpen = $state(false);
+  // The stamp must be clicked/tapped before the colour and delete actions
+  // appear (PalangCanvas reports selection through onSelect).
+  let stampSelected = $state(false);
   const COLORS = ["#000000", "#1a3a8f", "#b3261e", "#7a1210", "#1e7b46", "#6b4f16"];
 
   function add() {
@@ -46,10 +50,20 @@
   }
 
   function del() {
-    if (!anyArmed) return;
-    if (app.specs.length > 1) removeSpecAt(app.specIndex);
-    else updateSpec({ armed: false }); // last stamp: take it off the page
     colorOpen = false;
+    // With more than one stamp, delete the selected stamp.
+    if (app.specs.length > 1) {
+      removeSpecAt(app.specIndex);
+      return;
+    }
+    // With a single stamp, delete the whole image (and its stamp) instead of
+    // leaving a blank page you cannot get rid of.
+    const pg = app.preview?.pages?.[app.activePage];
+    const fileIdx = pg ? app.previewFiles.indexOf(pg.file) : -1;
+    if (fileIdx >= 0) {
+      if (app.previewFiles.length === 1) onClose?.();
+      removePreviewFile(fileIdx);
+    }
   }
 
   function revert() {
@@ -104,7 +118,7 @@
   </header>
 
   <div class="pedit-stage">
-    {#key app.activePage + "-" + app.specIndex + "-" + (app.specs[app.specIndex]?.armed ?? false)}
+    {#key app.activePage}
       {#if pageUrl && pageReady}
         <PalangCanvas
           class="pedit-canvas"
@@ -116,6 +130,7 @@
           spec={spec}
           fitContain={!!active.url}
           onChange={(patch) => updateSpec(patch)}
+          onSelect={(sel) => (stampSelected = sel)}
         />
       {:else if active?.loading}
         <div class="pv-loading" role="status">
@@ -130,7 +145,7 @@
     {/key}
   </div>
 
-  {#if colorOpen && anyArmed}
+  {#if colorOpen && stampSelected && anyArmed}
     <div class="pedit-colors" role="group" aria-label={t("plColor")}>
       {#each COLORS as c (c)}
         <button
@@ -159,7 +174,7 @@
       <Icon name="fit" size={22} />
       <span class="pedit-tlabel">{t("pcWhole")}</span>
     </button>
-    {#if anyArmed}
+    {#if stampSelected && anyArmed}
       <button type="button" class="pedit-tbtn" class:on={colorOpen} aria-label={t("plColor")} onclick={() => (colorOpen = !colorOpen)}>
         <Icon name="colorwell" size={22} />
         <span class="pedit-tlabel">{t("plColor")}</span>
@@ -177,6 +192,7 @@
     position: fixed;
     inset: 0;
     z-index: 70;
+    height: 100vh;
     background: var(--bg, #0e1116);
     display: flex;
     flex-direction: column;
@@ -215,23 +231,31 @@
   }
 
   .pedit-stage {
-    flex: 1;
+    flex: 1 1 0%;
     min-height: 0;
     display: flex;
     flex-direction: column;
     background: #12151b;
+    /* clip zoomed-in overflow so content can never float over the toolbar */
+    overflow: hidden;
+    position: relative;
   }
   .pedit-stage .pv-loading { border: 0; background: transparent; }
   .pedit-canvas {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    position: absolute;
+    inset: 0;
+    display: block;
   }
   :global(.pedit-canvas > .canvas-frame) {
-    flex: 1;
+    /* fill the stage exactly: an absolutely positioned frame is bounded by the
+       stage, so its clientHeight is the available space, never the page content.
+       An auto/flex-height frame grew with the zoomed page, re-fitted against a
+       bigger frame, and "fit view" did nothing. */
+    position: absolute;
+    inset: 0;
     min-height: 0;
     max-height: none;
+    height: auto;
     border: 0;
     border-radius: 0;
     background: transparent;

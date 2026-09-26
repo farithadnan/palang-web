@@ -100,7 +100,7 @@
 
   <div class="fview-pill">
     <button type="button" class="fpill-btn" aria-label={t("viewCrop")} onclick={() => onCrop?.(item.id)}>
-      <Icon name="crop" size={20} />
+      <Icon name="crop" size={18} />
     </button>
     <button
       type="button"
@@ -113,10 +113,10 @@
       onpointerleave={enUp}
       style={comparing ? "opacity:.6" : ""}
     >
-      <Icon name="sun" size={20} />
+      <Icon name="sun" size={18} />
     </button>
     <button type="button" class="fpill-btn fpill-del" aria-label={t("delete")} onclick={del}>
-      <Icon name="trash" size={20} />
+      <Icon name="trash" size={18} />
     </button>
   </div>
 </div>
@@ -201,8 +201,8 @@
     box-shadow: var(--shadow);
   }
   .fpill-btn {
-    width: 2.7rem;
-    height: 2.7rem;
+    width: 2.4rem;
+    height: 2.4rem;
     border-radius: 50%;
     border: 0;
     background: transparent;

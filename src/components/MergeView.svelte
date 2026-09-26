@@ -20,6 +20,7 @@
     stepMerge,
     generate,
     canMerge,
+    requestAdd,
   } from "../lib/store.svelte.js";
 
   let mergeInput = $state(null);
@@ -63,7 +64,7 @@
 </script>
 
 <div class="panel flat">
-  <ToolHeader title={t("mergeLabel")} />
+  <ToolHeader title={t("mergeLabel")} onAdd={requestAdd} addLabel={t("addFiles")} />
 
   <input
     bind:this={mergeInput}

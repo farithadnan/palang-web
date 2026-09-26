@@ -16,6 +16,7 @@
     retryPreview,
     setActivePage,
     generate,
+    requestAdd,
   } from "../lib/store.svelte.js";
 
   const basketItems = $derived(
@@ -47,7 +48,7 @@
 </script>
 
 <div class="panel flat">
-  <ToolHeader title={t("plTitle")} />
+  <ToolHeader title={t("plTitle")} onAdd={requestAdd} addLabel={t("addFiles")} />
 
   <FileBasket
     id="palang-files"

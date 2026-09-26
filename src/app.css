@@ -214,6 +214,9 @@ aside.side nav { display: flex; flex-direction: column; gap: 0.2rem; }
   justify-content: space-between;
   gap: 1rem;
 }
+/* In the packaged app the top bar spans the full window (the brand sits flush
+   left, actions flush right) instead of a centred 1280px band. */
+.topbar.appbar .topbar-inner { max-width: none; }
 .brand { display: flex; align-items: baseline; gap: 0.45rem; }
 .brand b { font-size: 1.15rem; font-weight: 750; letter-spacing: -0.02em; }
 .brand span { font-size: 0.8rem; color: var(--muted); }

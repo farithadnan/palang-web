@@ -17,7 +17,7 @@
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
-  import { app, applyUpdate, checkForUpdate, dismissUpdate, requestAdd } from "./lib/store.svelte.js";
+  import { app, applyUpdate, checkForUpdate, dismissUpdate } from "./lib/store.svelte.js";
   import { loadLimits } from "./lib/config.js";
   import { t } from "./lib/i18n.js";
   import { route, goto, subscribe } from "./lib/router.js";
@@ -55,19 +55,6 @@
   );
 
   const isSiteView = $derived(SITE_VIEWS.has(view));
-
-  // The "+ Add" lives in the top bar so it is visible on EVERY page (the user
-  // asked for it on About and Settings, which have no per-view header). It
-  // feeds the active tool; from About/Settings it jumps to Convert and opens
-  // the picker once the view has mounted.
-  function globalAdd() {
-    if (view !== "about" && view !== "settings") {
-      requestAdd();
-      return;
-    }
-    goto("convert");
-    setTimeout(() => requestAdd(), 0);
-  }
 
   // Canonicalise the URL: an unknown path, or a tool route on the site build,
   // resolves to the right default without a reload.
@@ -123,7 +110,7 @@
   {#if isSiteView}
     <Landing page={view} feature={featureId} />
   {:else}
-    <Topbar context="app" homeTo={null} onAdd={globalAdd} addLabel={t("addFiles")} />
+    <Topbar context="app" homeTo={null} />
 
     <div class="app-main">
       <aside class="side">

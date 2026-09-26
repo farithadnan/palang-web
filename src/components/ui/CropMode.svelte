@@ -46,6 +46,37 @@
     return stageEl?.getBoundingClientRect() ?? { left: 0, top: 0, width: 1, height: 1 };
   }
 
+  /** The image's visible rectangle, as fractions of the stage box. The crop
+   *  window is clamped to stay inside it, so it can never be dragged (or
+   *  resized) off the photo onto the empty background. */
+  function imageFrac() {
+    const r = stageRect();
+    const dispW = natW * baseScale * z;
+    const dispH = natH * baseScale * z;
+    const imgL = r.width / 2 - dispW / 2 + tx;
+    const imgT = r.height / 2 - dispH / 2 + ty;
+    return {
+      l: imgL / r.width,
+      t: imgT / r.height,
+      r: (imgL + dispW) / r.width,
+      b: (imgT + dispH) / r.height,
+    };
+  }
+
+  /** Keep a window rect inside the image bounds (centred when larger). */
+  function clampWin(w) {
+    const ir = imageFrac();
+    let x =
+      w.w > ir.r - ir.l + 0.0001
+        ? (ir.l + ir.r) / 2 - w.w / 2
+        : Math.min(ir.r - w.w, Math.max(ir.l, w.x));
+    let y =
+      w.h > ir.b - ir.t + 0.0001
+        ? (ir.t + ir.b) / 2 - w.h / 2
+        : Math.min(ir.b - w.h, Math.max(ir.t, w.y));
+    return { x, y, w: w.w, h: w.h };
+  }
+
   /** Keep the image covering the crop window (industrial-standard crop feel):
    *  the window can never look at empty background. */
   function clampPan() {
@@ -128,12 +159,12 @@
     const dy = (e.clientY - drag.sy) / (drag.rh || 1);
     const b = drag.box;
     if (drag.mode === "move") {
-      win = {
+      win = clampWin({
         x: Math.max(0, Math.min(b.x + dx, 1 - win.w)),
         y: Math.max(0, Math.min(b.y + dy, 1 - win.h)),
         w: win.w,
         h: win.h,
-      };
+      });
     } else {
       // corner handles: 'nw','ne','sw','se'
       const left = drag.mode.includes("w");
@@ -146,7 +177,7 @@
       else x2 = Math.max(b.x + b.w + dx, x1 + MIN_WIN);
       if (top) y1 = Math.min(b.y + dy, y2 - MIN_WIN);
       else y2 = Math.max(b.y + b.h + dy, y1 + MIN_WIN);
-      win = { x: Math.max(0, x1), y: Math.max(0, y1), w: Math.min(1, x2) - Math.max(0, x1), h: Math.min(1, y2) - Math.max(0, y1) };
+      win = clampWin({ x: Math.max(0, x1), y: Math.max(0, y1), w: Math.min(1, x2) - Math.max(0, x1), h: Math.min(1, y2) - Math.max(0, y1) });
     }
     winMoved = true;
     e.stopPropagation();

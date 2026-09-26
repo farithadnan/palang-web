@@ -8,7 +8,7 @@
   import { href as routeHref, goto } from "../../lib/router.js";
   import Icon from "./Icon.svelte";
 
-  let { context = "landing", children, onOpenApp, homeTo = "home", ctaLabel = "", github = "", onAdd = null, addLabel = "" } = $props();
+  let { context = "landing", children, onOpenApp, homeTo = "home", ctaLabel = "", github = "" } = $props();
   let open = $state(false);
 
   function go(view) {
@@ -23,7 +23,7 @@
   }
 </script>
 
-<header class="topbar">
+<header class="topbar" class:appbar={context === "app"}>
   <div class="topbar-inner">
     <a class="brand" href={routeHref(homeTo ?? "")} onclick={(e) => { e.preventDefault(); goHome(); }}>
       <span class="brand-mark" aria-hidden="true"></span>
@@ -33,12 +33,6 @@
       {@render children?.()}
     </nav>
     <div class="tb-actions">
-      {#if onAdd}
-        <button type="button" class="btn btn-sm tb-add" onclick={onAdd} aria-label={addLabel || t("addFiles")}>
-          <Icon name="plus" size={16} />
-          <span>{addLabel || t("addFiles")}</span>
-        </button>
-      {/if}
       {#if context === "landing"}
         <button type="button" class="btn btn-sm btn-primary tb-open" onclick={openApp}>
           {ctaLabel || t("openApp")}

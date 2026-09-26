@@ -486,8 +486,14 @@ export function setSpecIndex(i) {
  *  previous one when that one is centred, so it is visible immediately. */
 export function addSpec() {
   const base = defaultSpec();
-  const prev = app.specs[app.specs.length - 1];
-  base.topPt = (prev && prev.topPt != null ? prev.topPt : 60) + (prev?.heightPt ?? 48) + 16;
+  // Stack the new marking below the one the user is currently looking at
+  // (the active spec), never at a guessed 60pt that lands it against the top
+  // edge. Fall back to a comfortable mid-page offset when the active stamp
+  // is centred (topPt null).
+  const active = app.specs[app.specIndex] ?? app.specs[app.specs.length - 1];
+  const fallbackTop = 200;
+  const top = (active && active.topPt != null ? active.topPt : fallbackTop) + (active?.heightPt ?? 48) + 16;
+  base.topPt = top;
   app.specs = [...app.specs, base];
   app.specIndex = app.specs.length - 1;
   app.compiledFiles.clear();
