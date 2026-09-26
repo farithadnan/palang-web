@@ -3,12 +3,24 @@
    *  by tapping a row. The preview walks the WHOLE merged output — every
    *  file's pages, in merge order — one page at a time, so a 1000-page
    *  document never triggers bulk work. */
+  import ToolHeader from "./ui/ToolHeader.svelte";
   import Dropzone from "./ui/Dropzone.svelte";
   import OrderedList from "./ui/OrderedList.svelte";
   import Icon from "./ui/Icon.svelte";
   import ResultBar from "./ui/ResultBar.svelte";
   import { t } from "../lib/i18n.js";
-  import { app, addPdfs, movePdf, removePdf, selectMergeFile, stepMerge, generate, canMerge } from "../lib/store.svelte.js";
+  import { takeFiles, ACCEPT } from "../lib/pick.js";
+  import {
+    app,
+    addPdfs,
+    movePdf,
+    removePdf,
+    selectMergeFile,
+    stepMerge,
+    generate,
+    canMerge,
+    requestAdd,
+  } from "../lib/store.svelte.js";
 
   let mergeInput = $state(null);
   let fsOpen = $state(false); // fullscreen page preview
@@ -51,25 +63,25 @@
 </script>
 
 <div class="panel flat">
-  <h2>{t("mergeLabel")}</h2>
+  <ToolHeader title={t("mergeLabel")} onAdd={requestAdd} addLabel={t("addFiles")} />
 
   <input
     bind:this={mergeInput}
     class="hidden-input"
     id="merge-more"
     type="file"
-    accept=".pdf"
+    accept={ACCEPT.pdf}
     multiple
     onchange={(e) => {
-      if (e.currentTarget.files?.length) addPdfs(e.currentTarget.files);
-      e.currentTarget.value = "";
+      const picked = takeFiles(e.currentTarget);
+      if (picked.length) addPdfs(picked);
     }}
   />
 
   {#if !app.pdfs.length}
     <Dropzone
       id="merge-files"
-      accept=".pdf"
+      accept={ACCEPT.pdf}
       multiple
       main={t("mgChoose")}
       sub={t("mgPickHint")}
@@ -124,7 +136,7 @@
   }
   .mgfs-name {
     flex: 1;
-    font-size: 0.95rem;
+    font-size: var(--fs-body);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;

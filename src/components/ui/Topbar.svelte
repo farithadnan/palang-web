@@ -8,7 +8,7 @@
   import { href as routeHref, goto } from "../../lib/router.js";
   import Icon from "./Icon.svelte";
 
-  let { context = "landing", children, onOpenApp, onAdd, homeTo = "home", ctaLabel = "" } = $props();
+  let { context = "landing", children, onOpenApp, homeTo = "home", ctaLabel = "" } = $props();
   let open = $state(false);
 
   function go(view) {
@@ -16,9 +16,6 @@
   }
   function goHome() {
     goto(homeTo ?? "");
-  }
-  function addMedia() {
-    if (onAdd) onAdd();
   }
   function openApp() {
     if (onOpenApp) onOpenApp();
@@ -46,11 +43,7 @@
           <span>{t("home")}</span>
         </button>
       {/if}
-      {#if context === "app"}
-        <button type="button" class="iconbtn tb-add" aria-label={t("addFiles")} onclick={addMedia}>
-          <Icon name="plus" size={22} />
-        </button>
-      {:else}
+      {#if context !== "app"}
         <button
           type="button"
           class="iconbtn tb-lang"

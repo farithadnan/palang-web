@@ -5,6 +5,7 @@
    *  ONE file input lives here for BOTH states (the Dropzone is a surface, not
    *  a second picker), so the topbar "+" has a single, predictable target. */
   import { t } from "../../lib/i18n.js";
+  import { takeFiles } from "../../lib/pick.js";
   import Dropzone from "./Dropzone.svelte";
   import MediaGrid from "./MediaGrid.svelte";
 
@@ -47,8 +48,8 @@
   {accept}
   {multiple}
   onchange={(e) => {
-    if (e.currentTarget.files?.length) onPick?.(e.currentTarget.files);
-    e.currentTarget.value = "";
+    const picked = takeFiles(e.currentTarget);
+    if (picked.length) onPick?.(picked);
   }}
 />
 

@@ -2,6 +2,8 @@
   /** Palang tab: file basket; tapping a file opens the positioning editor as an
    *  expanded modal (same pattern as Convert's photo editor). */
   import { t } from "../lib/i18n.js";
+  import { ACCEPT } from "../lib/pick.js";
+  import ToolHeader from "./ui/ToolHeader.svelte";
   import FileBasket from "./ui/FileBasket.svelte";
   import Modal from "./ui/Modal.svelte";
   import ResultBar from "./ui/ResultBar.svelte";
@@ -20,6 +22,7 @@
     applyCompiled,
     flash,
     generate,
+    requestAdd,
   } from "../lib/store.svelte.js";
 
   const active = $derived(app.preview?.pages?.[app.activePage] ?? null);
@@ -55,14 +58,14 @@
 </script>
 
 <div class="panel flat">
-  <h2>{t("plTitle")}</h2>
+  <ToolHeader title={t("plTitle")} onAdd={requestAdd} addLabel={t("addFiles")} />
   <p class="desc">
     Stamp a purpose bar across your document — transparent, so nothing is covered. You get a new copy; the original file is untouched.
   </p>
 
   <FileBasket
     id="palang-files"
-    accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff"
+    accept={ACCEPT.pdfAndImages}
     multiple
     main={t("plChoose")}
     icon="palang"
@@ -228,7 +231,7 @@
     color: var(--text);
     border-radius: 999px;
     padding: 0.35rem 0.8rem;
-    font-size: 0.86rem;
+    font-size: var(--fs-note);
     cursor: pointer;
   }
   .chip.on { background: var(--accent, #c9b458); border-color: transparent; color: #111; }

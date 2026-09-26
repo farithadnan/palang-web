@@ -280,7 +280,7 @@
     border-bottom: 1px solid var(--line);
     background: var(--panel);
   }
-  .cm-title { flex: 1; font-size: 0.98rem; }
+  .cm-title { flex: 1; font-size: var(--fs-body); }
   .cm-stage {
     flex: 1;
     min-height: 0;

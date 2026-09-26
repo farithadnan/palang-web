@@ -5,6 +5,7 @@
    *  per surface, shared by the empty and populated states); otherwise the
    *  zone renders and drives its own. */
   import Icon from "./Icon.svelte";
+  import { takeFiles } from "../../lib/pick.js";
 
   let {
     id,
@@ -60,8 +61,8 @@
       {accept}
       {multiple}
       onchange={(e) => {
-        if (e.currentTarget.files?.length) onPick?.([...e.currentTarget.files]);
-        e.currentTarget.value = "";
+        const picked = takeFiles(e.currentTarget);
+        if (picked.length) onPick?.(picked);
       }}
     />
   {/if}

@@ -15,7 +15,7 @@
 <section class="panel flat settings">
   <h2>{t("settings")}</h2>
 
-  <div class="kv">
+  <div class="kv stacked">
     <dt>{t("switchLang")}</dt>
     <dd>
       <button type="button" class="seg" class:on={app.lang === "en"} onclick={() => setLang("en")}>EN</button>
@@ -23,7 +23,7 @@
     </dd>
   </div>
 
-  <div class="kv">
+  <div class="kv stacked">
     <dt>{t("switchTheme")}</dt>
     <dd>
       <button type="button" class="seg" class:on={app.theme === "light"} onclick={() => setTheme("light")}>{t("themeLight")}</button>
@@ -31,7 +31,7 @@
     </dd>
   </div>
 
-  <div class="kv">
+  <div class="kv stacked">
     <dt>{t("updateFreq")}</dt>
     <dd>
       {#each FREQS as f (f.id)}
@@ -44,26 +44,7 @@
 </section>
 
 <style>
-  .kv {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.9rem 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .kv:last-child { border-bottom: 0; }
-  .kv dt { font-size: 0.82rem; color: var(--muted); }
-  .kv dd { display: flex; gap: 0.45rem; margin: 0; }
-  .seg {
-    flex: 1;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--text);
-    padding: 0.6rem 1rem;
-    border-radius: 999px;
-    font-size: 0.92rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .seg.on { background: var(--accent, #c9b458); border-color: transparent; color: #111; }
+  /* Rows and pills come from app.css: the app has one type scale and one row
+     pattern, so About and Settings cannot drift apart. */
+  .settings .kv { padding: 0.9rem 0; }
 </style>

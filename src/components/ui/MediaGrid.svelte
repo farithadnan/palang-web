@@ -218,8 +218,8 @@
     border-bottom: 1px solid var(--line);
   }
   .mselbar .mradio { position: relative; display: block; top: 0; left: 0; }
-  .msel-all { display: flex; align-items: center; gap: 0.5rem; background: none; border: 0; color: var(--text); font-size: 0.95rem; }
-  .msel-count { flex: 1; font-size: 0.95rem; }
+  .msel-all { display: flex; align-items: center; gap: 0.5rem; background: none; border: 0; color: var(--text); font-size: var(--fs-body); }
+  .msel-count { flex: 1; font-size: var(--fs-body); }
   .mselpill {
     position: fixed;
     bottom: 5.2rem;
@@ -240,7 +240,7 @@
     border: 0;
     color: #e5533d;
     padding: 0.45rem 0.9rem;
-    font-size: 0.95rem;
+    font-size: var(--fs-body);
   }
   .msel-del:disabled { opacity: 0.4; }
 </style>

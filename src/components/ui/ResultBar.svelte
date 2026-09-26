@@ -39,7 +39,7 @@
   }
   .rb-icon { color: var(--accent); display: flex; }
   .rb-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .rb-text b { font-size: 0.92rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .rb-text small { color: var(--muted); font-size: 0.78rem; }
+  .rb-text b { font-size: var(--fs-btn); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rb-text small { color: var(--muted); font-size: var(--fs-note); }
   .rb-x { width: 2rem; height: 2rem; min-height: 0; }
 </style>

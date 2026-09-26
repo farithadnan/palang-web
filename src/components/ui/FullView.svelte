@@ -141,7 +141,7 @@
   }
   .fview-name {
     flex: 1;
-    font-size: 0.95rem;
+    font-size: var(--fs-body);
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;

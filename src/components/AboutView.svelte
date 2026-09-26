@@ -108,30 +108,9 @@
     background: #111;
   }
   .about-logo span:nth-child(2) { opacity: 0.5; }
-  .about-name { text-align: center; margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
+  .about-name { text-align: center; margin: 0; font-size: var(--fs-title); }
 
   .about-kv { margin: 1.4rem 0 0; }
-  .kv {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.65rem 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .kv dt {
-    font-size: 0.82rem;
-    color: var(--muted);
-    letter-spacing: 0.01em;
-  }
-  .kv dd {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-  }
 
   .about-update {
     display: flex;
@@ -144,12 +123,12 @@
   .about-status {
     margin: 0;
     text-align: center;
-    font-size: 0.92rem;
+    font-size: var(--fs-btn);
     color: var(--muted);
   }
   .about-status.bad { color: var(--bad); }
   .about-download { width: 100%; text-decoration: none; }
-  .about-reload { align-self: center; font-size: 0.9rem; }
+  .about-reload { align-self: center; font-size: var(--fs-btn); }
 
   .about-links {
     display: flex;

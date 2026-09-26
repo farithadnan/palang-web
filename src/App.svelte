@@ -17,7 +17,7 @@
   import ConvertView from "./components/ConvertView.svelte";
   import PalangView from "./components/PalangView.svelte";
   import MergeView from "./components/MergeView.svelte";
-  import { app, applyUpdate, checkForUpdate, dismissUpdate, requestAdd } from "./lib/store.svelte.js";
+  import { app, applyUpdate, checkForUpdate, dismissUpdate } from "./lib/store.svelte.js";
   import { loadLimits } from "./lib/config.js";
   import { t } from "./lib/i18n.js";
   import { route, goto, subscribe } from "./lib/router.js";
@@ -110,7 +110,7 @@
   {#if isSiteView}
     <Landing page={view} feature={featureId} />
   {:else}
-    <Topbar context="app" homeTo={null} onAdd={requestAdd} />
+    <Topbar context="app" homeTo={null} />
 
     <div class="app-main">
       <aside class="side">

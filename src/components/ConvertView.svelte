@@ -4,12 +4,14 @@
    *  cropped photo. */
   import Field from "./ui/Field.svelte";
   import Select from "./ui/Select.svelte";
+  import ToolHeader from "./ui/ToolHeader.svelte";
   import FileBasket from "./ui/FileBasket.svelte";
   import FullView from "./ui/FullView.svelte";
   import CropMode from "./ui/CropMode.svelte";
   import ResultBar from "./ui/ResultBar.svelte";
   import { PAGE_DIMS, PAGE_SIZES } from "../lib/domain.js";
   import { t } from "../lib/i18n.js";
+  import { ACCEPT } from "../lib/pick.js";
   import {
     app,
     addImages,
@@ -18,6 +20,7 @@
     updateImage,
     flash,
     generate,
+    requestAdd,
   } from "../lib/store.svelte.js";
 
   let viewing = $state(null); // image id open in the full-page viewer
@@ -69,11 +72,11 @@
 </script>
 
 <div class="panel flat">
-  <h2>{t("cvTitle")}</h2>
+  <ToolHeader title={t("cvTitle")} onAdd={requestAdd} addLabel={t("addFiles")} />
 
   <FileBasket
     id="convert-files"
-    accept=".jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff"
+    accept={ACCEPT.images}
     multiple
     main={t("cvChoose")}
     icon="convert"
