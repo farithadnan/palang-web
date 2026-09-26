@@ -5,6 +5,9 @@ on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: write # tauri-action creates the release on tag pushes
+
 jobs:
   build:
     runs-on: windows-latest
