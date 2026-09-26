@@ -8,7 +8,7 @@
   import { href as routeHref, goto } from "../../lib/router.js";
   import Icon from "./Icon.svelte";
 
-  let { context = "landing", children, onOpenApp, homeTo = "home", ctaLabel = "", github = "" } = $props();
+  let { context = "landing", children, onOpenApp, homeTo = "home", ctaLabel = "", github = "", onAdd = null, addLabel = "" } = $props();
   let open = $state(false);
 
   function go(view) {
@@ -33,6 +33,12 @@
       {@render children?.()}
     </nav>
     <div class="tb-actions">
+      {#if onAdd}
+        <button type="button" class="btn btn-sm tb-add" onclick={onAdd} aria-label={addLabel || t("addFiles")}>
+          <Icon name="plus" size={16} />
+          <span>{addLabel || t("addFiles")}</span>
+        </button>
+      {/if}
       {#if context === "landing"}
         <button type="button" class="btn btn-sm btn-primary tb-open" onclick={openApp}>
           {ctaLabel || t("openApp")}

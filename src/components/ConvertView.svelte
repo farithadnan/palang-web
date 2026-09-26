@@ -5,6 +5,7 @@
   import Field from "./ui/Field.svelte";
   import Select from "./ui/Select.svelte";
   import ToolHeader from "./ui/ToolHeader.svelte";
+  import BusyButton from "./ui/BusyButton.svelte";
   import FileBasket from "./ui/FileBasket.svelte";
   import FullView from "./ui/FullView.svelte";
   import CropMode from "./ui/CropMode.svelte";
@@ -20,7 +21,6 @@
     updateImage,
     flash,
     generate,
-    requestAdd,
   } from "../lib/store.svelte.js";
 
   let viewing = $state(null); // image id open in the full-page viewer
@@ -72,7 +72,7 @@
 </script>
 
 <div class="panel flat">
-  <ToolHeader title={t("cvTitle")} onAdd={requestAdd} addLabel={t("addFiles")} />
+  <ToolHeader title={t("cvTitle")} />
 
   <FileBasket
     id="convert-files"
@@ -93,14 +93,13 @@
   </Field>
 
   <div class="actbar">
-    <button
-      type="button"
-      class="btn btn-primary"
-      disabled={!app.images.length || app.busy}
+    <BusyButton
+      busy={app.busy}
+      disabled={!app.images.length}
+      label={t("cvConvert")}
+      busyLabel={t("working")}
       onclick={() => generate("convert")}
-    >
-      {app.busy ? t("working") : t("cvConvert")}
-    </button>
+    />
   </div>
   <ResultBar />
 </div>

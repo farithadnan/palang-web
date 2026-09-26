@@ -16,10 +16,11 @@
 
   let stageEl;
   let imgEl;
+  let panEl;
 
   let natW = 0;
   let natH = 0;
-  let baseScale = 1;
+  let baseScale = $state(1);
   let z = $state(1);
   let tx = $state(0);
   let ty = $state(0);
@@ -28,11 +29,18 @@
   let win = $state({ x: 0.17, y: 0.17, w: 0.66, h: 0.66 });
   let winMoved = false;
 
-  const imgTransform = $derived(`translate(${tx}px, ${ty}px) scale(${z})`);
   const winStyle = $derived(
     `left:${win.x * 100}%;top:${win.y * 100}%;width:${win.w * 100}%;height:${win.h * 100}%`
   );
   const changed = $derived(winMoved || Math.abs(z - 1) > 0.001 || Math.abs(tx) > 0.5 || Math.abs(ty) > 0.5);
+
+  // Apply the image transform imperatively: a reactive `style=` binding here
+  // was dropping the transform entirely (the photo stayed at natural size, so
+  // a big image always looked pre-zoomed-in with no way to zoom out). Writing
+  // to the element directly in an effect is deterministic.
+  $effect(() => {
+    if (panEl) panEl.style.transform = `translate(${tx}px, ${ty}px) scale(${baseScale * z})`;
+  });
 
   function stageRect() {
     return stageEl?.getBoundingClientRect() ?? { left: 0, top: 0, width: 1, height: 1 };
@@ -58,7 +66,10 @@
     natW = imgEl.naturalWidth;
     natH = imgEl.naturalHeight;
     const r = stageRect();
-    baseScale = r.width && r.height && natW && natH ? Math.max(r.width / natW, r.height / natH) : 1;
+    // CONTAIN, not cover: the whole photo must be visible at start. A cover base
+    // with a ZMIN of 1 made a large photo look pre-zoomed-in with no way to zoom
+    // out (the reported crop bug); the user finds the region, then zooms in.
+    baseScale = r.width && r.height && natW && natH ? Math.min(r.width / natW, r.height / natH) : 1;
     if (crop) {
       // Re-open on the existing crop region.
       win = { x: crop.l, y: crop.t, w: Math.max(MIN_WIN, crop.r - crop.l), h: Math.max(MIN_WIN, crop.b - crop.t) };
@@ -233,7 +244,7 @@
     onwheel={wheel}
     style="touch-action:none"
   >
-    <div class="cm-pan" style={imgTransform}>
+    <div class="cm-pan" bind:this={panEl}>
       <img
         bind:this={imgEl}
         src={url}
@@ -279,8 +290,9 @@
     padding: 0.55rem 0.8rem;
     border-bottom: 1px solid var(--line);
     background: var(--panel);
+    flex-wrap: wrap;
   }
-  .cm-title { flex: 1; font-size: var(--fs-body); }
+  .cm-title { flex: 1; font-size: var(--fs-body); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cm-stage {
     flex: 1;
     min-height: 0;

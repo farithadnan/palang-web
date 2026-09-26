@@ -35,8 +35,12 @@
       '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>',
     bug:
       '<path d="M8 2l1.5 2M16 2l-1.5 2"/><rect x="8" y="7" width="8" height="12" rx="4"/><path d="M8 7a4 4 0 0 1 8 0"/><path d="M4 10h3M17 10h3M4 16h3M17 16h3"/><path d="M9 12h6"/>',
+    fit: '<path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>',
+    reset: '<path d="M3 12a9 9 0 1 0 2.7-6.5M3 3v5h5"/>',
+    colorwell: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/>',
   };
 </script>
+
 
 <svg
   class={cls}

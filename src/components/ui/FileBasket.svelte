@@ -31,7 +31,9 @@
   // non-zero made every mount re-open the file chooser by itself: navigating
   // between tabs (with files already added), and the empty-state -> gallery
   // swap right after the first file landed.
-  let handledTick = 0;
+  // Seed with the CURRENT counter: on a fresh mount a non-zero tick was
+  // already handled in a previous mount, so it must not re-open the picker.
+  let handledTick = requestAddTick;
   $effect(() => {
     const tick = requestAddTick;
     if (!tick || tick === handledTick) return;

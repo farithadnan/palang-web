@@ -8,6 +8,7 @@
   import OrderedList from "./ui/OrderedList.svelte";
   import Icon from "./ui/Icon.svelte";
   import ResultBar from "./ui/ResultBar.svelte";
+  import BusyButton from "./ui/BusyButton.svelte";
   import { t } from "../lib/i18n.js";
   import { takeFiles, ACCEPT } from "../lib/pick.js";
   import {
@@ -19,7 +20,6 @@
     stepMerge,
     generate,
     canMerge,
-    requestAdd,
   } from "../lib/store.svelte.js";
 
   let mergeInput = $state(null);
@@ -27,7 +27,7 @@
 
   // The topbar "+" is a counter: open the picker only when it CHANGES, or
   // every mount re-opens the chooser by itself.
-  let handledTick = 0;
+  let handledTick = app.requestAdd;
   $effect(() => {
     const tick = app.requestAdd;
     if (!tick || tick === handledTick) return;
@@ -63,7 +63,7 @@
 </script>
 
 <div class="panel flat">
-  <ToolHeader title={t("mergeLabel")} onAdd={requestAdd} addLabel={t("addFiles")} />
+  <ToolHeader title={t("mergeLabel")} />
 
   <input
     bind:this={mergeInput}
@@ -103,14 +103,13 @@
   {/if}
 
   <div class="actbar">
-    <button
-      type="button"
-      class="btn btn-primary"
+    <BusyButton
+      busy={app.busy}
       disabled={!canMerge()}
+      label={t("mergeLabel")}
+      busyLabel={t("working")}
       onclick={() => generate("merge")}
-    >
-      {app.busy ? t("working") : t("mergeLabel")}
-    </button>
+    />
   </div>
   <ResultBar />
 </div>

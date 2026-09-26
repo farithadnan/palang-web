@@ -149,7 +149,7 @@
 <style>
   .mgrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 0.7rem;
     margin-top: 0.4rem;
   }

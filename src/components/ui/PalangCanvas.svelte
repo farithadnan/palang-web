@@ -9,7 +9,7 @@
 import { onMount } from "svelte";
   import { fittedPageSize, round1 } from "../../lib/domain.js";
 
-  let { url, widthPt, heightPt, spec, onChange, fitContain = false, class: cls = "" } = $props();
+  let { url, widthPt, heightPt, spec, onChange, fitContain = false, class: cls = "", bare = false, api = null } = $props();
 
   let img;
   let wrap;
@@ -135,6 +135,13 @@ import { onMount } from "svelte";
     window.addEventListener("blur", releaseHeld);
     window.addEventListener("pointerdown", cancelStuck, true);
     ensureFit();
+    // Hand our imperative actions up to the parent (used by the full-screen
+    // editor's toolbar): the parent owns a stable {} object it passes in as
+    // `api` and calls fitView()/resetPosition() on it.
+    if (api) {
+      api.fitView = fitView;
+      api.resetPosition = centerReset;
+    }
     return () => {
       ro?.disconnect();
       window.removeEventListener("resize", fitPage);
@@ -561,12 +568,14 @@ import { onMount } from "svelte";
     </div>
   </div>
 
-  <div class="canvas-zoom">
-    <button type="button" class="btn btn-sm" aria-label={t("pcWhole")} onclick={fitView}>
-      Fit view
-    </button>
-    <button type="button" class="btn btn-sm" aria-label={t("pcReset")} onclick={centerReset}>
-      Reset position
-    </button>
+  <div class="canvas-zoom" class:bare>
+    {#if !bare}
+      <button type="button" class="btn btn-sm" aria-label={t("pcWhole")} onclick={fitView}>
+        Fit view
+      </button>
+      <button type="button" class="btn btn-sm" aria-label={t("pcReset")} onclick={centerReset}>
+        Reset position
+      </button>
+    {/if}
   </div>
 </div>

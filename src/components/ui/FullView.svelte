@@ -189,7 +189,10 @@
   .fview-pill {
     align-self: center;
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 0.3rem;
+    max-width: calc(100vw - 2rem);
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 999px;
