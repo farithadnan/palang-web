@@ -23,6 +23,7 @@
   --good: #15803d;
   --bad: #b3261e;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 4px 12px rgba(16, 24, 40, 0.06);
+  --tabbar-h: 3.5rem; /* height of the mobile bottom nav (see .tabs-bottom) */
   color-scheme: light;
 }
 [data-theme="dark"] {
@@ -375,6 +376,14 @@ aside.side nav { display: flex; flex-direction: column; gap: 0.2rem; }
 .tabs-bottom .tabbtn svg { width: 20px; height: 20px; }
 @media (min-width: 720px) { .tabs-bottom { display: none; } }
 
+/* The mobile bottom nav is fixed over the content, so the sticky action bar
+   must sit above it (otherwise the primary button hides under the tabs), and
+   the page needs room so the bar never rests under the nav at the scroll end. */
+@media (max-width: 719px) {
+  .panel.flat .actbar { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
+  .app-body { padding-bottom: calc(var(--tabbar-h) + 3rem + env(safe-area-inset-bottom)); }
+}
+
 /* ---------- forms ---------- */
 .field { margin-bottom: 1rem; }
 .geo-row { display: flex; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
@@ -408,20 +417,6 @@ input[type="color"] {
 .row { display: flex; gap: 0.9rem; flex-wrap: wrap; align-items: flex-end; }
 .row .field { flex: 1; min-width: 12rem; }
 .row .field:last-child { flex: 0 0 auto; min-width: 0; }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.seg button {
-  min-height: 44px;
-  padding: 0.4rem 1rem;
-  background: var(--panel);
-  border: 0;
-  font: inherit;
-  font-weight: 600;
-  font-size: 0.88rem;
-  color: var(--muted);
-  cursor: pointer;
-}
-.seg button.active { background: var(--accent); color: #ffffff; }
-[data-theme="dark"] .seg button.active { color: #081018; }
 
 /* ---------- gallery ---------- */
 .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem; margin: 0.9rem 0 0.4rem; }
@@ -959,18 +954,3 @@ input[type="color"] {
 /* a kv row whose value is a control sits on its own line */
 .kv.stacked { flex-direction: column; align-items: stretch; gap: 0.5rem; }
 .kv.stacked dd { display: flex; gap: 0.45rem; text-align: left; }
-.seg {
-  flex: 1;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--text);
-  padding: 0.6rem 1rem;
-  border-radius: 999px;
-  font: inherit;
-  font-size: var(--fs-btn);
-  font-weight: 600;
-  cursor: pointer;
-}
-.seg:hover { border-color: var(--line-strong); }
-.seg.on { background: var(--accent); border-color: transparent; color: #fff; }
-[data-theme="dark"] .seg.on { color: #081018; }

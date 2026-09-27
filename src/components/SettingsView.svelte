@@ -1,15 +1,26 @@
 <script>
   /** Settings page: language, theme, and the update-check cadence.
-   *  Each setting is a full-width row of pills (the pill group spans the
-   *  whole width, so the choice is obvious on a phone). */
+   *  Each setting is one segmented control (a single cylinder with 2-3
+   *  options), so the current choice and the alternatives are obvious. */
   import { app, setLang, setTheme, setUpdateFreq } from "../lib/store.svelte.js";
   import { t } from "../lib/i18n.js";
+  import Segmented from "./ui/Segmented.svelte";
 
-  const FREQS = [
-    { id: "daily", label: () => t("freqDaily") },
-    { id: "weekly", label: () => t("freqWeekly") },
-    { id: "never", label: () => t("freqOff") },
-  ];
+  const langOptions = $derived([
+    { id: "en", label: "EN" },
+    { id: "ms", label: "BM" },
+  ]);
+
+  const themeOptions = $derived([
+    { id: "light", label: t("themeLight") },
+    { id: "dark", label: t("themeDark") },
+  ]);
+
+  const freqOptions = $derived([
+    { id: "daily", label: t("freqDaily") },
+    { id: "weekly", label: t("freqWeekly") },
+    { id: "never", label: t("freqOff") },
+  ]);
 </script>
 
 <section class="panel flat settings">
@@ -18,27 +29,21 @@
   <div class="kv stacked">
     <dt>{t("switchLang")}</dt>
     <dd>
-      <button type="button" class="seg" class:on={app.lang === "en"} onclick={() => setLang("en")}>EN</button>
-      <button type="button" class="seg" class:on={app.lang === "ms"} onclick={() => setLang("ms")}>BM</button>
+      <Segmented options={langOptions} value={app.lang} onchange={setLang} label={t("switchLang")} />
     </dd>
   </div>
 
   <div class="kv stacked">
     <dt>{t("switchTheme")}</dt>
     <dd>
-      <button type="button" class="seg" class:on={app.theme === "light"} onclick={() => setTheme("light")}>{t("themeLight")}</button>
-      <button type="button" class="seg" class:on={app.theme === "dark"} onclick={() => setTheme("dark")}>{t("themeDark")}</button>
+      <Segmented options={themeOptions} value={app.theme} onchange={setTheme} label={t("switchTheme")} />
     </dd>
   </div>
 
   <div class="kv stacked">
     <dt>{t("updateFreq")}</dt>
     <dd>
-      {#each FREQS as f (f.id)}
-        <button type="button" class="seg" class:on={app.updateFreq === f.id} onclick={() => setUpdateFreq(f.id)}>
-          {f.label()}
-        </button>
-      {/each}
+      <Segmented options={freqOptions} value={app.updateFreq} onchange={setUpdateFreq} label={t("updateFreq")} />
     </dd>
   </div>
 </section>

@@ -148,6 +148,18 @@ describe("processOffline — the on-device engine", () => {
     expect([Math.round(width), Math.round(height)]).toEqual([612, 792]);
   });
 
+  it("fit: the page takes the image's own shape, so there is no white border", async () => {
+    const out = await processOffline({
+      images: [image()], // 1×1 png
+      pdfs: [],
+      pageSize: "fit",
+      specs: [],
+    });
+    const doc = await PDFDocument.load(out);
+    const { width, height } = doc.getPage(0).getSize();
+    expect([Math.round(width), Math.round(height)]).toEqual([595, 595]);
+  });
+
   it("still produces a parseable pdf when there is nothing to process", async () => {
     const out = await processOffline({ images: [], pdfs: [], pageSize: "A4", spec: { armed: false } });
     // Parsable is all that matters here — the store never calls the engine

@@ -4,6 +4,7 @@
    *  live in a bottom toolbar. */
   import { t } from "../lib/i18n.js";
   import { ACCEPT } from "../lib/pick.js";
+  import { PAGE_DIMS } from "../lib/domain.js";
   import ToolHeader from "./ui/ToolHeader.svelte";
   import FileBasket from "./ui/FileBasket.svelte";
   import BusyButton from "./ui/BusyButton.svelte";
@@ -48,7 +49,7 @@
 </script>
 
 <div class="panel flat">
-  <ToolHeader title={t("plTitle")} onAdd={requestAdd} addLabel={t("addFiles")} />
+  <ToolHeader title={t("plTitle")} help={t("helpPalang")} onAdd={requestAdd} addLabel={t("addFiles")} />
 
   <FileBasket
     id="palang-files"
@@ -58,6 +59,7 @@
     icon="palang"
     requestAddTick={app.requestAdd}
     items={basketItems}
+    frameAspect={app.pageSize !== "fit" ? PAGE_DIMS[app.pageSize]?.w + "/" + PAGE_DIMS[app.pageSize]?.h : ""}
     onRemove={(id) => removePreviewFile(Number(id.replace("pf-", "")))}
     onItem={(id) => {
       // Open the editor on the tapped file, not the first one.

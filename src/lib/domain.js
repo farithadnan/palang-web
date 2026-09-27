@@ -23,6 +23,19 @@ export function fittedPageSize(imgW, imgH, pageW, pageH) {
     : { w: pageH * (imgW / imgH), h: pageH };
 }
 
+/** The page box for an image: the chosen paper size, or — for "fit" — a page
+ *  shaped exactly like the image, scaled inside A4, so the photo fills it with
+ *  no white border. Falls back to A4 for unknown sizes or missing dimensions. */
+export function pageDims(pageSize, imgW = 0, imgH = 0) {
+  if (pageSize !== "fit") return PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
+  if (!imgW || !imgH) return PAGE_DIMS.A4;
+  const ratio = imgW / imgH;
+  const pageRatio = PAGE_DIMS.A4.w / PAGE_DIMS.A4.h;
+  return ratio > pageRatio
+    ? { w: PAGE_DIMS.A4.w, h: PAGE_DIMS.A4.w / ratio }
+    : { w: PAGE_DIMS.A4.h * ratio, h: PAGE_DIMS.A4.h };
+}
+
 export const BAND_THICKNESS = { thin: 32, normal: 48, thick: 72 };
 export const REGION_THICKNESS = { thin: 16, normal: 28, thick: 44 };
 export const REGION_WIDTH = { narrow: 120, normal: 180, wide: 260 };

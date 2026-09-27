@@ -6,7 +6,7 @@ import { processOffline, compileStampedImage } from "./local-engine.js";
 import { openPdf, renderPdfPage } from "./pdf-preview.js";
 import { LIMITS, loadLimits } from "./config.js";
 import { APP_VERSION } from "./version.js";
-import { defaultSpec, PAGE_DIMS } from "./domain.js";
+import { defaultSpec, PAGE_DIMS, pageDims } from "./domain.js";
 import { toast } from "./toast.svelte.js";
 import { RELEASES_URL } from "./links.js";
 import { saveDocument } from "./save.js";
@@ -28,7 +28,7 @@ function initialTheme() {
 
 export const app = $state({
   view: "convert",
-  pageSize: "A4",
+  pageSize: "fit",
   theme: initialTheme(),
   images: [],
   pdfs: [],
@@ -334,6 +334,16 @@ function isImageFile(file) {
   return file.type ? IMAGE_TYPES.has(file.type) : /\.(jpe?g|png|webp|bmp|tiff?|gif)$/i.test(file.name);
 }
 
+/** Natural pixel size of an object URL (needed only for the "fit" page box). */
+function imageDims(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+    img.onerror = () => resolve({ w: 0, h: 0 });
+    img.src = url;
+  });
+}
+
 /**
  /** Build the preview STRUCTURE for any document (images, PDFs, mixed), in
   *  the browser with no server round-trip. Mirrors the server's image->PDF
@@ -346,7 +356,6 @@ function isImageFile(file) {
  async function buildPreviewMeta(files) {
    const seq = ++previewSeq;
    const pages = [];
-   const size = PAGE_DIMS[app.pageSize] ?? PAGE_DIMS.A4;
    let cumPdf = 0;
    for (const f of files) {
      if (!isImageFile(f)) {
@@ -369,18 +378,24 @@ function isImageFile(file) {
        continue;
      }
      const url = URL.createObjectURL(f);
-     // The page box is the FULL chosen page (like the output PDF, where the
-     // photo is fitted and centred inside it). The canvas computes the
-     // letterbox margin itself and shifts the emitted points by it — using
-     // the fitted rect instead would drop the margin and the marking would
-     // land ~half a letterbox too high in the output (the reported bug).
+     // The page box is the FULL page the output produces. A paper size gives
+     // every photo that page; "fit" gives each photo a page shaped like itself
+     // (scaled inside A4) so there is no white border. The canvas computes the
+     // letterbox margin itself and shifts the emitted points by it.
+     let box;
+     if (app.pageSize === "fit") {
+       const d = await imageDims(url);
+       box = pageDims("fit", d.w, d.h);
+     } else {
+       box = PAGE_DIMS[app.pageSize] ?? PAGE_DIMS.A4;
+     }
      pages.push({
        kind: "img",
        file: f,
        page: pages.length + 1,
        url,
-       w: Math.round(size.w),
-       h: Math.round(size.h),
+       w: Math.round(box.w),
+       h: Math.round(box.h),
        loading: false,
        err: false,
      });

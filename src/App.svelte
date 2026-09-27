@@ -25,7 +25,7 @@
   const TOOLS = [
     { id: "convert", label: () => t("convertLabel"), icon: "convert" },
     { id: "palang", label: () => t("palang"), icon: "palang" },
-    { id: "merge", label: () => t("mergeLabel"), icon: "merge" },
+    { id: "merge", label: () => t("navMerge"), icon: "merge" },
     { id: "about", label: () => t("about"), icon: "info" },
     { id: "settings", label: () => t("settings"), icon: "sliders" },
   ];

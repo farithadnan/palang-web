@@ -64,7 +64,7 @@
 </script>
 
 <div class="panel flat">
-  <ToolHeader title={t("mergeLabel")} onAdd={requestAdd} addLabel={t("addFiles")} />
+  <ToolHeader title={t("mergeLabel")} help={t("helpMerge")} onAdd={requestAdd} addLabel={t("addFiles")} />
 
   <input
     bind:this={mergeInput}

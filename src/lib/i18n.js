@@ -110,8 +110,16 @@ const DICT = {
     privacyOpen: "Open source",
     privacyOpenBody: "The app is public under the MIT licence. The code can be read and audited.",
     privacyContact: "Found a problem? Open an issue on GitHub.",
-    convertLabel: "Convert to PDF",
+    convertLabel: "Convert",
+    navMerge: "Merge",
     mergeLabel: "Merge PDFs",
+    helpTitle: "Help",
+    helpConvert:
+      "Tap a photo to open it, then crop or enhance it. Choose a paper size above — a size that matches the image leaves no white border.",
+    helpPalang:
+      "Tap a document to add a palang. Drag to place it, the corner handle stretches it, and pinch or the mouse wheel zooms.",
+    helpMerge:
+      "Add two or more PDFs, reorder them with the arrows, then merge. Tap a file to preview its pages.",
 
     // ---- Tool views (Convert / Palang / Merge) ----
     cancel: "Cancel",
@@ -120,7 +128,7 @@ const DICT = {
 
     cvTitle: "Convert images to PDF",
     cvChoose: "Choose images to convert",
-    cvPageOwn: "Each photo becomes a full page at its own size.",
+    cvPageOwn: "Each photo becomes a page shaped like the photo, with no white border.",
     cvPageFit: "Each photo becomes one page in this size. The thumbnails show the proportion.",
     cvPaperSize: "Paper size",
     cvRemoveConfirm: "Remove this photo from the list? This cannot be undone.",
@@ -389,8 +397,16 @@ const DICT = {
     privacyOpen: "Sumber terbuka",
     privacyOpenBody: "App ini awam di bawah lesen MIT. Kodnya boleh dibaca dan diaudit.",
     privacyContact: "Jumpa masalah? Buka isu di GitHub.",
-    convertLabel: "Tukar ke PDF",
+    convertLabel: "Tukar",
+    navMerge: "Gabung",
     mergeLabel: "Gabung PDF",
+    helpTitle: "Bantuan",
+    helpConvert:
+      "Ketik foto untuk membukanya, kemudian potong atau pertingkatkannya. Pilih saiz kertas di atas; saiz yang mengikut imej tidak meninggalkan bingkai putih.",
+    helpPalang:
+      "Ketik dokumen untuk menambah palang. Seret untuk meletakkannya, pemegang sudut membesarkannya, dan cubit atau roda tetikus untuk zum.",
+    helpMerge:
+      "Tambah dua PDF atau lebih, susun dengan anak panah, kemudian gabung. Ketik fail untuk pratonton halamannya.",
 
     // ---- Paparan alatan (Tukar / Palang / Gabung) ----
     cancel: "Batal",
@@ -399,7 +415,7 @@ const DICT = {
 
     cvTitle: "Tukar imej kepada PDF",
     cvChoose: "Pilih imej untuk ditukar",
-    cvPageOwn: "Setiap foto menjadi satu halaman penuh pada saiz asalnya.",
+    cvPageOwn: "Setiap foto menjadi halaman mengikut bentuk foto, tanpa bingkai putih.",
     cvPageFit: "Setiap foto menjadi satu halaman dalam saiz ini. Thumbnail menunjukkan perkadaran.",
     cvPaperSize: "Saiz kertas",
     cvRemoveConfirm: "Buang foto ini dari senarai? Tindakan ini tidak boleh dibatalkan.",

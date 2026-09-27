@@ -4,8 +4,27 @@ import {
   defaultSpec,
   fittedPageSize,
   imageSettings,
+  PAGE_DIMS,
+  pageDims,
   pagesValue,
 } from "../src/lib/domain.js";
+
+describe("pageDims — the page box for an image", () => {
+  it("returns the chosen paper size", () => {
+    expect(pageDims("A4", 2000, 1000)).toEqual({ w: 595, h: 842 });
+    expect(pageDims("A5", 2000, 1000)).toEqual({ w: 419, h: 595 });
+  });
+  it("fit: the page takes the image's own shape, scaled inside A4 (no border)", () => {
+    expect(pageDims("fit", 2000, 1000)).toEqual({ w: 595, h: 297.5 });
+    expect(pageDims("fit", 1000, 2000)).toEqual({ w: 421, h: 842 });
+    expect(pageDims("fit", 1000, 1000)).toEqual({ w: 595, h: 595 });
+  });
+  it("falls back to A4 for unknown sizes or missing dimensions", () => {
+    expect(pageDims("nope", 1, 1)).toEqual(PAGE_DIMS.A4);
+    expect(pageDims("fit", 0, 0)).toEqual(PAGE_DIMS.A4);
+    expect(pageDims("fit", null, null)).toEqual(PAGE_DIMS.A4);
+  });
+});
 
 describe("fittedPageSize", () => {
   const A4 = { w: 595, h: 842 };

@@ -8,7 +8,7 @@
  * centred) using the SAME formula as the server, via fittedPageSize.
  */
 import { PDFDocument } from "pdf-lib";
-import { PAGE_DIMS, buildPalangSpec, fittedPageSize } from "./domain.js";
+import { buildPalangSpec, fittedPageSize, pageDims } from "./domain.js";
 
 /** Decode bytes into an ImageBitmap/HTMLImageElement for canvas work. */
 async function decodeImage(bytes, opts) {
@@ -105,7 +105,7 @@ function outToBytes(canvas, type) {
  *  never clips, so the output must not either. Returns { bytes, w, h, rw, rh }
  *  in pt — w/h is the unrotated frame (the editor's coordinate space),
  *  rw/rh the rotated bounding box the PDF must draw. */
-async function renderPalang(spec, pageSize) {
+async function renderPalang(spec) {
   const api = buildPalangSpec(spec);
   const text = api.label?.text || "";
   const fontPt = api.label?.font_size ?? 18;
@@ -215,7 +215,7 @@ export function imageStampRect(imageW, imageH, pageW, pageH, w, h, cx, cy) {
  *  would erase the previous one. */
 async function drawStamped(c, page, spec) {
   const ctx = c.getContext("2d");
-  const palang = await renderPalang(spec, page);
+  const palang = await renderPalang(spec);
   const palangImg = await decodeImage(palang.bytes);
   const cx = (spec.leftPt ?? (page.w - palang.w) / 2) + palang.w / 2;
   const cy = (spec.topPt ?? (page.h - palang.h) / 2) + palang.h / 2;
@@ -236,7 +236,6 @@ export const MAX_COMPILE_PX = 2400;
 
 export async function compileStampedImage(input, pageSize, specs) {
   const bytes = new Uint8Array(await input.bytes());
-  const page = PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
   const armed = (specs ?? []).filter((s) => s?.armed);
   const c = document.createElement("canvas");
   let img;
@@ -257,6 +256,9 @@ export async function compileStampedImage(input, pageSize, specs) {
   c.width = img.width;
   c.height = img.height;
   c.getContext("2d").drawImage(img, 0, 0); // base photo once — stamps layer on top
+  // The page box follows the image (fit) or the chosen paper size, so the
+  // stamp lands at the same point the preview placed it.
+  const page = pageDims(pageSize, img.width, img.height);
   for (const spec of armed) await drawStamped(c, page, spec);
   return { bytes: new Uint8Array(await outToBytes(c, "image/png")), mime: "image/png" };
 }
@@ -272,16 +274,18 @@ function textWidthApprox(text, fontPt) {
  *  placement (see palangDrawRect). `specs` is an ARRAY: each armed spec is
  *  rendered and drawn on every page that isn't already compiled. */
 export async function processOffline({ images, pdfs, pageSize = "A4", specs }) {
-  const page = PAGE_DIMS[pageSize] ?? PAGE_DIMS.A4;
   const doc = await PDFDocument.create();
   const imagePages = new Set(); // pre-stamped (compiled) pages skip the stamp loop
 
   for (const f of images) {
     const bytes = new Uint8Array(await f.bytes());
     const processed = await processImage(bytes, f.mime, f.setting);
-    const p = doc.addPage([page.w, page.h]);
     const image =
       f.mime === "image/jpeg" ? await doc.embedJpg(processed) : await doc.embedPng(processed);
+    // "fit" gives each photo a page shaped like itself (no border); a paper
+    // size gives every photo the same page.
+    const page = pageDims(pageSize, image.width, image.height);
+    const p = doc.addPage([page.w, page.h]);
     const { w, h } = fittedPageSize(image.width, image.height, page.w, page.h);
     p.drawImage(image, { x: (page.w - w) / 2, y: (page.h - h) / 2, width: w, height: h });
     if (f.stamped) imagePages.add(p); // the palang is already baked in
@@ -302,7 +306,7 @@ export async function processOffline({ images, pdfs, pageSize = "A4", specs }) {
       // (Letter, landscape, photo-size…).
       const { width: pw, height: ph } = p.getSize();
       for (const spec of armed) {
-        const palang = await renderPalang(spec, page);
+        const palang = await renderPalang(spec);
         const png = await doc.embedPng(palang.bytes);
         const w = palang.rw;
         const h = palang.rh;

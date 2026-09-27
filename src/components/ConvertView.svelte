@@ -73,7 +73,7 @@
 </script>
 
 <div class="panel flat">
-  <ToolHeader title={t("cvTitle")} onAdd={requestAdd} addLabel={t("addFiles")} />
+  <ToolHeader title={t("cvTitle")} help={t("helpConvert")} onAdd={requestAdd} addLabel={t("addFiles")} />
 
   <FileBasket
     id="convert-files"

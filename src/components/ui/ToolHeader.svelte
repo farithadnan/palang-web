@@ -1,20 +1,28 @@
 <script>
-  /** A tool view's header: the view title on the left, its own Add action on
-   *  the right. The add button used to live in the top bar, where it was
-   *  disconnected from the view it fed and dead on About and Settings. */
+  /** A tool view's header: the view title on the left; on the right an optional
+   *  "?" help affordance and the view's own Add action. The add button used to
+   *  live in the top bar, where it was disconnected from the view it fed and
+   *  dead on About and Settings. */
   import Icon from "./Icon.svelte";
+  import HelpTip from "./HelpTip.svelte";
+  import { t } from "../../lib/i18n.js";
 
-  let { title = "", onAdd = null, addLabel = "" } = $props();
+  let { title = "", help = "", onAdd = null, addLabel = "" } = $props();
 </script>
 
 <header class="toolhead">
   <h2>{title}</h2>
-  {#if onAdd}
-    <button type="button" class="btn btn-sm btn-add" onclick={onAdd}>
-      <Icon name="plus" size={18} />
-      <span>{addLabel}</span>
-    </button>
-  {/if}
+  <div class="head-actions">
+    {#if help}
+      <HelpTip text={help} label={t("helpTitle")} />
+    {/if}
+    {#if onAdd}
+      <button type="button" class="btn btn-sm btn-add" onclick={onAdd}>
+        <Icon name="plus" size={18} />
+        <span>{addLabel}</span>
+      </button>
+    {/if}
+  </div>
 </header>
 
 <style>
@@ -37,6 +45,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .head-actions { display: flex; align-items: center; gap: 0.5rem; flex: none; }
   @media (max-width: 420px) {
     .btn-add span { display: none; } /* icon-only when the title needs the room */
     .btn-add { padding: 0 0.7rem; }
