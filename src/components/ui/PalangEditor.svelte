@@ -37,11 +37,13 @@
 
   let canvasApi = $state({});
   let colorOpen = $state(false);
+  let moreOpen = $state(false);
   let stampSelected = $state(false);
   const COLORS = ["#000000", "#1a3a8f", "#b3261e", "#7a1210", "#1e7b46", "#6b4f16"];
 
   function addPalang() {
     colorOpen = false;
+    moreOpen = false;
     updateSpec({ armed: true, topPt: null, leftPt: null, rotationDeg: 0 });
     stampSelected = true;
     canvasApi.resetPosition?.();
@@ -49,12 +51,14 @@
 
   function removePalang() {
     colorOpen = false;
+    moreOpen = false;
     removeStamp(); // this image keeps, but exports unstamped
     stampSelected = false;
   }
 
   function removeImage() {
     colorOpen = false;
+    moreOpen = false;
     const pg = app.preview?.pages?.[app.activePage];
     const fileIdx = pg ? app.previewFiles.indexOf(pg.file) : -1;
     if (fileIdx >= 0) {
@@ -65,6 +69,7 @@
 
   function revert() {
     colorOpen = false;
+    moreOpen = false;
     updateSpec({ armed: true, topPt: null, leftPt: null, rotationDeg: 0, color: COLORS[0] });
     canvasApi.resetPosition?.();
   }
@@ -72,6 +77,11 @@
   function save() {
     onClose?.();
     void applyCompiled().then(() => flash("ok", t("msgReady")));
+  }
+
+  function removeMenu(fn) {
+    moreOpen = false;
+    fn();
   }
 </script>
 
@@ -196,15 +206,37 @@
           <span class="pedit-tlabel">{t("plColor")}</span>
         </button>
       {/if}
-      <button type="button" class="pedit-tbtn pedit-del" aria-label={t("plRemoveStamp")} onclick={removePalang}>
-        <Icon name="palang" size={22} />
-        <span class="pedit-tlabel">{t("plRemoveStamp")}</span>
+      <span class="pedit-sep" aria-hidden="true"></span>
+      <span class="pedit-more">
+        <button
+          type="button"
+          class="pedit-tbtn"
+          class:on={moreOpen}
+          aria-label={t("more")}
+          title={t("more")}
+          aria-expanded={moreOpen}
+          onclick={() => (moreOpen = !moreOpen)}
+        >
+          <Icon name="more" size={22} />
+          <span class="pedit-tlabel">{t("more")}</span>
+        </button>
+        {#if moreOpen}
+          <div class="pedit-menu" role="menu">
+            <button type="button" role="menuitem" class="pedit-mi pedit-del" onclick={() => removeMenu(removePalang)}>
+              {t("plRemoveStamp")}
+            </button>
+            <button type="button" role="menuitem" class="pedit-mi pedit-del" onclick={() => removeMenu(removeImage)}>
+              {t("plRemoveImage")}
+            </button>
+          </div>
+        {/if}
+      </span>
+    {:else}
+      <button type="button" class="pedit-tbtn pedit-del" aria-label={t("plRemoveImage")} onclick={removeImage}>
+        <Icon name="trash" size={22} />
+        <span class="pedit-tlabel">{t("plRemoveImage")}</span>
       </button>
     {/if}
-    <button type="button" class="pedit-tbtn pedit-del" aria-label={t("plRemoveImage")} onclick={removeImage}>
-      <Icon name="trash" size={22} />
-      <span class="pedit-tlabel">{t("plRemoveImage")}</span>
-    </button>
   </div>
 </div>
 
@@ -354,6 +386,38 @@
   .pedit-tlabel { font-size: 0.68rem; font-weight: 600; }
   .pedit-del { color: var(--bad); }
   .pedit-del:hover { color: var(--bad); }
+
+  /* destructive actions live behind one overflow menu, so the toolbar stays
+     short and the primary tools are not crowded by removals */
+  .pedit-sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 0.2rem; }
+  .pedit-more { position: relative; display: inline-flex; }
+  .pedit-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
+    min-width: 12rem;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 0.3rem;
+  }
+  .pedit-mi {
+    text-align: left;
+    background: none;
+    border: 0;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-body);
+    padding: 0.5rem 0.6rem;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .pedit-mi:hover { background: color-mix(in srgb, var(--muted) 10%, transparent); }
+  .pedit-mi.pedit-del { color: var(--bad); }
 
   @media (max-width: 420px) {
     .pedit-tbtn { min-width: 2.9rem; padding: 0.3rem 0.25rem; }

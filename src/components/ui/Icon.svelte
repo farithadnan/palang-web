@@ -38,6 +38,7 @@
     fit: '<path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>',
     reset: '<path d="M3 12a9 9 0 1 0 2.7-6.5M3 3v5h5"/>',
     colorwell: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/>',
+    more: '<path d="M5 12h.01M12 12h.01M19 12h.01"/>',
   };
 </script>
 

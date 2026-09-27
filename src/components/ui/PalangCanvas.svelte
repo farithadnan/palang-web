@@ -62,6 +62,10 @@ import { onMount } from "svelte";
     const v = editVal.trim();
     if (v && v !== (spec.text || "")) onChange?.({ text: v });
   }
+  /** Leave edit mode WITHOUT saving (click outside / Esc). */
+  function cancelText() {
+    editingText = false;
+  }
   /** Enter inline text editing (double-click the text, or the toolbar's Edit
    *  text button). Selects the marking so the handles and toolbar stay put. */
   function editText() {
@@ -579,9 +583,9 @@ import { onMount } from "svelte";
                   onpointerdown={(e) => e.stopPropagation()}
                   onkeydown={(e) => {
                     if (e.key === "Enter") commitText();
-                    else if (e.key === "Escape") editingText = false;
+                    else if (e.key === "Escape") cancelText();
                   }}
-                  onblur={commitText}
+                  onblur={cancelText}
                 />
               {:else}
                 <span
@@ -604,9 +608,6 @@ import { onMount } from "svelte";
                   {spec.text || ""}
                 </span>
               {/if}
-            {/if}
-            {#if editingText}
-              <div class="overlay-edithint" role="status">{t("pcEditHint")}</div>
             {/if}
             {#if showHandles && !lines}
               <div class="handle h-midb" role="button" tabindex="-1" aria-label={t("pcResizeH")} title={t("pcResizeH")} onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>

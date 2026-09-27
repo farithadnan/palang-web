@@ -160,7 +160,6 @@ const DICT = {
     plRemoveImage: "Remove image",
     plNoPalangHere: "This photo has no palang yet.",
     pcDblEdit: "Double-click to edit the palang text",
-    pcEditHint: "Enter to save · Esc to cancel",
     pcMoveHint: "Drag to move",
     plStampSelect: "Select palang {n}",
     plStampRemove: "Remove palang {n}",
@@ -310,6 +309,7 @@ const DICT = {
     updateAvailable: "A new version (v{version}) is available.",
     updateNow: "Update now",
     later: "Later",
+    more: "More",
   },
 
   ms: {
@@ -454,7 +454,6 @@ const DICT = {
     plRemoveImage: "Buang imej",
     plNoPalangHere: "Foto ini belum ada palang.",
     pcDblEdit: "Klik dua kali untuk ubah teks palang",
-    pcEditHint: "Enter untuk simpan · Esc untuk batal",
     pcMoveHint: "Seret untuk gerak",
     plStampSelect: "Pilih palang {n}",
     plStampRemove: "Buang palang {n}",
@@ -601,6 +600,7 @@ const DICT = {
     updateAvailable: "Terdapat versi baharu (v{version}).",
     updateNow: "Kemas kini sekarang",
     later: "Nanti",
+    more: "Lagi",
   },
 };
 
