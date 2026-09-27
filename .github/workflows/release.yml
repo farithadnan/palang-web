@@ -77,7 +77,9 @@ jobs:
         with:
           draft: true
           name: Palang ${{ github.ref_name }}
-          files: dist-artifacts/*
+          # The Windows artifact keeps its msi/ and nsis/ subfolders, so match
+          # recursively — `dist-artifacts/*` would only catch the flat APK.
+          files: dist-artifacts/**
           body: |
             Prepare documents for sharing: convert photos to one PDF, stamp a
             palang purpose band, and merge PDFs. Everything runs on your device.
