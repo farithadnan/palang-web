@@ -142,18 +142,21 @@
 
 {#if selecting}
   <div class="mselbar" role="toolbar" aria-label={t("menu")}>
-    <button type="button" class="msel-all" onclick={toggleAll} aria-pressed={selected.length === items.length}>
+    <button
+      type="button"
+      class="btn btn-sm"
+      onclick={toggleAll}
+      aria-pressed={selected.length === items.length}
+    >
       <span class="mradio" class:on={selected.length === items.length} aria-hidden="true"></span>
       {t("selSelectAll")}
     </button>
     <span class="msel-count">{t("selCount", { n: selected.length })}</span>
-    <button type="button" class="msel-cancel link" onclick={cancelSelection}>{t("cancel")}</button>
-  </div>
-  <div class="mselpill">
-    <button type="button" class="msel-del" disabled={!selected.length} onclick={bulkRemove} aria-label={t("delete")}>
-      <Icon name="x" size={18} />
+    <button type="button" class="btn btn-sm btn-danger" disabled={!selected.length} onclick={bulkRemove}>
+      <Icon name="trash" size={16} />
       {t("delete")}
     </button>
+    <button type="button" class="btn btn-sm" onclick={cancelSelection}>{t("cancel")}</button>
   </div>
 {/if}
 
@@ -242,35 +245,13 @@
     z-index: 40;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.7rem 1rem;
+    gap: 0.5rem;
+    padding: 0.55rem 0.8rem;
     background: var(--panel);
     border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
   }
   .mselbar .mradio { position: relative; display: block; top: 0; left: 0; }
-  .msel-all { display: flex; align-items: center; gap: 0.5rem; background: none; border: 0; color: var(--text); font-size: var(--fs-body); }
-  .msel-count { flex: 1; font-size: var(--fs-body); }
-  .mselpill {
-    position: fixed;
-    bottom: 5.2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 40;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 0.35rem;
-    box-shadow: var(--shadow);
-  }
-  .msel-del {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: none;
-    border: 0;
-    color: #e5533d;
-    padding: 0.45rem 0.9rem;
-    font-size: var(--fs-body);
-  }
-  .msel-del:disabled { opacity: 0.4; }
+  .mselbar .btn { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .msel-count { flex: 1; font-size: var(--fs-body); color: var(--muted); min-width: 4rem; }
 </style>

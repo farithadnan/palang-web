@@ -21,7 +21,9 @@ import { onMount } from "svelte";
   let mode = $state(null); // null | "move" | corners (region) | "midb" (band height)
   let selected = $state(false);
   let sx = 0, sy = 0, bx = 0, by = 0, bw = 0, bh = 0, sf0 = 18, rotBase = 0;
-  let pointers = new Map(); // active background touches (pinch zoom)
+  let pointers = new Map(); // active touches (pinch zoom)
+  let pinching = $state(false);
+  let pinch0 = null; // { d, z } at pinch start
 
   // Report selection upward so the editor can reveal the Colour / Delete
   // actions only once a stamp is actually clicked.
@@ -219,6 +221,7 @@ import { onMount } from "svelte";
 
   function begin(e, m) {
     if (!box || !armed) return;
+    if (pinching || pointers.size >= 2) return; // a pinch is in progress
     sx = e.clientX;
     sy = e.clientY;
     bx = box.x;
@@ -241,7 +244,22 @@ import { onMount } from "svelte";
     e.stopPropagation();
   }
 
+  /** Capture-phase: track EVERY touch, including ones that land on the marking
+   *  (the overlay stops propagation in bubble phase, which is why a pinch only
+   *  worked on the background before). Two pointers = pinch zoom. */
+  function downCapture(e) {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch0 = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: zoom };
+      pinching = true;
+      mode = null; // a drag already in progress yields to the pinch
+    }
+  }
+
   function wrapDown(e) {
+    // A pinch owns the gesture: never start a drag while two fingers are down.
+    if (pinching || pointers.size >= 2) return;
     // Track background touches for pinch zoom.
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     // A background press always ends any held drag (stuck-drag safety net).
@@ -340,6 +358,7 @@ import { onMount } from "svelte";
 
   function beginRotate(e) {
     if (!box || !armed) return;
+    if (pinching || pointers.size >= 2) return; // a pinch is in progress
     const c = boxCenterScreen();
     rotBase = Math.atan2(e.clientY - c.y, e.clientX - c.x) - ((spec.rotationDeg ?? 0) * Math.PI) / 180;
     mode = "rotate";
@@ -397,17 +416,18 @@ import { onMount } from "svelte";
 
   function trackUp(e) {
     pointers.delete(e.pointerId);
+    if (pointers.size < 2) {
+      pinching = false;
+      pinch0 = null;
+    }
   }
   function trackMove(e) {
-    if (!pointers.has(e.pointerId) || pointers.size !== 2) {
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      return;
-    }
-    const [a, b] = [...pointers.values()];
-    const cur = Math.hypot(b.x - e.clientX, b.y - e.clientY);
-    const prev = Math.hypot(b.x - a.x, b.y - a.y);
-    if (prev > 0 && cur > 0) zoomBy(cur / prev);
+    if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size !== 2 || !pinch0) return;
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (d > 0) zoom = clampZoom(pinch0.z * (d / pinch0.d));
   }
 
   function onKey(e) {
@@ -515,6 +535,7 @@ import { onMount } from "svelte";
       bind:this={wrap}
       role="application"
       aria-label={t("pcPageSurface")}
+      onpointerdowncapture={downCapture}
       onpointerdown={wrapDown}
       onpointermove={emitMove}
       onpointerup={emitUp}
@@ -558,6 +579,8 @@ import { onMount } from "svelte";
                   role="textbox"
                   tabindex="0"
                   aria-label={t("pcDblEdit")}
+                  title={t("pcDblEdit")}
+                  onpointerdown={(e) => e.stopPropagation()}
                   ondblclick={(e) => {
                     if (!lines) return;
                     e.stopPropagation();

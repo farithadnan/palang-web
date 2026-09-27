@@ -117,7 +117,7 @@ const DICT = {
     helpConvert:
       "Tap a photo to open it, then crop or enhance it. Choose a paper size above — a size that matches the image leaves no white border.",
     helpPalang:
-      "Tap a document to add a palang. Drag to place it, the corner handle stretches it, and pinch or the mouse wheel zooms.",
+      "Tap a document to add a palang. Drag to place it, the corner handle stretches it, pinch or the mouse wheel zooms, and double-click the text to edit it.",
     helpMerge:
       "Add two or more PDFs, reorder them with the arrows, then merge. Tap a file to preview its pages.",
 
@@ -408,7 +408,7 @@ const DICT = {
     helpConvert:
       "Ketik foto untuk membukanya, kemudian potong atau pertingkatkannya. Pilih saiz kertas di atas; saiz yang mengikut imej tidak meninggalkan bingkai putih.",
     helpPalang:
-      "Ketik dokumen untuk menambah palang. Seret untuk meletakkannya, pemegang sudut membesarkannya, dan cubit atau roda tetikus untuk zum.",
+      "Ketik dokumen untuk menambah palang. Seret untuk meletakkannya, pemegang sudut membesarkannya, cubit atau roda tetikus untuk zum, dan klik dua kali teks untuk mengubahnya.",
     helpMerge:
       "Tambah dua PDF atau lebih, susun dengan anak panah, kemudian gabung. Ketik fail untuk pratonton halamannya.",
 
