@@ -217,9 +217,12 @@ there).
 
 ## Roadmap
 
-- Native file save/share on Android and Windows (blob downloads are not
-  reliable inside the Android WebView)
-- Play-Store signing
+- Play-Store signing (the APK is debug-signed; wire a keystore first)
+- iOS build (the native shell is mobile-ready; no CI target yet)
+
+Native save/share is done: `src/lib/util/save.js` saves through the Tauri
+Save-as dialog on Windows and the Android share sheet on device, falling back
+to a browser download on the web.
 
 ## License
 
