@@ -69,7 +69,8 @@
   });
 
   $effect(() => {
-    document.documentElement.dataset.theme = app.theme;
+    document.documentElement.dataset.theme =
+      app.theme === "system" ? (app.systemDark ? "dark" : "light") : app.theme;
     document.documentElement.lang = app.lang;
   });
 

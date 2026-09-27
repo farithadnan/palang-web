@@ -14,26 +14,59 @@ import { saveDocument } from "./save.js";
 
 const THEME_KEY = "palang-theme";
 const LANG_KEY = "palang-lang";
+const PAGESIZE_KEY = "palang-pagesize";
+const DEFAULTTEXT_KEY = "palang-default-text";
 
 function initialTheme() {
   try {
     const saved = localStorage.getItem(THEME_KEY);
-    if (saved === "dark" || saved === "light") return saved;
+    if (saved === "dark" || saved === "light" || saved === "system") return saved;
   } catch {
-    /* fall through to system preference */
+    /* fall through */
   }
-  return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return "system"; // follow the OS by default
+}
+
+function initialSystemDark() {
+  return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function initialPageSize() {
+  try {
+    const saved = localStorage.getItem(PAGESIZE_KEY);
+    if (["A4", "A5", "Letter", "fit"].includes(saved)) return saved;
+  } catch {
+    /* fall through */
+  }
+  return "fit";
+}
+
+/** The saved default palang text, or null to use the domain default. */
+function savedDefaultText() {
+  try {
+    return localStorage.getItem(DEFAULTTEXT_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+/** A fresh spec, using the saved default palang text when one is set. */
+function newSpec() {
+  const s = defaultSpec();
+  const text = savedDefaultText();
+  if (text) s.text = text;
+  return s;
 }
 
 export const app = $state({
   view: "convert",
-  pageSize: "fit",
+  pageSize: initialPageSize(),
   theme: initialTheme(),
+  systemDark: initialSystemDark(),
+  defaultText: savedDefaultText(),
   images: [],
   pdfs: [],
-  specs: [defaultSpec()],
+  specs: [newSpec()],
   specIndex: 0,
   preview: null, // { count, pages: [{kind,file,page,url,w,h,loading,err}] }
   previewFiles: [],
@@ -55,12 +88,42 @@ export const app = $state({
 // so the store -> i18n import stays one-way and cycle-free.
 __bindLang(() => app.lang);
 
+// Keep the "system" theme live when the OS preference changes.
+if (typeof window !== "undefined" && typeof matchMedia !== "undefined") {
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+    app.systemDark = e.matches;
+  });
+}
+
 export function setTheme(theme) {
+  if (!["light", "dark", "system"].includes(theme)) return;
   app.theme = theme;
   try {
     localStorage.setItem(THEME_KEY, theme);
   } catch {
     /* theme lasts for this session only */
+  }
+}
+
+/** Default paper size — also becomes the current choice. */
+export function setDefaultPageSize(size) {
+  if (!["A4", "A5", "Letter", "fit"].includes(size)) return;
+  app.pageSize = size;
+  try {
+    localStorage.setItem(PAGESIZE_KEY, size);
+  } catch {
+    /* session only */
+  }
+}
+
+/** Default palang text, pre-filled on every new palang. */
+export function setDefaultText(text) {
+  app.defaultText = text || null;
+  try {
+    if (text) localStorage.setItem(DEFAULTTEXT_KEY, text);
+    else localStorage.removeItem(DEFAULTTEXT_KEY);
+  } catch {
+    /* session only */
   }
 }
 
@@ -453,7 +516,7 @@ function imageDims(url) {
      app.previewFiles = files;
      // Seed each photo's own palang spec (kept for existing files, default for
      // new ones) so specFor() stays a pure read below.
-     app.stamp = files.map((f, i) => app.stamp[i] ?? defaultSpec());
+     app.stamp = files.map((f, i) => app.stamp[i] ?? newSpec());
      app.activePage = 0;
    if (!files.length) {
      app.preview = null;
@@ -541,7 +604,7 @@ export function setSpecIndex(i) {
 /** Add another palang marking (multi-stamp). A new band stacks below the
  *  previous one when that one is centred, so it is visible immediately. */
 export function addSpec() {
-  const base = defaultSpec();
+  const base = newSpec();
   // Stack the new marking below the one the user is currently looking at
   // (the active spec), never at a guessed 60pt that lands it against the top
   // edge. Fall back to a comfortable mid-page offset when the active stamp
@@ -563,7 +626,7 @@ export function removeSpecAt(i) {
 }
 
 export function resetSpec() {
-  app.specs = [defaultSpec()];
+  app.specs = [newSpec()];
   app.specIndex = 0;
   app.compiledFiles.clear();
 }
@@ -584,7 +647,7 @@ export function specFor(file) {
   // Pure read: specs are seeded when files are picked (pickPreviewFiles), so
   // this never mutates state — calling it from a $derived is safe.
   const i = file ? app.previewFiles.indexOf(file) : -1;
-  return i >= 0 && app.stamp[i] ? app.stamp[i] : defaultSpec();
+  return i >= 0 && app.stamp[i] ? app.stamp[i] : newSpec();
 }
 
 /** Remove the palang from ONE image but keep the image: that photo then

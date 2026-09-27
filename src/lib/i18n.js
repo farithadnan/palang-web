@@ -25,6 +25,11 @@ const DICT = {
     menu: "Menu",
     switchLang: "Switch language",
     switchTheme: "Switch theme",
+    themeSystem: "System",
+    defaultPaper: "Default paper size",
+    defaultText: "Default palang text",
+    defaultTextHint: "Pre-filled when you add a palang. Leave empty for the built-in default.",
+    pageFit: "Fit",
 
     convert: "Convert",
     palang: "Palang",
@@ -330,6 +335,11 @@ const DICT = {
     menu: "Menu",
     switchLang: "Tukar bahasa",
     switchTheme: "Tukar tema",
+    themeSystem: "Sistem",
+    defaultPaper: "Saiz kertas lalai",
+    defaultText: "Teks palang lalai",
+    defaultTextHint: "Diisi secara automatik apabila anda menambah palang. Biarkan kosong untuk lalai terbina.",
+    pageFit: "Ikut",
 
     convert: "Tukar",
     palang: "Palang",

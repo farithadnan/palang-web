@@ -20,6 +20,7 @@
     cropPreview,
     removeImage,
     updateImage,
+    setDefaultPageSize,
     flash,
     generate,
     requestAdd,
@@ -97,7 +98,7 @@
   />
 
   <Field label={t("cvPaperSize")} hint={app.pageSize === "fit" ? t("cvPageOwn") : t("cvPageFit")}>
-    <Select id="page-size" value={app.pageSize} options={PAGE_SIZES} onChange={(v) => (app.pageSize = v)} />
+    <Select id="page-size" value={app.pageSize} options={PAGE_SIZES} onChange={(v) => setDefaultPageSize(v)} />
   </Field>
 
   <div class="actbar">
