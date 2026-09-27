@@ -58,6 +58,10 @@ jobs:
           npx cap sync android
       - name: Build APK (debug-signed — installable by sideload)
         run: cd android && ./gradlew assembleDebug
+      - name: Give the APK a proper name
+        run: |
+          V=$(node -p "require('./package.json').version")
+          mv android/app/build/outputs/apk/debug/app-debug.apk "android/app/build/outputs/apk/debug/Palang_${V}.apk"
       - uses: actions/upload-artifact@v7
         with:
           name: android-apk
@@ -75,7 +79,7 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v3
         with:
-          draft: true
+          draft: false
           name: Palang ${{ github.ref_name }}
           # The Windows artifact keeps its msi/ and nsis/ subfolders, so match
           # recursively — `dist-artifacts/*` would only catch the flat APK.
@@ -92,7 +96,7 @@ jobs:
             | --- | --- |
             | `Palang_x.x.x_x64-setup.exe` | Windows installer (recommended) |
             | `Palang_x.x.x_x64_en-US.msi` | Windows installer for managed / silent installs |
-            | `app-debug.apk` | Android app. Debug-signed, so Android asks you to allow installs from this source |
+            | `Palang_x.x.x.apk` | Android app. Debug-signed, so Android asks you to allow installs from this source |
 
             ## Install notes
 
