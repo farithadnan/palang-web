@@ -6,9 +6,9 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const OUT = process.env.PALANG_OUT || "dist";
+const OUT = process.argv[2] || "dist";
 const src = join(root, "node_modules/pdfjs-dist/standard_fonts");
 const dest = join(root, OUT, "standard_fonts");
 mkdirSync(dest, { recursive: true });
 cpSync(src, dest, { recursive: true });
-console.log("standard fonts copied to dist/standard_fonts");
+console.log(`standard fonts copied to ${OUT}/standard_fonts`);

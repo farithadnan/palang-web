@@ -1,11 +1,11 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Palang",
-  "version": "0.3.3",
+  "version": "../package.json",
   "identifier": "my.faritadnan.palang",
   "build": {
     "beforeBuildCommand": "npm run build:app",
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run dev:app",
     "devUrl": "http://localhost:5173",
     "frontendDist": "../dist-app"
   },

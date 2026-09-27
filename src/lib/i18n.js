@@ -277,7 +277,7 @@ const DICT = {
       "The site is plain static files, so it runs free on Vercel, Cloudflare Pages or any static host. The apps do all the work on the device.",
     docPackaging: "EXE & APK pipeline",
     docPackBody:
-      "Tag a release and CI builds everything. The workflows run on GitHub Actions: a Windows runner for the EXE, and the Android SDK for the APK. Nothing to install locally.",
+      "Version and release are one step: npm version bumps package.json and tags, then push the tag. A single workflow (.github/workflows/release.yml) builds the Windows EXE/MSI and the Android APK and attaches both to one draft release. To build test artifacts without publishing, run that workflow manually.",
     docPackWin: "Windows (EXE and MSI)",
     docPackWinBody: "Built by Tauri on a Windows runner, then attached to the GitHub release.",
     docPackApk: "Android (APK)",
@@ -553,7 +553,7 @@ const DICT = {
       "Laman ini fail statik biasa, jadi ia berjalan percuma di Vercel, Cloudflare Pages atau mana-mana hos statik. App melakukan semua kerja pada peranti.",
     docPackaging: "Saluran EXE & APK",
     docPackBody:
-      "Tag satu release dan CI membina segala-galanya. Aliran kerja berjalan di GitHub Actions: runner Windows untuk EXE, SDK Android untuk APK. Tiada perlu pasang tempatan.",
+      "Versi dan terbitan dalam satu langkah: npm version menaikkan package.json dan menandakan tag, kemudian tolak tag. Satu aliran kerja (.github/workflows/release.yml) membina EXE/MSI Windows dan APK Android serta melampirkan kedua-duanya pada satu draf release. Untuk bina artifak ujian tanpa menerbitkan, jalankan aliran kerja itu secara manual.",
     docPackWin: "Windows (EXE dan MSI)",
     docPackWinBody: "Dibina oleh Tauri pada runner Windows, kemudian dilampirkan pada release GitHub.",
     docPackApk: "Android (APK)",

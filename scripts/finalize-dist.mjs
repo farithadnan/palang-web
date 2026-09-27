@@ -18,7 +18,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const OUT = process.env.PALANG_OUT || "dist";
+const OUT = process.argv[2] || "dist";
 const dist = join(root, OUT);
 
 // ---------- 1. strip crossorigin from every emitted HTML ----------
@@ -84,4 +84,4 @@ if (missing.length) {
   for (const m of missing) console.error("  " + m);
   process.exit(1);
 }
-console.log(`dist verified: ${refs.size} referenced asset(s), all present`);
+console.log(`${OUT} verified: ${refs.size} referenced asset(s), all present`);

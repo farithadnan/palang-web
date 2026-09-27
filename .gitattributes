@@ -1,0 +1,5 @@
+# Normalise every text file to LF in the repository, on every platform.
+# Without this the Windows drive (F:) checks files out as CRLF, so git reports
+# the whole tree as modified and a commit rewrites every file for no reason.
+# `text=auto` still detects and leaves binary files (png, ico, pfb, woff2) alone.
+* text=auto eol=lf

@@ -21,12 +21,17 @@ CSS with design tokens (light/dark themes), EN/BM interface, mobile-first.
 
 ## Development
 
-No server is needed — the app works on its own.
+No server is needed — the app works on its own. One codebase, two dev servers:
 
 ```bash
 npm install
-npm run dev        # local editor with the in-browser engine
+npm run dev        # the public site (landing, install, privacy, feature pages)
+npm run dev:app    # the tools only — what the EXE and APK run (hash routes)
 ```
+
+`npm run dev:app` is the fastest way to exercise the editor in a desktop
+browser: it is the same Svelte/CSS/JS the installers bundle, so gestures and
+layout behave as they do in the packaged app.
 
 ## Build & test
 
@@ -45,10 +50,10 @@ superseded hashed assets while keeping one previous generation, so a cached
 
 One codebase, two build outputs.
 
-| Variant | Build | Ships |
-| --- | --- | --- |
-| Site | `npm run build` | The public site: landing, install, privacy and the per-feature pages |
-| App | `npm run build:app` | The tools only, no site — what Tauri and Capacitor package into the EXE and APK |
+| Variant | Dev | Build | Ships |
+| --- | --- | --- | --- |
+| Site | `npm run dev` | `npm run build` | The public site: landing, install, privacy and the per-feature pages |
+| App | `npm run dev:app` | `npm run build:app` | The tools only, no site — what Tauri and Capacitor package into the EXE and APK |
 
 The variant is the Vite mode (`vite build --mode app`); the site graph is
 aliased to a stub in app builds, so it never enters that bundle. Site routes
@@ -58,8 +63,9 @@ web, and the site is not shipped inside the installers.
 Runtime operator caps stay in `public/limits.json` (adjustable without a
 rebuild).
 
-PITFALL: both variants write to `dist/` — the last build wins. Always finish a
-packaging pass with the variant you intend to deploy.
+Each variant has its own output directory, so they never overwrite each other:
+the site builds to `dist/` (published), the app to `dist-app/` (packaged by
+Tauri/Capacitor, and git-ignored — build output is never committed).
 
 ## Publishing (GitHub Pages)
 
@@ -156,28 +162,46 @@ docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro pala
   keys nudge it (Shift = 10 pt); Delete removes it; Reset recentres it; rotation
   tilts the whole marking, matching the stamped output exactly (rotated bounding
   box, so a tilted band never clips).
-- Photo crop is **visual and confirmable**: save re-crops the thumbnail so you
-  see the result, and the crop window is a real frame (corner handles resize it,
-  the image pans and pinches underneath).
+- Photo crop is **visual and confirmable** and follows the Samsung-gallery
+  gesture model: a corner handle resizes the window without moving the photo,
+  releasing a handle focuses the crop window to fill the screen, one finger/mouse
+  drag pans the photo, and pinch/wheel zooms (limited so the window never sees
+  empty background). Save re-crops the thumbnail so you see the result.
 - Merge needs **at least two PDFs** — one file is not a merge.
 - Downloads use branded, timestamped names (e.g. `palang-stamped-2026-09-24.pdf`).
 - Every result is shown in-app (name, size, save again) so the file is findable.
 
 ## Desktop & mobile (EXE / APK)
 
-Same codebase, same tools bundle, wrapped by [Tauri] and [Capacitor]. The build
-runs in GitHub Actions — tag a release (`git tag v0.3.0 && git push --tags`)
-and the workflows produce:
+Same codebase, same tools bundle, wrapped by [Tauri] and [Capacitor]. One
+workflow, `.github/workflows/release.yml`, builds both platforms.
 
-- **Windows EXE/MSI** — `Package EXE (Windows)` workflow (tauri-action), the
-  EXE+MSI land on the GitHub release.
-- **Android APK** — `Package APK (Android)` workflow, debug-signed APK as a
-  build artifact (sideloadable). Play-Store signing needs a keystore — wire the
-  signingConfig with your keystore secrets before publishing to the Play Console.
+**Cut a release** — `npm version` bumps `package.json`, commits and tags; the
+push triggers the release workflow:
 
-The bundle uses relative asset paths, so the same `dist/` works on http hosts
-and inside `tauri://`/`capacitor://`. Local Tauri development needs the Rust
-toolchain; the APK always builds in CI (Android SDK + Java are set up there).
+```bash
+npm version patch        # or minor / major
+git push --follow-tags
+```
+
+`package.json` is the single source of version: `src-tauri/tauri.conf.json`
+points at it (`"version": "../package.json"`), so there is nothing else to bump.
+
+The workflow produces a **draft** GitHub release carrying:
+
+- **Windows EXE/MSI** — built by tauri-action.
+- **Android APK** — debug-signed (sideloadable). Play-Store signing needs a
+  keystore — wire the signingConfig with your keystore secrets before publishing
+  to the Play Console.
+
+**Test a build without releasing** — run the *Release* workflow manually
+(Actions → Release → Run workflow). It builds the same EXE/MSI and APK and
+attaches them to the run; nothing is published.
+
+The bundle uses relative asset paths, so the same `dist-app/` works on http
+hosts and inside `tauri://`/`capacitor://`. Local Tauri development needs the
+Rust toolchain; the APK always builds in CI (Android SDK + Java are set up
+there).
 
 [Tauri]: https://tauri.app
 [Capacitor]: https://capacitorjs.com

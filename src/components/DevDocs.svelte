@@ -10,19 +10,20 @@
   import { href } from "../lib/router.js";
 
   const VARIANTS = [
-    { id: "site", cmd: "npm run build", what: () => t("docVarFull") },
-    { id: "app", cmd: "npm run build:app", what: () => t("docVarApp") },
+    { id: "site", dev: "npm run dev", build: "npm run build", what: () => t("docVarFull") },
+    { id: "app", dev: "npm run dev:app", build: "npm run build:app", what: () => t("docVarApp") },
   ];
 
   const CLONE = `git clone https://github.com/farithadnan/palang-web
 cd palang-web
 npm install
-npm run dev`;
+npm run dev       # the public site
+npm run dev:app   # the tools the EXE and APK run`;
 
   const DOCKER = `docker compose up --build`;
 
-  const TAGGING = `git tag v0.3.0
-git push origin v0.3.0`;
+  const RELEASE = `npm version patch   # or minor / major
+git push --follow-tags`;
 </script>
 
 <svelte:head>
@@ -58,7 +59,10 @@ git push origin v0.3.0`;
           <b><code>{v.id}</code></b>
           <span>{v.what()}</span>
         </span>
-        <code class="cmd-chip">{v.cmd}</code>
+        <span class="cmd-chips">
+          <code class="cmd-chip">{v.dev}</code>
+          <code class="cmd-chip">{v.build}</code>
+        </span>
       </li>
     {/each}
   </ul>
@@ -85,7 +89,7 @@ git push origin v0.3.0`;
 
   <h2 class="site-h2">{t("docPackaging")}</h2>
   <p class="site-note">{t("docPackBody")}</p>
-  <Code code={TAGGING} label="sh" />
+  <Code code={RELEASE} label="sh" />
   <ul class="site-rows">
     <li>
       <span class="site-row-main">
@@ -106,6 +110,12 @@ git push origin v0.3.0`;
 <style>
   .docs h1 { margin-bottom: 0.6rem; }
   .docs li { margin: 0; }
+  .cmd-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    justify-content: flex-end;
+  }
   .cmd-chip {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.8125rem;

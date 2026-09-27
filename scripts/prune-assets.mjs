@@ -16,7 +16,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const OUT = process.env.PALANG_OUT || "dist";
+const OUT = process.argv[2] || "dist";
 const dist = join(root, OUT);
 const assetsDir = join(dist, "assets");
 const manifestPath = join(dist, ".vite/manifest.json");

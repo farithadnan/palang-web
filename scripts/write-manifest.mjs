@@ -5,7 +5,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const OUT = process.env.PALANG_OUT || "dist";
+const OUT = process.argv[2] || "dist";
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 
 mkdirSync(join(root, OUT), { recursive: true });
@@ -13,4 +13,4 @@ writeFileSync(
   join(root, OUT, "version.json"),
   JSON.stringify({ version: pkg.version, note: "" }, null, 2) + "\n"
 );
-console.log(`manifest written: dist/version.json (v${pkg.version})`);
+console.log(`manifest written: ${OUT}/version.json (v${pkg.version})`);

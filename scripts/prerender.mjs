@@ -11,7 +11,7 @@ import { mkdirSync, copyFileSync, existsSync } from "node:fs";
 import { dirname } from "node:path";
 
 const ROUTES = ["install", "privacy", "docs", "features/convert", "features/palang", "features/merge"];
-const OUT = process.env.PALANG_OUT || "dist";
+const OUT = process.argv[2] || "dist";
 
 if (!existsSync(`${OUT}/index.html`)) {
   console.error(`prerender: ${OUT}/index.html missing — run vite build first`);
