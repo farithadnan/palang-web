@@ -125,6 +125,7 @@ const DICT = {
     cancel: "Cancel",
     pagePrev: "Previous page",
     pageNext: "Next page",
+    pageJump: "Jump to page",
 
     cvTitle: "Convert",
     cvChoose: "Choose images to convert",
@@ -427,6 +428,7 @@ const DICT = {
     cancel: "Batal",
     pagePrev: "Halaman sebelumnya",
     pageNext: "Halaman seterusnya",
+    pageJump: "Lompat ke halaman",
 
     cvTitle: "Tukar",
     cvChoose: "Pilih imej untuk ditukar",

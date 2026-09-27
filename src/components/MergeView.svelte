@@ -18,6 +18,7 @@
     removePdf,
     selectMergeFile,
     stepMerge,
+    setMergePage,
     generate,
     canMerge,
     requestAdd,
@@ -164,8 +165,14 @@
     border: 1px solid var(--line);
     border-radius: 999px;
     padding: 0.3rem 0.9rem;
-    margin-bottom: 1.4rem;
+    margin-bottom: 0.5rem;
     box-shadow: var(--shadow);
+  }
+  .mgfs-range {
+    align-self: center;
+    width: min(34rem, 88%);
+    margin: 0 0 1.4rem;
+    accent-color: var(--accent);
   }
 </style>
 
@@ -208,5 +215,17 @@
         <Icon name="chevR" size={20} />
       </button>
     </div>
+    {#if total > 1}
+      <input
+        class="mgfs-range"
+        type="range"
+        min="1"
+        max={total}
+        step="1"
+        value={app.merge.active + 1}
+        aria-label={t("pageJump")}
+        oninput={(e) => setMergePage(Number(e.currentTarget.value) - 1)}
+      />
+    {/if}
   </div>
 {/if}

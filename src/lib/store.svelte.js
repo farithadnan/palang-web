@@ -296,6 +296,15 @@ export function stepMerge(delta) {
   void ensureMergePage(next);
 }
 
+/** Jump straight to a page (the slider); renders only the target page. */
+export function setMergePage(index) {
+  const total = app.merge.pages.length;
+  const next = Math.min(Math.max(0, index), Math.max(0, total - 1));
+  if (next === app.merge.active) return;
+  app.merge.active = next;
+  void ensureMergePage(next);
+}
+
 /** Jump the preview to the first page of `id` (list row tap). */
 export function selectMergeFile(id) {
   const idx = app.merge.pages.findIndex((pg) => pg.pdfId === id);
@@ -803,6 +812,7 @@ if (typeof window !== "undefined") {
     pickPreviewFiles,
     selectMergeFile,
     stepMerge,
+    setMergePage,
     setActivePage,
     applyCompiled,
     removeStamp,
