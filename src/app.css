@@ -537,21 +537,38 @@ input[type="color"] {
 }
 .overlay-label { font-weight: 400; white-space: nowrap; line-height: 1; }
 .overlay-label.editable { cursor: text; border-bottom: 1px dashed color-mix(in srgb, currentColor 45%, transparent); }
-/* inline text editor: a transparent field replacing the stamp's text (double-click the stamp to open it) */
+/* inline text editor: a solid dark field replacing the stamp's text, so it
+   stays readable over any photo (double-click the stamp, or Edit text) */
 .overlay-edit {
-  border: 1px dashed var(--accent);
-  background: transparent;
-  color: inherit;
+  border: 1px solid var(--accent);
+  background: rgba(15, 18, 24, 0.92);
+  color: #ffffff;
   font: inherit;
   text-align: center;
   width: 100%;
   min-width: 0;
   margin: 0;
-  padding: 0 2px;
+  padding: 0.15rem 0.35rem;
   outline: none;
-  border-radius: 2px;
-  line-height: 1;
+  border-radius: 6px;
+  line-height: 1.2;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
 }
+.overlay-edithint {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  z-index: 5;
+}
+.overlay-box.grabbing { cursor: grabbing; }
 .overlay-box .handle {
   position: absolute;
   width: 20px; height: 20px;

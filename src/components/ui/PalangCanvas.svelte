@@ -62,6 +62,14 @@ import { onMount } from "svelte";
     const v = editVal.trim();
     if (v && v !== (spec.text || "")) onChange?.({ text: v });
   }
+  /** Enter inline text editing (double-click the text, or the toolbar's Edit
+   *  text button). Selects the marking so the handles and toolbar stay put. */
+  function editText() {
+    if (!lines || !armed) return;
+    selected = true;
+    editVal = spec.text || "";
+    editingText = true;
+  }
   $effect(() => {
     if (editingText) {
       editEl?.focus();
@@ -163,6 +171,7 @@ import { onMount } from "svelte";
     if (api) {
       api.fitView = fitView;
       api.resetPosition = centerReset;
+      api.editText = editText;
     }
     return () => {
       ro?.disconnect();
@@ -525,6 +534,7 @@ import { onMount } from "svelte";
       .join("; ")
   );
   const labelStyle = $derived(lines ? `color:${spec.color}; font-size:${Math.round(fontPt * scale)}px` : "");
+  const editStyle = $derived(lines ? `font-size:${Math.round(fontPt * scale)}px` : "");
   const rotation = $derived(((spec.rotationDeg ?? 0) % 360 + 360) % 360);
 </script>
 
@@ -548,6 +558,8 @@ import { onMount } from "svelte";
             class="overlay-box"
             class:overlay-lines={lines}
             class:selected={showHandles}
+            class:grabbing={mode === "move" || mode === "rotate"}
+            title={t("pcMoveHint")}
             style={boxStyle}
             onpointerdown={(e) => begin(e, "move")}
             onpointerup={emitUp}
@@ -563,7 +575,7 @@ import { onMount } from "svelte";
                   type="text"
                   value={editVal}
                   oninput={(e) => (editVal = e.currentTarget.value)}
-                  style={labelStyle}
+                  style={editStyle}
                   onpointerdown={(e) => e.stopPropagation()}
                   onkeydown={(e) => {
                     if (e.key === "Enter") commitText();
@@ -593,12 +605,15 @@ import { onMount } from "svelte";
                 </span>
               {/if}
             {/if}
+            {#if editingText}
+              <div class="overlay-edithint" role="status">{t("pcEditHint")}</div>
+            {/if}
             {#if showHandles && !lines}
-              <div class="handle h-midb" role="button" tabindex="-1" aria-label={t("pcResizeH")} onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>
+              <div class="handle h-midb" role="button" tabindex="-1" aria-label={t("pcResizeH")} title={t("pcResizeH")} onpointerdown={(e) => { e.preventDefault(); begin(e, "midb"); }}></div>
             {/if}
             {#if showHandles && lines}
-              <div class="rotate-handle" role="button" tabindex="-1" aria-label={t("pcRotate")} onpointerdown={(e) => { e.preventDefault(); e.stopPropagation(); beginRotate(e); }}></div>
-              <div class="handle h-se" role="button" tabindex="-1" aria-label={t("pcScale")} onpointerdown={(e) => { e.preventDefault(); begin(e, "scale"); }}></div>
+              <div class="rotate-handle" role="button" tabindex="-1" aria-label={t("pcRotate")} title={t("pcRotate")} onpointerdown={(e) => { e.preventDefault(); e.stopPropagation(); beginRotate(e); }}></div>
+              <div class="handle h-se" role="button" tabindex="-1" aria-label={t("pcScale")} title={t("pcScale")} onpointerdown={(e) => { e.preventDefault(); begin(e, "scale"); }}></div>
             {/if}
             {#if showHandles && region}
               <div class="handle h-nw" role="button" tabindex="-1" aria-label={t("resizeTL")} onpointerdown={(e) => { e.preventDefault(); begin(e, "nw"); }}></div>

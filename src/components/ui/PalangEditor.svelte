@@ -172,6 +172,18 @@
         <Icon name="fit" size={22} />
         <span class="pedit-tlabel">{t("pcWhole")}</span>
       </button>
+      {#if spec.mode === "band" && spec.style === "lines"}
+        <button
+          type="button"
+          class="pedit-tbtn"
+          aria-label={t("plEditText")}
+          title={t("plEditText")}
+          onclick={() => canvasApi.editText?.()}
+        >
+          <Icon name="pencil" size={22} />
+          <span class="pedit-tlabel">{t("plEditText")}</span>
+        </button>
+      {/if}
       {#if stampSelected}
         <button
           type="button"

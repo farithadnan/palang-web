@@ -142,6 +142,10 @@
 
 {#if selecting}
   <div class="mselbar" role="toolbar" aria-label={t("menu")}>
+    <button type="button" class="iconbtn" aria-label={t("cancel")} title={t("cancel")} onclick={cancelSelection}>
+      <Icon name="x" size={20} />
+    </button>
+    <span class="msel-count">{t("selCount", { n: selected.length })}</span>
     <button
       type="button"
       class="btn btn-sm"
@@ -151,12 +155,16 @@
       <span class="mradio" class:on={selected.length === items.length} aria-hidden="true"></span>
       {t("selSelectAll")}
     </button>
-    <span class="msel-count">{t("selCount", { n: selected.length })}</span>
-    <button type="button" class="btn btn-sm btn-danger" disabled={!selected.length} onclick={bulkRemove}>
-      <Icon name="trash" size={16} />
-      {t("delete")}
+    <button
+      type="button"
+      class="iconbtn msel-deld"
+      aria-label={t("delete")}
+      title={t("delete")}
+      disabled={!selected.length}
+      onclick={bulkRemove}
+    >
+      <Icon name="trash" size={20} />
     </button>
-    <button type="button" class="btn btn-sm" onclick={cancelSelection}>{t("cancel")}</button>
   </div>
 {/if}
 
@@ -254,4 +262,6 @@
   .mselbar .mradio { position: relative; display: block; top: 0; left: 0; }
   .mselbar .btn { display: inline-flex; align-items: center; gap: 0.35rem; }
   .msel-count { flex: 1; font-size: var(--fs-body); color: var(--muted); min-width: 4rem; }
+  .msel-deld { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+  .msel-deld:disabled { opacity: 0.5; cursor: default; }
 </style>
