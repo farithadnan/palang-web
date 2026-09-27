@@ -16,6 +16,7 @@
    *  Emits fractions {l,t,r,b} (0..1) — the format the store's crop path uses. */
   import { onMount } from "svelte";
   import { t } from "../../lib/i18n.js";
+  import { ask } from "../../lib/confirm.svelte.js";
   import Icon from "./Icon.svelte";
   import {
     clampFrame,
@@ -105,7 +106,8 @@
     ready = true;
   }
 
-  function revert() {
+  async function revert() {
+    if (!(await ask({ title: t("cfRevertTitle"), body: t("cfRevertBody"), confirmLabel: t("cmRevert") }))) return;
     const r = stageRect();
     stageW = r.width;
     stageH = r.height;

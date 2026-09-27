@@ -10,6 +10,7 @@
    *           · Remove this palang (per image) · Remove this image.
    */
   import { t } from "../../lib/i18n.js";
+  import { ask } from "../../lib/confirm.svelte.js";
   import Icon from "./Icon.svelte";
   import PalangCanvas from "./PalangCanvas.svelte";
   import {
@@ -49,16 +50,26 @@
     canvasApi.resetPosition?.();
   }
 
-  function removePalang() {
+  async function removePalang() {
     colorOpen = false;
     moreOpen = false;
+    if (
+      !(await ask({
+        title: t("cfRemovePalangTitle"),
+        body: t("cfRemovePalangBody"),
+        confirmLabel: t("plRemoveStamp"),
+        danger: true,
+      }))
+    )
+      return;
     removeStamp(); // this image keeps, but exports unstamped
     stampSelected = false;
   }
 
-  function removeImage() {
+  async function removeImage() {
     colorOpen = false;
     moreOpen = false;
+    if (!(await ask({ title: t("cfDeleteImageTitle"), confirmLabel: t("delete"), danger: true }))) return;
     const pg = app.preview?.pages?.[app.activePage];
     const fileIdx = pg ? app.previewFiles.indexOf(pg.file) : -1;
     if (fileIdx >= 0) {
@@ -67,9 +78,10 @@
     }
   }
 
-  function revert() {
+  async function revert() {
     colorOpen = false;
     moreOpen = false;
+    if (!(await ask({ title: t("cfRevertTitle"), body: t("cfRevertBody"), confirmLabel: t("cmRevert") }))) return;
     updateSpec({ armed: true, topPt: null, leftPt: null, rotationDeg: 0, color: COLORS[0] });
     canvasApi.resetPosition?.();
   }

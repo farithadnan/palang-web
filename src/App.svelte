@@ -10,6 +10,7 @@
   import { onMount } from "svelte";
   import ToolIcon from "./components/ui/Icon.svelte";
   import ToastHost from "./components/ui/Toast.svelte";
+  import ConfirmDialog from "./components/ui/ConfirmDialog.svelte";
   import Topbar from "./components/ui/Topbar.svelte";
   import Landing from "$landing"; // the whole public site, or a stub
   import AboutView from "./components/AboutView.svelte";
@@ -165,3 +166,4 @@
 {/if}
 
 <ToastHost />
+<ConfirmDialog />

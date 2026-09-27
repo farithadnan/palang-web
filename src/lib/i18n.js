@@ -310,6 +310,14 @@ const DICT = {
     updateNow: "Update now",
     later: "Later",
     more: "More",
+    cfConfirm: "Confirm",
+    cfDeleteImageTitle: "Delete this item?",
+    cfDeleteImagesTitle: "Delete {n} selected?",
+    cfDeleteImagesBody: "They are removed from the list.",
+    cfRemovePalangTitle: "Remove the palang?",
+    cfRemovePalangBody: "The image stays, but it exports without a palang.",
+    cfRevertTitle: "Discard changes?",
+    cfRevertBody: "This goes back to the original.",
   },
 
   ms: {
@@ -601,6 +609,14 @@ const DICT = {
     updateNow: "Kemas kini sekarang",
     later: "Nanti",
     more: "Lagi",
+    cfConfirm: "Sahkan",
+    cfDeleteImageTitle: "Padam item ini?",
+    cfDeleteImagesTitle: "Padam {n} yang dipilih?",
+    cfDeleteImagesBody: "Ia dibuang dari senarai.",
+    cfRemovePalangTitle: "Buang palang?",
+    cfRemovePalangBody: "Imej kekal, tetapi dieksport tanpa palang.",
+    cfRevertTitle: "Buang perubahan?",
+    cfRevertBody: "Ini kembali kepada asal.",
   },
 };
 

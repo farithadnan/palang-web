@@ -11,6 +11,7 @@
    *  - the released-tap path is gated on the long-press flag set by the timer,
    *    or the up event toggles the just-selected item back off. */
   import { t } from "../../lib/i18n.js";
+  import { ask } from "../../lib/confirm.svelte.js";
   import Icon from "./Icon.svelte";
 
   let {
@@ -84,7 +85,15 @@
     else selected = items.map((i) => i.id);
   }
 
-  function bulkRemove() {
+  async function bulkRemove() {
+    if (!selected.length) return;
+    const ok = await ask({
+      title: t("cfDeleteImagesTitle", { n: selected.length }),
+      body: t("cfDeleteImagesBody"),
+      confirmLabel: t("delete"),
+      danger: true,
+    });
+    if (!ok) return;
     for (const id of selected) onRemove?.(id);
     cancelSelection();
   }

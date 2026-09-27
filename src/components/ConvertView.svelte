@@ -13,6 +13,7 @@
   import { PAGE_DIMS, PAGE_SIZES } from "../lib/domain.js";
   import { t } from "../lib/i18n.js";
   import { ACCEPT } from "../lib/pick.js";
+  import { ask } from "../lib/confirm.svelte.js";
   import {
     app,
     addImages,
@@ -46,6 +47,12 @@
   function openViewer(id) {
     viewStart = Math.max(0, app.images.findIndex((im) => im.id === id));
     viewing = id;
+  }
+
+  async function confirmDelete(id) {
+    if (await ask({ title: t("cfDeleteImageTitle"), confirmLabel: t("delete"), danger: true })) {
+      removeImage(id);
+    }
   }
 
   function viewerCrop(id) {
@@ -112,7 +119,7 @@
     items={galleryItems}
     start={viewStart}
     onClose={() => (viewing = null)}
-    onDelete={removeImage}
+    onDelete={confirmDelete}
     onCrop={viewerCrop}
     onEnhance={viewerEnhance}
   />
