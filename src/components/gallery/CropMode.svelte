@@ -105,11 +105,9 @@
       );
       dirty = true;
     } else {
-      frame = clampFrame(
-        { x: stageW * 0.17, y: stageH * 0.17, w: stageW * 0.66, h: stageH * 0.66 },
-        rect,
-        MIN
-      );
+      // Default window = the WHOLE photo, so "Save" with no adjustment is not a
+      // surprise centre-crop; the user drags the frame to mark what to keep.
+      frame = { x: rect.left, y: rect.top, w: rect.w, h: rect.h };
       dirty = false;
     }
     ready = true;
@@ -123,11 +121,8 @@
     const scale = fitScale(stageW, stageH, natW, natH);
     animating = true;
     view = { scale, tx: 0, ty: 0 };
-    frame = clampFrame(
-      { x: stageW * 0.17, y: stageH * 0.17, w: stageW * 0.66, h: stageH * 0.66 },
-      displayRect(view, natW, natH, stageW, stageH),
-      MIN
-    );
+    const rect = displayRect(view, natW, natH, stageW, stageH);
+    frame = { x: rect.left, y: rect.top, w: rect.w, h: rect.h };
     dirty = false;
   }
 

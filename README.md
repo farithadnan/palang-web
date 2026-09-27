@@ -47,10 +47,11 @@ npm run build      # the public site -> dist/ (zero a11y warnings expected)
 npm run build:app  # the tools bundle the EXE and APK are packaged from
 ```
 
-The build chain stamps `src/lib/version.js` + `dist/version.json` (the
-update-check manifest), copies pdf.js standard fonts into `dist/`, and prunes
-superseded hashed assets while keeping one previous generation, so a cached
-`index.html` degrades to the older bundle instead of a blank page.
+The version is read from `package.json` at build time (Vite `define`), so it is
+always current — even in dev. The build chain writes `dist/version.json` (the
+update-check manifest), copies pdf.js standard fonts, and prunes superseded
+hashed assets while keeping one previous generation, so a cached `index.html`
+degrades to the older bundle instead of a blank page.
 
 ## Build variants
 
@@ -177,7 +178,8 @@ docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro pala
   drag pans the photo, and pinch/wheel zooms (limited so the window never sees
   empty background). Save re-crops the thumbnail so you see the result.
 - Merge needs **at least two PDFs** — one file is not a merge.
-- Downloads use branded, timestamped names (e.g. `palang-stamped-2026-09-24.pdf`).
+- Downloads use branded, timestamped names (e.g.
+  `palang-stamped-2026-09-24-1430.pdf`), in local time.
 - Every result is shown in-app (name, size, save again) so the file is findable.
 
 ## Desktop & mobile (EXE / APK)

@@ -9,8 +9,8 @@ import { LIMITS, loadLimits } from "../util/config.js";
 import { APP_VERSION } from "../util/version.js";
 import { defaultSpec, PAGE_DIMS, pageDims } from "../domain/domain.js";
 import { toast } from "./toast.svelte.js";
-import { RELEASES_URL } from "../util/links.js";
-import { saveDocument } from "../util/save.js";
+import { RELEASES_URL, SITE_URL } from "../util/links.js";
+import { saveDocument, isNativeApp } from "../util/save.js";
 
 const THEME_KEY = "palang-theme";
 const LANG_KEY = "palang-lang";
@@ -695,7 +695,11 @@ const UPDATE_KEY = "palang-update-dismissed";
 
 /** Read the published manifest. Returns the remote version or null. */
 async function fetchRemoteVersion() {
-  const res = await fetch(`version.json?t=${Date.now()}`, { cache: "no-store" });
+  // On device the app runs from tauri:// or capacitor://, where a RELATIVE
+  // version.json is the BUNDLED one (same version as the app) — so an update
+  // could never be seen. Fetch the published manifest from the site instead.
+  const base = isNativeApp() ? SITE_URL : "";
+  const res = await fetch(`${base}version.json?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) return null;
   const manifest = await res.json();
   const remote = String(manifest.version ?? "");
@@ -741,8 +745,13 @@ export function releaseUrl() {
 }
 
 export function applyUpdate() {
-  // Web/PWA: refresh pulls the new static bundle. The native APK/EXE
-  // updaters will point at the download page instead.
+  if (isNativeApp()) {
+    // A reload would load the SAME bundled build. Send the user to the release
+    // page to install the new one (a true in-app updater is a future item).
+    window.open(RELEASES_URL, "_blank", "noopener");
+    return;
+  }
+  // Web/PWA: refresh pulls the new static bundle.
   location.reload();
 }
 
@@ -797,7 +806,11 @@ export async function generate(mode = "convert") {
     }
   }
 
-  const stamp = new Date().toISOString().slice(0, 10);
+  // LOCAL date+time: toISOString() is UTC, so a filename made late in the day
+  // in UTC+8 carried yesterday's date (the "outdated timestamp" report).
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
   const filename =
     mode === "merge"
       ? `palang-merged-${stamp}.pdf`

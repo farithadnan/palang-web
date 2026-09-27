@@ -235,7 +235,7 @@ import { onMount } from "svelte";
   function begin(e, m) {
     if (!box || !armed) return;
     if (editingText) {
-      cancelText(); // clicking the marking also leaves edit mode, unsaved
+      commitText(); // clicking the marking leaves edit mode, saving the text
       return;
     }
     if (pinching || pointers.size >= 2) return; // a pinch is in progress
@@ -277,9 +277,10 @@ import { onMount } from "svelte";
   }
 
   function wrapDown(e) {
-    // Clicking anywhere on the page leaves text editing WITHOUT saving.
+    // Clicking anywhere on the page LEAVES text editing and SAVES it (like a
+    // normal field blur); Escape is the explicit cancel.
     if (editingText) {
-      cancelText();
+      commitText();
       return;
     }
     // A pinch owns the gesture: never start a drag while two fingers are down.
@@ -609,7 +610,7 @@ import { onMount } from "svelte";
                     if (e.key === "Enter") commitText();
                     else if (e.key === "Escape") cancelText();
                   }}
-                  onblur={cancelText}
+                  onblur={commitText}
                 />
               {:else}
                 <span

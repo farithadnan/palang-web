@@ -6,7 +6,7 @@
   import { APP_VERSION, APP_BUILT_AT, APP_CHANNEL } from "../../lib/util/version.js";
   import { app, applyUpdate, checkNow, releaseUrl } from "../../lib/state/store.svelte.js";
   import { t } from "../../lib/i18n/index.js";
-  import { GITHUB_URL, ISSUES_URL, SITE_URL } from "../../lib/util/links.js";
+  import { ISSUES_URL, RELEASES_URL, SITE_URL } from "../../lib/util/links.js";
   import Icon from "../ui/Icon.svelte";
 
   let checking = $state(false);
@@ -77,14 +77,20 @@
   </div>
 
   <div class="about-links">
-    <a class="iconbtn" href={SITE_URL} target="_blank" rel="noopener" aria-label={t("aboutWebsite")}>
+    <a class="about-link" href={SITE_URL} target="_blank" rel="noopener">
       <Icon name="globe" size={20} />
+      <span>{t("aboutWebsite")}</span>
+      <Icon name="chevR" size={16} />
     </a>
-    <a class="iconbtn" href={GITHUB_URL} target="_blank" rel="noopener" aria-label={t("aboutGithub")}>
-      <Icon name="github" size={20} />
+    <a class="about-link" href={RELEASES_URL} target="_blank" rel="noopener">
+      <Icon name="download" size={20} />
+      <span>{t("aboutWhatsNew")}</span>
+      <Icon name="chevR" size={16} />
     </a>
-    <a class="iconbtn" href={ISSUES_URL} target="_blank" rel="noopener" aria-label={t("aboutIssues")}>
+    <a class="about-link" href={ISSUES_URL} target="_blank" rel="noopener">
       <Icon name="bug" size={20} />
+      <span>{t("aboutIssues")}</span>
+      <Icon name="chevR" size={16} />
     </a>
   </div>
 </section>
@@ -135,8 +141,22 @@
 
   .about-links {
     display: flex;
-    justify-content: center;
-    gap: 0.7rem;
-    margin-top: 1.4rem;
+    flex-direction: column;
+    margin-top: 1.6rem;
+    border-top: 1px solid var(--line);
   }
+  .about-link {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: var(--ctrl-h);
+    padding: 0.5rem 0.2rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--text);
+    text-decoration: none;
+    font-size: var(--fs-body);
+  }
+  .about-link:hover { color: var(--accent); }
+  .about-link span { flex: 1; }
+  .about-link svg:first-child { color: var(--muted); }
 </style>

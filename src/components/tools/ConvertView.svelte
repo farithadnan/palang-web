@@ -62,6 +62,16 @@
     cropOpen = id;
   }
 
+  /** Reopen the viewer on a specific image (fixes jumping to the first one —
+   *  FullView starts at `viewStart`, so that must move too). */
+  function reopenViewer(id) {
+    const i = app.images.findIndex((im) => im.id === id);
+    if (i >= 0) {
+      viewStart = i;
+      viewing = id;
+    }
+  }
+
   function cropSave(rect) {
     const ret = cropReturn;
     cropReturn = null;
@@ -71,7 +81,7 @@
       flash("ok", t("msgSaved"));
     }
     cropOpen = null;
-    if (ret && app.images.some((im) => im.id === ret)) viewing = ret; // back to the viewer
+    if (ret) reopenViewer(ret); // back to the SAME image, not the first
   }
 
   function viewerEnhance(id) {
@@ -138,7 +148,7 @@
       const ret = cropReturn;
       cropReturn = null;
       cropOpen = null;
-      if (ret && app.images.some((im) => im.id === ret)) viewing = ret;
+      if (ret) reopenViewer(ret);
     }}
     onSave={cropSave}
   />

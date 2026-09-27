@@ -2,6 +2,11 @@ import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+
+// package.json is the single source of version; inject it at build AND dev time
+// (Vite `define`), so the app never shows a stale version in `npm run dev`.
+const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
 // Variant switch — one codebase, two build outputs. The variant IS the Vite
 // mode (industrial standard: vite build => .env.production, --mode app =>
@@ -22,6 +27,10 @@ export default defineConfig(({ mode }) => {
     // capacitor://) have no root to be absolute against, so the app build uses
     // relative URLs — /assets/ would 404 there.
     base: APP_ONLY ? "./" : SITE_BASE,
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      __APP_BUILT_AT__: JSON.stringify(new Date().toISOString()),
+    },
     plugins: [svelte(), tailwindcss()],
     resolve: {
       alias: {

@@ -8,8 +8,8 @@
     "dev:app": "vite --mode app",
     "dev:host": "vite --host",
     "dev:app:host": "vite --mode app --host",
-    "build": "node scripts/make-version.mjs && vite build && node scripts/copy-static.mjs && node scripts/prune-assets.mjs && node scripts/prerender.mjs && node scripts/finalize-dist.mjs && node scripts/write-manifest.mjs",
-    "build:app": "node scripts/make-version.mjs && vite build --mode app && node scripts/copy-static.mjs dist-app && node scripts/prune-assets.mjs dist-app && node scripts/finalize-dist.mjs dist-app && node scripts/write-manifest.mjs dist-app",
+    "build": "vite build && node scripts/copy-static.mjs && node scripts/prune-assets.mjs && node scripts/prerender.mjs && node scripts/finalize-dist.mjs && node scripts/write-manifest.mjs",
+    "build:app": "vite build --mode app && node scripts/copy-static.mjs dist-app && node scripts/prune-assets.mjs dist-app && node scripts/finalize-dist.mjs dist-app && node scripts/write-manifest.mjs dist-app",
     "tauri": "tauri",
     "preview": "vite preview",
     "test": "vitest run"

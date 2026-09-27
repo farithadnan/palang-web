@@ -41,5 +41,5 @@
   .rb-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .rb-text b { font-size: var(--fs-btn); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rb-text small { color: var(--muted); font-size: var(--fs-note); }
-  .rb-x { width: 2rem; height: 2rem; min-height: 0; }
+  .rb-x { width: var(--ctrl-h); height: var(--ctrl-h); min-height: var(--ctrl-h); }
 </style>
