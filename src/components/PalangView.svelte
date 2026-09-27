@@ -24,12 +24,15 @@
   const basketItems = $derived(
     app.previewFiles.map((f, i) => {
       const isImg = f.type?.startsWith("image/");
+      const thumb = app.fileThumbs.get(f);
       return {
         id: "pf-" + i,
         name: f.name,
         // Images show their object URL; a PDF shows its first-page render once
-        // the queued thumbnail is ready (icon until then / on failure).
-        url: isImg ? app.preview?.pages?.find((p) => p.file === f)?.url : app.fileThumbs.get(f) || undefined,
+        // the queued thumbnail is ready. While either is pending, a skeleton
+        // holds the space so the grid never jumps.
+        url: isImg ? app.preview?.pages?.find((p) => p.file === f)?.url : thumb || undefined,
+        loading: app.previewLoading || (!isImg && thumb !== ""),
         icon: isImg ? "convert" : "file",
       };
     })
@@ -83,10 +86,9 @@
 
   {#if app.previewFiles.length}
     {#if app.previewLoading}
-      <div class="spinner" role="status" aria-label={t("plPreparing")}></div>
-      <p class="caption" style="text-align:center">
-        {slow ? t("plStillPreparing") : t("plPreparingEll")}
-      </p>
+      {#if slow}
+        <p class="caption" style="text-align:center">{t("plStillPreparing")}</p>
+      {/if}
     {:else if !app.preview}
       <div class="retrycard">
         <p class="desc">{t("plUnable")}</p>

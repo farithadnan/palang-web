@@ -13,6 +13,7 @@
   import { t } from "../../lib/i18n.js";
   import { ask } from "../../lib/confirm.svelte.js";
   import Icon from "./Icon.svelte";
+  import Skeleton from "./Skeleton.svelte";
 
   let {
     items = [], // {id, url?, name, filter?, icon?}
@@ -142,6 +143,8 @@
           loading="lazy"
           draggable="false"
         />
+      {:else if item.loading}
+        <Skeleton class="mtile-skel" />
       {:else}
         <span class="gfileicon"><Icon name={item.icon || "file"} size={30} /></span>
       {/if}
@@ -231,6 +234,7 @@
   .mtile.sel { border-color: var(--accent); }
 
   .gfileicon { display: flex; align-items: center; justify-content: center; padding: 2.2rem 0; color: var(--muted); }
+  .mtile-skel { width: 100%; height: 100%; border-radius: 0; }
 
   /* Selection overlay: a normal radio — white circle, blue dot when picked. */
   .mradio {

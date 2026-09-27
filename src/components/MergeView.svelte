@@ -9,6 +9,7 @@
   import Icon from "./ui/Icon.svelte";
   import ResultBar from "./ui/ResultBar.svelte";
   import BusyButton from "./ui/BusyButton.svelte";
+  import Skeleton from "./ui/Skeleton.svelte";
   import { t } from "../lib/i18n.js";
   import { takeFiles, ACCEPT } from "../lib/pick.js";
   import {
@@ -156,6 +157,7 @@
     object-fit: contain;
     border-radius: 6px;
   }
+  .mgfs-skel { width: min(70%, 26rem); max-height: 100%; aspect-ratio: 1 / 1.414; }
   .mgfs-bar {
     align-self: center;
     display: flex;
@@ -189,7 +191,9 @@
       {#if mergePage.url}
         <img src={mergePage.url} alt={fileContext()} />
       {:else if mergePage.loading}
-        <div class="spinner" role="status" aria-label={t("mgRendering")}></div>
+        <div class="mgfs-skel" role="status" aria-label={t("mgRendering")}>
+          <Skeleton height="100%" width="100%" />
+        </div>
       {:else}
         <p class="caption">{t("mgNoPreview")}</p>
       {/if}

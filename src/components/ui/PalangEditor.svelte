@@ -12,6 +12,7 @@
   import { t } from "../../lib/i18n.js";
   import { ask } from "../../lib/confirm.svelte.js";
   import Icon from "./Icon.svelte";
+  import Skeleton from "./Skeleton.svelte";
   import PalangCanvas from "./PalangCanvas.svelte";
   import {
     app,
@@ -21,6 +22,7 @@
     removeStamp,
     removePreviewFile,
     applyCompiled,
+    retryPreview,
     flash,
   } from "../../lib/store.svelte.js";
 
@@ -156,13 +158,13 @@
           <p class="pedit-addcap">{t("plNoPalangHere")}</p>
         {/if}
       {:else if active?.loading}
-        <div class="pv-loading" role="status">
-          <div class="spinner"></div>
-          <p class="caption">{t("plRendering", { n: active.page })}</p>
+        <div class="pedit-skel" role="status" aria-label={t("plRendering", { n: active.page })}>
+          <div class="pedit-skel-page"><Skeleton height="100%" width="100%" /></div>
         </div>
       {:else}
         <div class="pv-loading">
           <p class="caption">{t("plNoPreview")}</p>
+          <button type="button" class="btn btn-sm" onclick={() => void retryPreview()}>{t("plTryAgain")}</button>
         </div>
       {/if}
     {/key}
@@ -305,6 +307,8 @@
     position: relative;
   }
   .pedit-stage .pv-loading { border: 0; background: transparent; }
+  .pedit-skel { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+  .pedit-skel-page { width: min(70%, 26rem); aspect-ratio: 1 / 1.414; }
   :global(.pedit-canvas > .canvas-frame) {
     position: absolute;
     inset: 0;
