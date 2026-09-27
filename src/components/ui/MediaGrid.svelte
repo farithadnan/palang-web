@@ -43,12 +43,14 @@
     pressId = id;
     downX = e.clientX;
     downY = e.clientY;
+    // Capture the pointer so release/move always reach this tile even if the
+    // finger drifts, or the browser would otherwise retarget/cancel the event.
+    e.currentTarget.setPointerCapture?.(e.pointerId);
     pressTimer = setTimeout(() => {
       if (!selecting) selecting = true;
       if (!selected.includes(id)) selected = [...selected, id];
       longPress = true;
     }, 450);
-    e.preventDefault();
   }
 
   function up(id) {
@@ -94,6 +96,15 @@
     }
   });
 </script>
+
+{#if selectable && items.length}
+  <div class="mhead">
+    <span class="mcount">{t("itemCount", { n: items.length })}</span>
+    {#if !selecting}
+      <button type="button" class="mselect" onclick={() => (selecting = true)}>{t("select")}</button>
+    {/if}
+  </div>
+{/if}
 
 <div class="mgrid" class:selecting>
   {#each items as item (item.id)}
@@ -147,6 +158,23 @@
 {/if}
 
 <style>
+  .mhead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0.2rem 0 0.6rem;
+  }
+  .mcount { color: var(--muted); font-size: var(--fs-note); }
+  .mselect {
+    background: none;
+    border: 0;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.3rem 0.2rem;
+  }
   .mgrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -165,10 +193,12 @@
     background: color-mix(in srgb, var(--muted) 6%, transparent);
     border-radius: 12px;
     overflow: hidden;
-    touch-action: none;
+    touch-action: pan-y; /* vertical scroll still works; a still hold arms select */
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
   }
   .mtile img {
     width: 100%;

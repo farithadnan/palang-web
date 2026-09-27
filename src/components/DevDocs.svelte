@@ -17,8 +17,9 @@
   const CLONE = `git clone https://github.com/farithadnan/palang-web
 cd palang-web
 npm install
-npm run dev       # the public site
-npm run dev:app   # the tools the EXE and APK run`;
+npm run dev            # the public site
+npm run dev:app        # the tools the EXE and APK run
+npm run dev:app:host   # the tools, also reachable from your phone`;
 
   const DOCKER = `docker compose up --build`;
 
@@ -50,6 +51,7 @@ git push --follow-tags`;
 
   <h2 class="site-h2">{t("docDev")}</h2>
   <Code code={CLONE} label="sh" />
+  <p class="site-note">{t("docDevHost")}</p>
 
   <h2 class="site-h2">{t("docVariants")}</h2>
   <ul class="site-rows">

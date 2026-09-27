@@ -33,6 +33,12 @@ npm run dev:app    # the tools only — what the EXE and APK run (hash routes)
 browser: it is the same Svelte/CSS/JS the installers bundle, so gestures and
 layout behave as they do in the packaged app.
 
+**Test the tools on a phone (same Wi-Fi):** run `npm run dev:app:host`, then
+open the printed **Network** URL on the device (e.g.
+`http://192.168.0.5:5173/`) — it lands on `#/convert`. The desktop equivalent
+is `npm run dev:host` for the site. Allow Node through the firewall the first
+time.
+
 ## Build & test
 
 ```bash
