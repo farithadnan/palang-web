@@ -71,11 +71,20 @@
 
   /** Start a session on the loaded photo: fit the whole image, then either
    *  re-open the saved crop region or show the default centred window. */
+  let initTries = 0;
   function init() {
     if (!imgEl?.naturalWidth) return;
+    const r = stageRect();
+    // `load` can fire BEFORE the dialog has real layout. Measuring a 0-size
+    // stage fitted the photo wrongly (the jump when entering crop) and clamped
+    // the crop window to nothing, so the dim covered the whole photo (the
+    // "part of the image is black" report). Wait for real layout first.
+    if (!r.width || !r.height) {
+      if (initTries++ < 60) requestAnimationFrame(init);
+      return;
+    }
     natW = imgEl.naturalWidth;
     natH = imgEl.naturalHeight;
-    const r = stageRect();
     stageW = r.width;
     stageH = r.height;
     const scale = fitScale(stageW, stageH, natW, natH);
@@ -269,15 +278,27 @@
 
   onMount(() => {
     const onResize = () => {
-      if (!ready) return;
       const r = stageRect();
+      if (!r.width || !r.height) return;
+      if (!ready) {
+        init(); // the stage finally has layout
+        return;
+      }
       stageW = r.width;
       stageH = r.height;
       view = clampView(view, frame, natW, natH, stageW, stageH, maxScale());
       frame = clampFrame(frame, displayRect(view, natW, natH, stageW, stageH), MIN);
     };
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    let ro = null;
+    if (typeof ResizeObserver !== "undefined" && stageEl) {
+      ro = new ResizeObserver(onResize);
+      ro.observe(stageEl);
+    }
+    return () => {
+      window.removeEventListener("resize", onResize);
+      ro?.disconnect();
+    };
   });
 </script>
 
@@ -303,7 +324,7 @@
     onwheel={wheel}
     style="touch-action:none"
   >
-    <div class="cm-pan" class:animating bind:this={panEl}>
+    <div class="cm-pan" class:animating class:ready bind:this={panEl}>
       <img
         bind:this={imgEl}
         src={url}
@@ -354,7 +375,8 @@
     cursor: grab;
   }
   .cm-stage:active { cursor: grabbing; }
-  .cm-pan { position: absolute; inset: 0; will-change: transform; }
+  .cm-pan { position: absolute; inset: 0; will-change: transform; visibility: hidden; }
+  .cm-pan.ready { visibility: visible; }
   .cm-pan.animating { transition: transform 0.22s ease; }
   .cm-pan img {
     position: absolute;
