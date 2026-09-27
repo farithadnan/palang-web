@@ -31,7 +31,7 @@
   .segbtn {
     flex: 1;
     min-width: 0;
-    min-height: 42px;
+    min-height: var(--ctrl-h);
     padding: 0.45rem 0.8rem;
     border: 0;
     border-left: 1px solid var(--line);

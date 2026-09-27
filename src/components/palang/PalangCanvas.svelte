@@ -257,7 +257,9 @@ import { onMount } from "svelte";
       return;
     }
     selected = true;
-    e.preventDefault();
+    // Only handle-drags cancel the default; a body drag must NOT preventDefault,
+    // or the browser suppresses the double-click that opens the text editor.
+    if (m !== "move") e.preventDefault();
     e.stopPropagation();
   }
 
@@ -395,9 +397,22 @@ import { onMount } from "svelte";
     e.stopPropagation();
   }
 
-  /** Safety nets for a lost pointerup: a stuck drag must never survive. */
-  function releaseHeld() {
+  /** Safety nets for a lost pointerup: a stuck drag must never survive, and a
+   *  pointer that ends off-canvas must leave the map or the next single-finger
+   *  drag would look like a pinch (pointers.size >= 2) and be ignored. */
+  function releaseHeld(e) {
     mode = null;
+    if (e && typeof e.pointerId === "number") {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) {
+        pinching = false;
+        pinch0 = null;
+      }
+    } else if (e && e.type === "blur") {
+      pointers.clear();
+      pinching = false;
+      pinch0 = null;
+    }
   }
   function cancelStuck(e) {
     // Starting a new interaction outside the canvas always ends a held drag.
@@ -605,7 +620,6 @@ import { onMount } from "svelte";
                   tabindex="0"
                   aria-label={t("pcDblEdit")}
                   title={t("pcDblEdit")}
-                  onpointerdown={(e) => e.stopPropagation()}
                   ondblclick={(e) => {
                     if (!lines) return;
                     e.stopPropagation();

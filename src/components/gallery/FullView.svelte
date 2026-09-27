@@ -202,8 +202,8 @@
     box-shadow: var(--shadow);
   }
   .fpill-btn {
-    width: 2.4rem;
-    height: 2.4rem;
+    width: var(--ctrl-h);
+    height: var(--ctrl-h);
     border-radius: 50%;
     border: 0;
     background: transparent;

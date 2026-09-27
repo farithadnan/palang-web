@@ -24,6 +24,7 @@
   --bad: #b3261e;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 4px 12px rgba(16, 24, 40, 0.06);
   --tabbar-h: 3.5rem; /* height of the mobile bottom nav (see .tabs-bottom) */
+  --ctrl-h: 44px; /* one height for every control: icon or labelled buttons match */
   color-scheme: light;
 }
 [data-theme="dark"] {
@@ -225,8 +226,8 @@ aside.side nav { display: flex; flex-direction: column; gap: 0.2rem; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--ctrl-h);
+  min-height: var(--ctrl-h);
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--panel);
@@ -326,7 +327,7 @@ aside.side nav { display: flex; flex-direction: column; gap: 0.2rem; }
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  min-height: 44px;
+  min-height: var(--ctrl-h);
   padding: 0.5rem 1.1rem;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -342,7 +343,7 @@ aside.side nav { display: flex; flex-direction: column; gap: 0.2rem; }
 .btn-primary:disabled { opacity: 0.55; cursor: default; }
 .btn:disabled { opacity: 0.5; cursor: default; }
 .btn-danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
-.btn-sm { min-height: 38px; padding: 0.35rem 0.85rem; font-size: 0.88rem; }
+.btn-sm { min-height: var(--ctrl-h); padding: 0.35rem 0.85rem; font-size: 0.88rem; }
 
 /* ---------- navigation: sidebar at >=720px, bottom tabs below ---------- */
 .tabbtn {
@@ -527,6 +528,8 @@ input[type="color"] {
   box-sizing: border-box;
   cursor: move;
   line-height: 1.2;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .overlay-box.overlay-lines {
   background: transparent;

@@ -209,6 +209,8 @@
   "msgFailPalang": "Stamp failed",
   "msgFailMerge": "Merge failed",
   "msgSaved": "Saved",
+  "msgEnhanced": "Enhanced",
+  "msgEnhanceOff": "Enhance off",
   "msgReady": "Ready. Stamp the PDF when you are done.",
   "working": "Working…",
   "cvConvert": "Convert",

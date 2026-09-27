@@ -106,30 +106,6 @@
     </button>
     <span class="pedit-title">{t("palang")}</span>
 
-    {#if pages.length > 1}
-      <span class="pedit-step" role="group" aria-label={t("pagePrev")}>
-        <button
-          type="button"
-          class="iconbtn iconbtn-xs"
-          aria-label={t("pagePrev")}
-          disabled={app.activePage === 0}
-          onclick={() => setActivePage(app.activePage - 1)}
-        >
-          <Icon name="chevL" size={18} />
-        </button>
-        <span class="pedit-stepcap">Page {app.activePage + 1} of {pages.length}</span>
-        <button
-          type="button"
-          class="iconbtn iconbtn-xs"
-          aria-label={t("pageNext")}
-          disabled={app.activePage >= pages.length - 1}
-          onclick={() => setActivePage(app.activePage + 1)}
-        >
-          <Icon name="chevR" size={18} />
-        </button>
-      </span>
-    {/if}
-
     <span class="pedit-spacer"></span>
     <button type="button" class="btn btn-sm" onclick={revert} disabled={!armed}>{t("cmRevert")}</button>
     <button type="button" class="btn btn-sm btn-primary" onclick={save}>{t("cmSave")}</button>
@@ -183,6 +159,21 @@
           onclick={() => updateSpec({ color: c })}
         ></button>
       {/each}
+    </div>
+  {/if}
+
+  {#if pages.length > 1}
+    <div class="pedit-pager">
+      <input
+        type="range"
+        min="1"
+        max={pages.length}
+        step="1"
+        value={app.activePage + 1}
+        aria-label={t("pageJump")}
+        oninput={(e) => setActivePage(Number(e.currentTarget.value) - 1)}
+      />
+      <span class="pedit-pagecap">Page {app.activePage + 1} / {pages.length}</span>
     </div>
   {/if}
 
@@ -276,15 +267,16 @@
   }
   .pedit-ic { flex: none; }
   .pedit-title { font-size: var(--fs-body); font-weight: 650; white-space: nowrap; }
-  .pedit-step {
-    display: inline-flex;
+  .pedit-pager {
+    display: flex;
     align-items: center;
-    gap: 0.35rem;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 0.15rem 0.45rem;
+    gap: 0.6rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
   }
-  .pedit-stepcap { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .pedit-pager input[type="range"] { flex: 1; accent-color: var(--accent); }
+  .pedit-pagecap { font-size: var(--fs-note); color: var(--muted); white-space: nowrap; }
   .pedit-spacer { flex: 1; min-width: 0.5rem; }
   .iconbtn-xs {
     min-width: 28px;
@@ -389,6 +381,7 @@
     justify-content: center;
     gap: 0.15rem;
     min-width: 3.6rem;
+    min-height: var(--ctrl-h);
     padding: 0.35rem 0.5rem;
     border: 0;
     border-radius: 10px;

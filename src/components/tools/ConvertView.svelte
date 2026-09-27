@@ -76,7 +76,10 @@
 
   function viewerEnhance(id) {
     const im = app.images.find((x) => x.id === id);
-    if (im) updateImage(id, { enhance: !im.enhance }); // live on/off in the viewer
+    if (!im) return;
+    const on = !im.enhance;
+    updateImage(id, { enhance: on }); // live on/off in the viewer
+    flash("ok", on ? t("msgEnhanced") : t("msgEnhanceOff"));
   }
 </script>
 
