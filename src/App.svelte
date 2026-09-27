@@ -13,15 +13,15 @@
   import ConfirmDialog from "./components/ui/ConfirmDialog.svelte";
   import Topbar from "./components/ui/Topbar.svelte";
   import Landing from "$landing"; // the whole public site, or a stub
-  import AboutView from "./components/AboutView.svelte";
-  import SettingsView from "./components/SettingsView.svelte";
-  import ConvertView from "./components/ConvertView.svelte";
-  import PalangView from "./components/PalangView.svelte";
-  import MergeView from "./components/MergeView.svelte";
-  import { app, applyUpdate, checkForUpdate, dismissUpdate } from "./lib/store.svelte.js";
-  import { loadLimits } from "./lib/config.js";
-  import { t } from "./lib/i18n.js";
-  import { route, goto, subscribe } from "./lib/router.js";
+  import AboutView from "./components/tools/AboutView.svelte";
+  import SettingsView from "./components/tools/SettingsView.svelte";
+  import ConvertView from "./components/tools/ConvertView.svelte";
+  import PalangView from "./components/tools/PalangView.svelte";
+  import MergeView from "./components/tools/MergeView.svelte";
+  import { app, applyUpdate, checkForUpdate, dismissUpdate } from "./lib/state/store.svelte.js";
+  import { loadLimits } from "./lib/util/config.js";
+  import { t } from "./lib/i18n/index.js";
+  import { route, goto, subscribe } from "./lib/util/router.js";
 
   const TOOLS = [
     { id: "convert", label: () => t("convertLabel"), icon: "convert" },

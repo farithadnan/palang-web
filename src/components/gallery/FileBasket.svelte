@@ -4,9 +4,9 @@
    *
    *  ONE file input lives here for BOTH states (the Dropzone is a surface, not
    *  a second picker), so the topbar "+" has a single, predictable target. */
-  import { t } from "../../lib/i18n.js";
-  import { takeFiles } from "../../lib/pick.js";
-  import Dropzone from "./Dropzone.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import { takeFiles } from "../../lib/util/pick.js";
+  import Dropzone from "../ui/Dropzone.svelte";
   import MediaGrid from "./MediaGrid.svelte";
 
   let {

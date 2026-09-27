@@ -1,16 +1,16 @@
 /* Module-mode runes store: the single owner of app state and side effects.
    Views read/write `app.*`; components stay presentational. */
 
-import { t, __bindLang } from "./i18n.js";
+import { t, __bindLang } from "../i18n/index.js";
 import { SvelteMap } from "svelte/reactivity";
-import { processOffline, compileStampedImage } from "./local-engine.js";
-import { openPdf, renderPdfPage } from "./pdf-preview.js";
-import { LIMITS, loadLimits } from "./config.js";
-import { APP_VERSION } from "./version.js";
-import { defaultSpec, PAGE_DIMS, pageDims } from "./domain.js";
+import { processOffline, compileStampedImage } from "../engine/local-engine.js";
+import { openPdf, renderPdfPage } from "../engine/pdf-preview.js";
+import { LIMITS, loadLimits } from "../util/config.js";
+import { APP_VERSION } from "../util/version.js";
+import { defaultSpec, PAGE_DIMS, pageDims } from "../domain/domain.js";
 import { toast } from "./toast.svelte.js";
-import { RELEASES_URL } from "./links.js";
-import { saveDocument } from "./save.js";
+import { RELEASES_URL } from "../util/links.js";
+import { saveDocument } from "../util/save.js";
 
 const THEME_KEY = "palang-theme";
 const LANG_KEY = "palang-lang";

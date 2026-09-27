@@ -5,7 +5,7 @@
    *  dead on About and Settings. */
   import Icon from "./Icon.svelte";
   import HelpTip from "./HelpTip.svelte";
-  import { t } from "../../lib/i18n.js";
+  import { t } from "../../lib/i18n/index.js";
 
   let { title = "", help = "", onAdd = null, addLabel = "" } = $props();
 </script>

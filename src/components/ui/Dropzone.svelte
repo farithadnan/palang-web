@@ -5,7 +5,7 @@
    *  per surface, shared by the empty and populated states); otherwise the
    *  zone renders and drives its own. */
   import Icon from "./Icon.svelte";
-  import { takeFiles } from "../../lib/pick.js";
+  import { takeFiles } from "../../lib/util/pick.js";
 
   let {
     id,

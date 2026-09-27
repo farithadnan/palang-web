@@ -3,9 +3,9 @@
    *  brand (→ home), optional section links (landing, desktop), then the
    *  action cluster: Open app (landing) / Home (app), language, theme, and a
    *  collapsible menu on mobile that folds the links + the Open app button. */
-  import { app, setLang, setTheme } from "../../lib/store.svelte.js";
-  import { nextLang, t } from "../../lib/i18n.js";
-  import { href as routeHref, goto } from "../../lib/router.js";
+  import { app, setLang, setTheme } from "../../lib/state/store.svelte.js";
+  import { nextLang, t } from "../../lib/i18n/index.js";
+  import { href as routeHref, goto } from "../../lib/util/router.js";
   import Icon from "./Icon.svelte";
 
   let { context = "landing", children, onOpenApp, homeTo = "home", ctaLabel = "", github = "" } = $props();

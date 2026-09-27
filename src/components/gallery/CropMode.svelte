@@ -15,9 +15,9 @@
    *
    *  Emits fractions {l,t,r,b} (0..1) — the format the store's crop path uses. */
   import { onMount } from "svelte";
-  import { t } from "../../lib/i18n.js";
-  import { ask } from "../../lib/confirm.svelte.js";
-  import Icon from "./Icon.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import { ask } from "../../lib/state/confirm.svelte.js";
+  import Icon from "../ui/Icon.svelte";
   import {
     clampFrame,
     clampView,
@@ -26,7 +26,7 @@
     displayRect,
     fitScale,
     focusView,
-  } from "../../lib/crop.js";
+  } from "../../lib/domain/crop.js";
 
   let { url, filter = "none", crop = null, onClose, onSave } = $props();
 

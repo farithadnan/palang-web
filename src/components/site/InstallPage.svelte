@@ -3,10 +3,10 @@
    *  the update behaviour. Downloads point at GitHub Releases (honest: no
    *  fake "download" buttons for builds that are not published yet). */
   import Icon from "../ui/Icon.svelte";
-  import { t } from "../../lib/i18n.js";
-  import { RELEASES_URL } from "../../lib/links.js";
+  import { t } from "../../lib/i18n/index.js";
+  import { RELEASES_URL } from "../../lib/util/links.js";
   import SiteLinks from "./SiteLinks.svelte";
-  import { href } from "../../lib/router.js";
+  import { href } from "../../lib/util/router.js";
 
   const BUILDS = [
     { key: "dlWin", stepsKey: "installWinSteps", steps: ["installWinStep1", "installWinStep2", "installWinStep3"] },

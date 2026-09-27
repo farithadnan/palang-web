@@ -3,10 +3,10 @@
    *  the hero visual) and one row per feature, each linking to its own page.
    *  Nothing else — no stacked sections repeating what those pages say. */
   import Icon from "../ui/Icon.svelte";
-  import SampleDemo from "../SampleDemo.svelte";
-  import { t } from "../../lib/i18n.js";
-  import { GITHUB_URL } from "../../lib/links.js";
-  import { href } from "../../lib/router.js";
+  import SampleDemo from "./SampleDemo.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import { GITHUB_URL } from "../../lib/util/links.js";
+  import { href } from "../../lib/util/router.js";
 
   const FEATURES = [
     { id: "convert", icon: "convert", title: "featConvertTitle", body: "featureConvertBody" },

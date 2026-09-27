@@ -2,14 +2,14 @@
   /** Palang tab: file basket; tapping a file opens the full-screen placement
    *  editor (PalangEditor): the image fills the window and the stamp actions
    *  live in a bottom toolbar. */
-  import { t } from "../lib/i18n.js";
-  import { ACCEPT } from "../lib/pick.js";
-  import { PAGE_DIMS } from "../lib/domain.js";
-  import ToolHeader from "./ui/ToolHeader.svelte";
-  import FileBasket from "./ui/FileBasket.svelte";
-  import BusyButton from "./ui/BusyButton.svelte";
-  import ResultBar from "./ui/ResultBar.svelte";
-  import PalangEditor from "./ui/PalangEditor.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import { ACCEPT } from "../../lib/util/pick.js";
+  import { PAGE_DIMS } from "../../lib/domain/domain.js";
+  import ToolHeader from "../ui/ToolHeader.svelte";
+  import FileBasket from "../gallery/FileBasket.svelte";
+  import BusyButton from "../ui/BusyButton.svelte";
+  import ResultBar from "../ui/ResultBar.svelte";
+  import PalangEditor from "../palang/PalangEditor.svelte";
   import {
     app,
     pickPreviewFiles,
@@ -19,7 +19,7 @@
     ensureFileThumb,
     generate,
     requestAdd,
-  } from "../lib/store.svelte.js";
+  } from "../../lib/state/store.svelte.js";
 
   const basketItems = $derived(
     app.previewFiles.map((f, i) => {

@@ -8,7 +8,7 @@
  * centred) using the SAME formula as the server, via fittedPageSize.
  */
 import { PDFDocument } from "pdf-lib";
-import { buildPalangSpec, fittedPageSize, pageDims } from "./domain.js";
+import { buildPalangSpec, fittedPageSize, pageDims } from "../domain/domain.js";
 
 /** Decode bytes into an ImageBitmap/HTMLImageElement for canvas work. */
 async function decodeImage(bytes, opts) {

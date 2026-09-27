@@ -10,9 +10,9 @@ import {
   resetSpec,
   canMerge,
   humanSize,
-} from "../src/lib/store.svelte.js";
-import { nextLang } from "../src/lib/i18n.js";
-import { defaultSpec } from "../src/lib/domain.js";
+} from "../src/lib/state/store.svelte.js";
+import { nextLang } from "../src/lib/i18n/index.js";
+import { defaultSpec } from "../src/lib/domain/domain.js";
 
 beforeEach(() => {
   app.specs = [defaultSpec()];

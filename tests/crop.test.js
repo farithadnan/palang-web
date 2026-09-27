@@ -7,7 +7,7 @@ import {
   displayRect,
   fitScale,
   focusView,
-} from "../src/lib/crop.js";
+} from "../src/lib/domain/crop.js";
 
 const STAGE = { w: 500, h: 500 };
 const IMG = { w: 1000, h: 1000 };

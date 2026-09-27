@@ -3,11 +3,11 @@
    *  section headings, plain notes, and real code blocks with a copy button.
    *  The CI section is gone (a list of trivia), and the EXE/APK story is two
    *  rows instead of a run-on bullet list. */
-  import Code from "./site/Code.svelte";
-  import Icon from "./ui/Icon.svelte";
-  import { t } from "../lib/i18n.js";
-  import { GITHUB_URL } from "../lib/links.js";
-  import { href } from "../lib/router.js";
+  import Code from "./Code.svelte";
+  import Icon from "../ui/Icon.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import { GITHUB_URL } from "../../lib/util/links.js";
+  import { href } from "../../lib/util/router.js";
 
   const VARIANTS = [
     { id: "site", dev: "npm run dev", build: "npm run build", what: () => t("docVarFull") },

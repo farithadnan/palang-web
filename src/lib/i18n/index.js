@@ -10,8 +10,8 @@
  * here for its toasts, so i18n must stay cycle-free (a store <-> i18n cycle
  * breaks in the bundled module order with "t is not defined" at boot).
  */
-import en from "./i18n/en.json";
-import ms from "./i18n/ms.json";
+import en from "./en.json";
+import ms from "./ms.json";
 
 const DICT = { en, ms };
 

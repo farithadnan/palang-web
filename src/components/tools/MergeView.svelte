@@ -3,15 +3,15 @@
    *  by tapping a row. The preview walks the WHOLE merged output — every
    *  file's pages, in merge order — one page at a time, so a 1000-page
    *  document never triggers bulk work. */
-  import ToolHeader from "./ui/ToolHeader.svelte";
-  import Dropzone from "./ui/Dropzone.svelte";
-  import OrderedList from "./ui/OrderedList.svelte";
-  import Icon from "./ui/Icon.svelte";
-  import ResultBar from "./ui/ResultBar.svelte";
-  import BusyButton from "./ui/BusyButton.svelte";
-  import Skeleton from "./ui/Skeleton.svelte";
-  import { t } from "../lib/i18n.js";
-  import { takeFiles, ACCEPT } from "../lib/pick.js";
+  import ToolHeader from "../ui/ToolHeader.svelte";
+  import Dropzone from "../ui/Dropzone.svelte";
+  import OrderedList from "../ui/OrderedList.svelte";
+  import Icon from "../ui/Icon.svelte";
+  import ResultBar from "../ui/ResultBar.svelte";
+  import BusyButton from "../ui/BusyButton.svelte";
+  import Skeleton from "../ui/Skeleton.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import { takeFiles, ACCEPT } from "../../lib/util/pick.js";
   import {
     app,
     addPdfs,
@@ -23,7 +23,7 @@
     generate,
     canMerge,
     requestAdd,
-  } from "../lib/store.svelte.js";
+  } from "../../lib/state/store.svelte.js";
 
   let mergeInput = $state(null);
   let fsOpen = $state(false); // fullscreen page preview

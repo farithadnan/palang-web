@@ -1,10 +1,10 @@
 <script>
   /** Result row: the file the user just produced. Answers "where did my file
    *  go?" inside the app — name, size, and a save-again button. */
-  import { t } from "../../lib/i18n.js";
+  import { t } from "../../lib/i18n/index.js";
   import Icon from "./Icon.svelte";
-  import { app, saveResult, clearResult, humanSize } from "../../lib/store.svelte.js";
-  import { isNativeApp } from "../../lib/save.js";
+  import { app, saveResult, clearResult, humanSize } from "../../lib/state/store.svelte.js";
+  import { isNativeApp } from "../../lib/util/save.js";
 
   const HINT = isNativeApp() ? "resultHintApp" : "resultHint";
   const meta = $derived(

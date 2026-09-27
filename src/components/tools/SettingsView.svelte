@@ -10,9 +10,9 @@
     setDefaultPageSize,
     setDefaultText,
     setUpdateFreq,
-  } from "../lib/store.svelte.js";
-  import { t } from "../lib/i18n.js";
-  import Segmented from "./ui/Segmented.svelte";
+  } from "../../lib/state/store.svelte.js";
+  import { t } from "../../lib/i18n/index.js";
+  import Segmented from "../ui/Segmented.svelte";
 
   const langOptions = $derived([
     { id: "en", label: "EN" },

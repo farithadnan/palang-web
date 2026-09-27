@@ -3,8 +3,8 @@
    *  issue). Shared by the pages that used to repeat the same two text links
    *  and a "MIT License · Palang" line that the footer already states. */
   import Icon from "../ui/Icon.svelte";
-  import { t } from "../../lib/i18n.js";
-  import { GITHUB_URL, ISSUES_URL } from "../../lib/links.js";
+  import { t } from "../../lib/i18n/index.js";
+  import { GITHUB_URL, ISSUES_URL } from "../../lib/util/links.js";
 </script>
 
 <div class="site-links">

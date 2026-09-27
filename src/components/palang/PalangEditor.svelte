@@ -9,10 +9,10 @@
    *  Toolbar: Reset position · Fit view · Colour (when the stamp is selected)
    *           · Remove this palang (per image) · Remove this image.
    */
-  import { t } from "../../lib/i18n.js";
-  import { ask } from "../../lib/confirm.svelte.js";
-  import Icon from "./Icon.svelte";
-  import Skeleton from "./Skeleton.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import { ask } from "../../lib/state/confirm.svelte.js";
+  import Icon from "../ui/Icon.svelte";
+  import Skeleton from "../ui/Skeleton.svelte";
   import PalangCanvas from "./PalangCanvas.svelte";
   import {
     app,
@@ -24,7 +24,7 @@
     applyCompiled,
     retryPreview,
     flash,
-  } from "../../lib/store.svelte.js";
+  } from "../../lib/state/store.svelte.js";
 
   let { onClose } = $props();
 

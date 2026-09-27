@@ -2,9 +2,9 @@
   /** One page per notable feature (#/features/convert|palang|merge): what it
    *  does, how to use it, and (for palang) a live sample. */
   import Icon from "../ui/Icon.svelte";
-  import SampleDemo from "../SampleDemo.svelte";
-  import { t } from "../../lib/i18n.js";
-  import { href } from "../../lib/router.js";
+  import SampleDemo from "./SampleDemo.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import { href } from "../../lib/util/router.js";
 
   let { id = "convert" } = $props();
 

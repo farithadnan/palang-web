@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
       alias: {
         $landing: fileURLToPath(
           new URL(
-            APP_ONLY ? "./src/components/StubLanding.svelte" : "./src/components/Landing.svelte",
+            APP_ONLY ? "./src/components/site/StubLanding.svelte" : "./src/components/site/Landing.svelte",
             import.meta.url,
           ),
         ),

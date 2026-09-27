@@ -3,11 +3,11 @@
    *  date + channel, links as icon buttons, and an explicit update flow
    *  (button -> spinner -> result row -> download button) so "checking" is
    *  never indistinguishable from "nothing happened". Presentational. */
-  import { APP_VERSION, APP_BUILT_AT, APP_CHANNEL } from "../lib/version.js";
-  import { app, applyUpdate, checkNow, releaseUrl } from "../lib/store.svelte.js";
-  import { t } from "../lib/i18n.js";
-  import { GITHUB_URL, ISSUES_URL, SITE_URL } from "../lib/links.js";
-  import Icon from "./ui/Icon.svelte";
+  import { APP_VERSION, APP_BUILT_AT, APP_CHANNEL } from "../../lib/util/version.js";
+  import { app, applyUpdate, checkNow, releaseUrl } from "../../lib/state/store.svelte.js";
+  import { t } from "../../lib/i18n/index.js";
+  import { GITHUB_URL, ISSUES_URL, SITE_URL } from "../../lib/util/links.js";
+  import Icon from "../ui/Icon.svelte";
 
   let checking = $state(false);
   let status = $state(""); // "" | "latest" | "update" | "error"

@@ -4,9 +4,9 @@
    *  uploaded) and this static website. No consent gate, no hosted-server
    *  wording: there is no hosted web app. */
   import Icon from "../ui/Icon.svelte";
-  import { t } from "../../lib/i18n.js";
+  import { t } from "../../lib/i18n/index.js";
   import SiteLinks from "./SiteLinks.svelte";
-  import { href } from "../../lib/router.js";
+  import { href } from "../../lib/util/router.js";
 
   const POINTS = [
     { strong: "private1a", rest: "private1b" },

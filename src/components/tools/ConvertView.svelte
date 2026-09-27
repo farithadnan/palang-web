@@ -2,18 +2,18 @@
   /** Convert tab: shared file basket + full-page viewer with full-screen crop
    *  and live enhance. Crop commits on save; the thumbnail is the actual
    *  cropped photo. */
-  import Field from "./ui/Field.svelte";
-  import Select from "./ui/Select.svelte";
-  import ToolHeader from "./ui/ToolHeader.svelte";
-  import BusyButton from "./ui/BusyButton.svelte";
-  import FileBasket from "./ui/FileBasket.svelte";
-  import FullView from "./ui/FullView.svelte";
-  import CropMode from "./ui/CropMode.svelte";
-  import ResultBar from "./ui/ResultBar.svelte";
-  import { PAGE_DIMS, PAGE_SIZES } from "../lib/domain.js";
-  import { t } from "../lib/i18n.js";
-  import { ACCEPT } from "../lib/pick.js";
-  import { ask } from "../lib/confirm.svelte.js";
+  import Field from "../ui/Field.svelte";
+  import Select from "../ui/Select.svelte";
+  import ToolHeader from "../ui/ToolHeader.svelte";
+  import BusyButton from "../ui/BusyButton.svelte";
+  import FileBasket from "../gallery/FileBasket.svelte";
+  import FullView from "../gallery/FullView.svelte";
+  import CropMode from "../gallery/CropMode.svelte";
+  import ResultBar from "../ui/ResultBar.svelte";
+  import { PAGE_DIMS, PAGE_SIZES } from "../../lib/domain/domain.js";
+  import { t } from "../../lib/i18n/index.js";
+  import { ACCEPT } from "../../lib/util/pick.js";
+  import { ask } from "../../lib/state/confirm.svelte.js";
   import {
     app,
     addImages,
@@ -24,7 +24,7 @@
     flash,
     generate,
     requestAdd,
-  } from "../lib/store.svelte.js";
+  } from "../../lib/state/store.svelte.js";
 
   let viewing = $state(null); // image id open in the full-page viewer
   let cropOpen = $state(null); // image id in full-screen crop mode

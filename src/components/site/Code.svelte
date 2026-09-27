@@ -2,7 +2,7 @@
   /** Code block for the site: monospace panel, a Copy button, and a light
    *  shell highlight (comments, flags, command). The site had plain <pre>
    *  text: unreadable, uncopyable. */
-  import { t } from "../../lib/i18n.js";
+  import { t } from "../../lib/i18n/index.js";
 
   let { code = "", label = "" } = $props();
 

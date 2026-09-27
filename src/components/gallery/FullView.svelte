@@ -2,8 +2,8 @@
   /** Full-page media viewer (Samsung-style): image fills the screen, a
    *  scrollable thumbnail carousel sits mid-bottom, and a pill toolbar below
    *  it offers crop / enhance / delete. Icons only, no labels. */
-  import { t } from "../../lib/i18n.js";
-  import Icon from "./Icon.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import Icon from "../ui/Icon.svelte";
 
   let {
     items = [], // {id, url?, name, filter?}

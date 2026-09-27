@@ -5,9 +5,9 @@
    *  on release. The lines band measures its width from the live text, like the
    *  server. Selection: the marking shows handles while selected; Delete/Esc
    *  remove/deselect it; tap the page to re-add it after deleting. */
-  import { t } from "../../lib/i18n.js";
+  import { t } from "../../lib/i18n/index.js";
 import { onMount } from "svelte";
-  import { fittedPageSize, round1 } from "../../lib/domain.js";
+  import { fittedPageSize, round1 } from "../../lib/domain/domain.js";
 
   let { url, widthPt, heightPt, spec, onChange, fitContain = false, class: cls = "", bare = false, api = null, onSelect = null } = $props();
 

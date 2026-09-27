@@ -7,7 +7,7 @@ import {
   PAGE_DIMS,
   pageDims,
   pagesValue,
-} from "../src/lib/domain.js";
+} from "../src/lib/domain/domain.js";
 
 describe("pageDims — the page box for an image", () => {
   it("returns the chosen paper size", () => {

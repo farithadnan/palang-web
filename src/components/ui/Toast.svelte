@@ -2,8 +2,8 @@
   /** Toast host: renders the toast service queue. Mounted once by the shell.
    *  Green + tick for success, red + alert for failure, icon-only dismiss. */
   import Icon from "./Icon.svelte";
-  import { t } from "../../lib/i18n.js";
-  import { toasts, dismissToast } from "../../lib/toast.svelte.js";
+  import { t } from "../../lib/i18n/index.js";
+  import { toasts, dismissToast } from "../../lib/state/toast.svelte.js";
 </script>
 
 <div class="toastwrap" role="status" aria-live="polite">

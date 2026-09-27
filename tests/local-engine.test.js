@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
-import { processOffline, rotatedPalangBox, palangDrawRect, imageStampRect } from "../src/lib/local-engine.js";
+import { processOffline, rotatedPalangBox, palangDrawRect, imageStampRect } from "../src/lib/engine/local-engine.js";
 
 const PNG = new Uint8Array(Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",

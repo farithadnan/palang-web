@@ -135,28 +135,31 @@ docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro pala
 
 ## Architecture
 
-- `src/lib/domain.js` — pure helpers (spec builders, page-size fit geometry).
-  No DOM, no fetch; unit-tested.
-- `src/lib/local-engine.js` — the on-device engine (pdf-lib): image→PDF,
-  crop/enhance, rotated palang stamp, PDF merge.
-- `src/lib/pdf-preview.js` — pdf.js preview rendering with a geometry-only
-  fallback; previews never leave the device.
-- `src/lib/store.svelte.js` — module-run runes store: the single owner of app
-  state and side effects (files, specs, theme, previews, generate, update check).
-- `src/lib/toast.svelte.js` — the one toast queue; every outcome goes through it.
-- `src/lib/i18n.js` — flat EN/BM dictionaries + `t()`; imports nothing from the
-  store (cycle-free).
-- `src/lib/links.js` — the project's outbound links, in one place.
-- `src/lib/router.js` — clean paths on the site, hash routes in the app.
+`src` is grouped by concern:
+
+- `src/lib/domain/` — pure helpers. `domain.js` (spec builders, page-size fit
+  geometry, `pageDims`), `crop.js` (crop-viewport geometry). No DOM, no fetch;
+  unit-tested.
+- `src/lib/engine/` — the on-device engine. `local-engine.js` (pdf-lib:
+  image→PDF, crop/enhance, rotated palang stamp, PDF merge), `pdf-preview.js`
+  (pdf.js preview with a geometry-only fallback).
+- `src/lib/state/` — module-run runes stores: `store.svelte.js` (the single
+  owner of app state and side effects), `toast.svelte.js` (the one toast
+  queue), `confirm.svelte.js` (the one confirmation service).
+- `src/lib/i18n/` — `index.js` + `en.json` / `ms.json` (translations are JSON,
+  so they are easy to edit; a test enforces matching keys).
+- `src/lib/util/` — `config.js`, `links.js`, `pick.js`, `router.js`, `save.js`,
+  `version.js`.
 - `scripts/make-icon.mjs` — one description of the brand mark; writes the app
-  icon and the favicon set (a 10% bar is sub-pixel at 16px, so favicons use a
-  chunkier variant).
-- `src/components/ui/*` — generic, presentational components (props in,
-  callbacks out): FileBasket, MediaGrid, FullView, CropMode, Dropzone,
-  PalangCanvas, Modal, Toast, ResultBar, Icon, fields.
-- `src/components/site/*` — the public site pages (home, feature, install,
-  privacy); the site root owns the shared top bar and footer.
-- `src/components/*` — thin tool views (Convert, Palang, Merge, About, Settings).
+  icon and the favicon set.
+- `src/components/ui/*` — generic presentational primitives (Icon, Toast,
+  ConfirmDialog, Segmented, HelpTip, Skeleton, Topbar, fields, …).
+- `src/components/gallery/*` — file/media UI: FileBasket, MediaGrid, FullView,
+  CropMode.
+- `src/components/palang/*` — PalangCanvas, PalangEditor.
+- `src/components/tools/*` — the tool views (Convert, Palang, Merge, About,
+  Settings).
+- `src/components/site/*` — the public site pages and the shared top bar.
 - `src/App.svelte` — routing + the app shell (tools only).
 
 ## Product behaviour worth knowing

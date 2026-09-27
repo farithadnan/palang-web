@@ -2,8 +2,8 @@
   /** The app's single confirmation dialog, driven by the confirm service.
    *  Any action can `await ask({...})`; this renders the one open prompt. */
   import { onMount } from "svelte";
-  import { confirmState, resolveConfirm } from "../../lib/confirm.svelte.js";
-  import { t } from "../../lib/i18n.js";
+  import { confirmState, resolveConfirm } from "../../lib/state/confirm.svelte.js";
+  import { t } from "../../lib/i18n/index.js";
 
   onMount(() => {
     const onKey = (e) => {

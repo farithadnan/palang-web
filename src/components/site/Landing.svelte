@@ -2,15 +2,15 @@
   /** The public SITE root. One component behind the `$landing` alias, so the
    *  app-only build (EXE/APK) tree-shakes every page out of the bundle.
    *  Routes: / (home), /install, /privacy, /features/<id>, /docs. */
-  import Topbar from "./ui/Topbar.svelte";
-  import HomePage from "./site/HomePage.svelte";
-  import FeaturePage from "./site/FeaturePage.svelte";
-  import InstallPage from "./site/InstallPage.svelte";
-  import PrivacyPage from "./site/PrivacyPage.svelte";
+  import Topbar from "../ui/Topbar.svelte";
+  import HomePage from "./HomePage.svelte";
+  import FeaturePage from "./FeaturePage.svelte";
+  import InstallPage from "./InstallPage.svelte";
+  import PrivacyPage from "./PrivacyPage.svelte";
   import DevDocs from "./DevDocs.svelte";
-  import { t } from "../lib/i18n.js";
-  import { GITHUB_URL } from "../lib/links.js";
-  import { href, goto } from "../lib/router.js";
+  import { t } from "../../lib/i18n/index.js";
+  import { GITHUB_URL } from "../../lib/util/links.js";
+  import { href, goto } from "../../lib/util/router.js";
 
   let { page = "home", feature = "convert" } = $props();
 

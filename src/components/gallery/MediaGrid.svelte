@@ -10,10 +10,10 @@
    *    never armed and a tap with jitter did nothing at all.
    *  - the released-tap path is gated on the long-press flag set by the timer,
    *    or the up event toggles the just-selected item back off. */
-  import { t } from "../../lib/i18n.js";
-  import { ask } from "../../lib/confirm.svelte.js";
-  import Icon from "./Icon.svelte";
-  import Skeleton from "./Skeleton.svelte";
+  import { t } from "../../lib/i18n/index.js";
+  import { ask } from "../../lib/state/confirm.svelte.js";
+  import Icon from "../ui/Icon.svelte";
+  import Skeleton from "../ui/Skeleton.svelte";
 
   let {
     items = [], // {id, url?, name, filter?, icon?}
