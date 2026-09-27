@@ -47,6 +47,7 @@
     <dd>
       <Segmented options={langOptions} value={app.lang} onchange={setLang} label={t("switchLang")} />
     </dd>
+    <p class="set-desc">{t("switchLangDesc")}</p>
   </div>
 
   <div class="kv stacked">
@@ -54,6 +55,7 @@
     <dd>
       <Segmented options={themeOptions} value={app.theme} onchange={setTheme} label={t("switchTheme")} />
     </dd>
+    <p class="set-desc">{t("switchThemeDesc")}</p>
   </div>
 
   <div class="kv stacked">
@@ -61,6 +63,7 @@
     <dd>
       <Segmented options={paperOptions} value={app.pageSize} onchange={setDefaultPageSize} label={t("defaultPaper")} />
     </dd>
+    <p class="set-desc">{t("defaultPaperDesc")}</p>
   </div>
 
   <div class="kv stacked">
@@ -73,14 +76,15 @@
         onchange={(e) => setDefaultText(e.currentTarget.value.trim())}
       />
     </dd>
+    <p class="set-desc">{t("defaultTextDesc")}</p>
   </div>
-  <p class="hint">{t("defaultTextHint")}</p>
 
   <div class="kv stacked">
     <dt>{t("updateFreq")}</dt>
     <dd>
       <Segmented options={freqOptions} value={app.updateFreq} onchange={setUpdateFreq} label={t("updateFreq")} />
     </dd>
+    <p class="set-desc">{t("updateFreqDesc")}</p>
   </div>
 </section>
 
@@ -88,5 +92,5 @@
   /* Rows and pills come from app.css: the app has one type scale and one row
      pattern, so About and Settings cannot drift apart. */
   .settings .kv { padding: 0.9rem 0; }
-  .settings .hint { margin: -0.2rem 0 0.4rem; }
+  .settings .set-desc { margin: 0; font-size: var(--fs-note); color: var(--muted); line-height: 1.5; }
 </style>
