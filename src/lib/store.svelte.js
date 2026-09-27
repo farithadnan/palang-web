@@ -2,6 +2,7 @@
    Views read/write `app.*`; components stay presentational. */
 
 import { t, __bindLang } from "./i18n.js";
+import { SvelteMap } from "svelte/reactivity";
 import { processOffline, compileStampedImage } from "./local-engine.js";
 import { openPdf, renderPdfPage } from "./pdf-preview.js";
 import { LIMITS, loadLimits } from "./config.js";
@@ -46,6 +47,7 @@ export const app = $state({
   requestAdd: 0,
   updateFreq: updateFreqDefault(), // requests the app has made this session (privacy proof panel)
   compiledFiles: new Map(), // file -> Blob with the palang baked in ("second temp")
+  fileThumbs: new SvelteMap(), // pdf File -> first-page thumbnail object URL (Palang basket)
   stamp: [], // per-image palang spec, index-aligned with previewFiles (per-image stamps)
 });
 
@@ -468,6 +470,9 @@ function imageDims(url) {
    if (index < 0 || index >= app.previewFiles.length) return;
    const f = app.previewFiles[index];
    app.compiledFiles.delete(f);
+   const thumb = app.fileThumbs.get(f);
+   if (thumb) URL.revokeObjectURL(thumb);
+   app.fileThumbs.delete(f);
    app.stamp.splice(index, 1);
    app.previewFiles.splice(index, 1);
    app.activePage = 0;
@@ -483,6 +488,26 @@ function imageDims(url) {
  export function setActivePage(index) {
    app.activePage = index;
    void ensurePreviewPage(index);
+ }
+
+ /** Render a PDF's FIRST page once, for the Palang basket thumbnail (so a PDF
+  *  shows like an image instead of a file icon). Cached per File and queued so
+  *  many PDFs render one at a time; "" marks a failed render (icon fallback). */
+ let thumbChain = Promise.resolve();
+ export function ensureFileThumb(file) {
+   const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+   if (!isPdf || app.fileThumbs.has(file)) return;
+   app.fileThumbs.set(file, null); // in-flight
+   thumbChain = thumbChain.then(async () => {
+     if (!app.fileThumbs.has(file)) return; // removed since queued
+     try {
+       const doc = await openPdf(file);
+       const r = await renderPdfPage(doc, 1);
+       if (app.fileThumbs.has(file)) app.fileThumbs.set(file, r.url);
+     } catch {
+       if (app.fileThumbs.has(file)) app.fileThumbs.set(file, "");
+     }
+   });
  }
 
  /** Rebuild the on-device preview (the retry path after a failed render). */

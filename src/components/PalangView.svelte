@@ -16,19 +16,31 @@
     removePreviewFile,
     retryPreview,
     setActivePage,
+    ensureFileThumb,
     generate,
     requestAdd,
   } from "../lib/store.svelte.js";
 
   const basketItems = $derived(
-    app.previewFiles.map((f, i) => ({
-      id: "pf-" + i,
-      name: f.name,
-      // Images shown instantly get a real thumbnail from their object URL.
-      url: f.type?.startsWith("image/") && app.preview?.client ? app.preview.pages[i]?.url : undefined,
-      icon: f.type?.startsWith("image/") ? "convert" : "file",
-    }))
+    app.previewFiles.map((f, i) => {
+      const isImg = f.type?.startsWith("image/");
+      return {
+        id: "pf-" + i,
+        name: f.name,
+        // Images show their object URL; a PDF shows its first-page render once
+        // the queued thumbnail is ready (icon until then / on failure).
+        url: isImg ? app.preview?.pages?.find((p) => p.file === f)?.url : app.fileThumbs.get(f) || undefined,
+        icon: isImg ? "convert" : "file",
+      };
+    })
   );
+
+  $effect(() => {
+    // Request first-page thumbnails for PDFs (queued + cached in the store).
+    for (const f of app.previewFiles) {
+      if (!f.type?.startsWith("image/")) void ensureFileThumb(f);
+    }
+  });
 
   let editing = $state(false);
 

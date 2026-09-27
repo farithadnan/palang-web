@@ -13,7 +13,7 @@
     trash:
       '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/>',
     crop:
-      '<path d="M3 3h6M3 21h6M15 3h6v6M15 21h6v-6"/>',
+      '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M2 6h14a2 2 0 0 1 2 2v14"/>',
     upload: '<path d="M12 16V4"/><path d="M6 10l6-6 6 6"/><path d="M4 20h16"/>',
     check: '<path d="M4.5 12.5l5 5L19.5 7"/>',
     alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5"/><path d="M12 16.4h.01"/>',

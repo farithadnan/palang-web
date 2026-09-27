@@ -32,7 +32,8 @@
     if (!item) return;
     const id = item.id;
     const last = items.length - 1;
-    if (!confirm(t("cvRemoveConfirm"))) return;
+    // Confirmation belongs to the parent (one generic dialog); this only
+    // reports the intent, so we never double-confirm.
     onDelete?.(id);
     if (items.length <= 1) onClose?.();
     else if (active >= last) active = last - 1;
