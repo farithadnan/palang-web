@@ -1,258 +1,282 @@
 <script>
-  /** Full-screen crop mode. The crop window is a real, resizable frame:
-   *  four round corner handles drag it, dragging inside it moves it, and the
-   *  image underneath pans/pinches/wheel-zooms. Save lives in the TOP TOOLBAR
-   *  (the swipe-to-confirm strip was removed — it read as a mystery button).
-   *  Emits fractions {l,t,r,b} (0..1), the format the store's crop path uses. */
+  /** Full-screen crop mode (desktop AND touch).
+   *
+   *  Gesture model — Samsung-gallery style:
+   *    · A corner handle resizes the crop window ONLY. The photo never moves
+   *      while you resize; the window is clamped inside the photo.
+   *    · Releasing a handle auto-focuses: the view zooms so the crop window
+   *      fills the screen (keeping the same selected region), for fine-tuning.
+   *    · One finger / mouse drag moves the PHOTO under the fixed window.
+   *    · Two fingers / mouse wheel pinches the photo, limited so the window
+   *      always sees photo (never empty background) and never past max zoom.
+   *
+   *  All geometry lives in src/lib/crop.js (pure, unit-tested); this file is
+   *  gestures, rendering and the toolbar only.
+   *
+   *  Emits fractions {l,t,r,b} (0..1) — the format the store's crop path uses. */
+  import { onMount } from "svelte";
   import { t } from "../../lib/i18n.js";
   import Icon from "./Icon.svelte";
+  import {
+    clampFrame,
+    clampView,
+    coverScale,
+    cropFromView,
+    displayRect,
+    fitScale,
+    focusView,
+  } from "../../lib/crop.js";
 
   let { url, filter = "none", crop = null, onClose, onSave } = $props();
 
-  const ZMIN = 1;
-  const ZMAX = 8;
-  const MIN_WIN = 0.14; // window may not shrink below 14% of the stage
-  const clamp01 = (v) => Math.min(1, Math.max(0, v));
+  const MIN = 48; // smallest crop window, stage px
+  const MAX_ZOOM = 8; // zoom-in limit, relative to "fit"
+  const FOCUS_PAD = 0.06; // breathing room around the focused window
 
   let stageEl;
   let imgEl;
   let panEl;
 
-  let natW = 0;
-  let natH = 0;
-  let baseScale = $state(1);
-  let z = $state(1);
-  let tx = $state(0);
-  let ty = $state(0);
-
-  // Crop window as fractions of the stage box.
-  let win = $state({ x: 0.17, y: 0.17, w: 0.66, h: 0.66 });
-  let winMoved = false;
+  let natW = $state(0);
+  let natH = $state(0);
+  let stageW = $state(0);
+  let stageH = $state(0);
+  let view = $state({ scale: 1, tx: 0, ty: 0 });
+  let frame = $state({ x: 0, y: 0, w: 1, h: 1 });
+  let dirty = $state(false);
+  let ready = $state(false);
+  let animating = $state(false);
 
   const winStyle = $derived(
-    `left:${win.x * 100}%;top:${win.y * 100}%;width:${win.w * 100}%;height:${win.h * 100}%`
+    `left:${frame.x}px;top:${frame.y}px;width:${frame.w}px;height:${frame.h}px`
   );
-  const changed = $derived(winMoved || Math.abs(z - 1) > 0.001 || Math.abs(tx) > 0.5 || Math.abs(ty) > 0.5);
-
-  // Apply the image transform imperatively: a reactive `style=` binding here
-  // was dropping the transform entirely (the photo stayed at natural size, so
-  // a big image always looked pre-zoomed-in with no way to zoom out). Writing
-  // to the element directly in an effect is deterministic.
-  $effect(() => {
-    if (panEl) panEl.style.transform = `translate(${tx}px, ${ty}px) scale(${baseScale * z})`;
-  });
 
   function stageRect() {
     return stageEl?.getBoundingClientRect() ?? { left: 0, top: 0, width: 1, height: 1 };
   }
-
-  /** The image's visible rectangle, as fractions of the stage box. The crop
-   *  window is clamped to stay inside it, so it can never be dragged (or
-   *  resized) off the photo onto the empty background. */
-  function imageFrac() {
-    const r = stageRect();
-    const dispW = natW * baseScale * z;
-    const dispH = natH * baseScale * z;
-    const imgL = r.width / 2 - dispW / 2 + tx;
-    const imgT = r.height / 2 - dispH / 2 + ty;
-    return {
-      l: imgL / r.width,
-      t: imgT / r.height,
-      r: (imgL + dispW) / r.width,
-      b: (imgT + dispH) / r.height,
-    };
+  function baseScale() {
+    return fitScale(stageW, stageH, natW, natH);
+  }
+  function maxScale() {
+    return Math.max(baseScale(), coverScale(frame, natW, natH)) * MAX_ZOOM;
   }
 
-  /** Keep a window rect inside the image bounds (centred when larger). */
-  function clampWin(w) {
-    const ir = imageFrac();
-    let x =
-      w.w > ir.r - ir.l + 0.0001
-        ? (ir.l + ir.r) / 2 - w.w / 2
-        : Math.min(ir.r - w.w, Math.max(ir.l, w.x));
-    let y =
-      w.h > ir.b - ir.t + 0.0001
-        ? (ir.t + ir.b) / 2 - w.h / 2
-        : Math.min(ir.b - w.h, Math.max(ir.t, w.y));
-    return { x, y, w: w.w, h: w.h };
-  }
+  // Apply the view transform imperatively: a reactive `style=` binding here was
+  // dropping the transform entirely (a reported crop bug). Writing to the
+  // element directly is deterministic.
+  $effect(() => {
+    if (panEl) panEl.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})`;
+  });
 
-  /** Keep the image covering the crop window (industrial-standard crop feel):
-   *  the window can never look at empty background. */
-  function clampPan() {
-    const r = stageRect();
-    const dispW = natW * baseScale * z;
-    const dispH = natH * baseScale * z;
-    const cx = win.x + win.w / 2;
-    const cy = win.y + win.h / 2;
-    const lo = win.x * r.width - r.width / 2 + dispW / 2;
-    const hi = (win.x + win.w) * r.width - r.width / 2 - dispW / 2;
-    tx = lo > hi ? (win.x + win.w / 2) * r.width - r.width / 2 : Math.min(hi, Math.max(lo, tx));
-    const loY = win.y * r.height - r.height / 2 + dispH / 2;
-    const hiY = (win.y + win.h) * r.height - r.height / 2 - dispH / 2;
-    ty = loY > hiY ? cy * r.height - r.height / 2 : Math.min(hiY, Math.max(loY, ty));
-  }
-
-  function onImgLoad() {
+  /** Start a session on the loaded photo: fit the whole image, then either
+   *  re-open the saved crop region or show the default centred window. */
+  function init() {
+    if (!imgEl?.naturalWidth) return;
     natW = imgEl.naturalWidth;
     natH = imgEl.naturalHeight;
     const r = stageRect();
-    // CONTAIN, not cover: the whole photo must be visible at start. A cover base
-    // with a ZMIN of 1 made a large photo look pre-zoomed-in with no way to zoom
-    // out (the reported crop bug); the user finds the region, then zooms in.
-    baseScale = r.width && r.height && natW && natH ? Math.min(r.width / natW, r.height / natH) : 1;
+    stageW = r.width;
+    stageH = r.height;
+    const scale = fitScale(stageW, stageH, natW, natH);
+    view = { scale, tx: 0, ty: 0 };
+    const rect = displayRect(view, natW, natH, stageW, stageH);
     if (crop) {
-      // Re-open on the existing crop region.
-      win = { x: crop.l, y: crop.t, w: Math.max(MIN_WIN, crop.r - crop.l), h: Math.max(MIN_WIN, crop.b - crop.t) };
-      winMoved = true;
+      const toX = (f) => stageW / 2 + (f * natW - natW / 2) * scale;
+      const toY = (f) => stageH / 2 + (f * natH - natH / 2) * scale;
+      frame = clampFrame(
+        {
+          x: toX(crop.l),
+          y: toY(crop.t),
+          w: Math.max(MIN, (crop.r - crop.l) * natW * scale),
+          h: Math.max(MIN, (crop.b - crop.t) * natH * scale),
+        },
+        rect,
+        MIN
+      );
+      dirty = true;
+    } else {
+      frame = clampFrame(
+        { x: stageW * 0.17, y: stageH * 0.17, w: stageW * 0.66, h: stageH * 0.66 },
+        rect,
+        MIN
+      );
+      dirty = false;
     }
-    clampPan();
-  }
-
-  /** Crop fractions the window sees over the transformed image. */
-  function compute() {
-    const r = stageRect();
-    const cw = win.w * r.width;
-    const ch = win.h * r.height;
-    const winL = r.left + win.x * r.width;
-    const winT = r.top + win.y * r.height;
-    const dispW = natW * baseScale * z;
-    const dispH = natH * baseScale * z;
-    const imgL = r.left + r.width / 2 - dispW / 2 + tx;
-    const imgT = r.top + r.height / 2 - dispH / 2 + ty;
-    const rect = {
-      l: clamp01((winL - imgL) / dispW),
-      t: clamp01((winT - imgT) / dispH),
-      r: clamp01((winL + cw - imgL) / dispW),
-      b: clamp01((winT + ch - imgT) / dispH),
-    };
-    return rect.r - rect.l > 0.04 && rect.b - rect.t > 0.04 ? rect : null;
+    ready = true;
   }
 
   function revert() {
-    z = 1;
-    tx = 0;
-    ty = 0;
-    win = { x: 0.17, y: 0.17, w: 0.66, h: 0.66 };
-    winMoved = false;
-    clampPan();
+    const r = stageRect();
+    stageW = r.width;
+    stageH = r.height;
+    const scale = fitScale(stageW, stageH, natW, natH);
+    animating = true;
+    view = { scale, tx: 0, ty: 0 };
+    frame = clampFrame(
+      { x: stageW * 0.17, y: stageH * 0.17, w: stageW * 0.66, h: stageH * 0.66 },
+      displayRect(view, natW, natH, stageW, stageH),
+      MIN
+    );
+    dirty = false;
   }
 
   function finish() {
-    onSave?.(changed ? compute() : null);
+    onSave?.(dirty ? cropFromView(frame, view, natW, natH, stageW, stageH) : null);
   }
 
-  /* ---------- crop window: move + corner resize ---------- */
-  let drag = null;
+  /* ---------- gestures: one unified pointer pipeline ---------- */
 
-  function winDown(e, mode) {
-    const r = stageRect();
-    drag = { mode, sx: e.clientX, sy: e.clientY, box: { ...win }, rw: r.width, rh: r.height };
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    e.stopPropagation();
+  const ptrs = new Map();
+  let mode = null; // "resize" | "pan" | "pinch"
+  let corner = null;
+  let drag = null; // { sx, sy, frame, view }
+  let pinch = null; // { d0, scale0, ix, iy }
+
+  function down(e) {
+    if (!ready) return;
+    stageEl.setPointerCapture?.(e.pointerId);
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    animating = false;
+    if (ptrs.size === 1) {
+      const handle = e.target instanceof Element ? e.target.closest(".cm-handle") : null;
+      mode = handle ? "resize" : "pan";
+      corner = handle?.dataset.corner ?? null;
+      drag = { sx: e.clientX, sy: e.clientY, frame: { ...frame }, view: { ...view } };
+    } else if (ptrs.size === 2) {
+      startPinch();
+    }
     e.preventDefault();
   }
 
-  function winMove(e) {
-    if (!drag) return;
-    const dx = (e.clientX - drag.sx) / (drag.rw || 1);
-    const dy = (e.clientY - drag.sy) / (drag.rh || 1);
-    const b = drag.box;
-    if (drag.mode === "move") {
-      win = clampWin({
-        x: Math.max(0, Math.min(b.x + dx, 1 - win.w)),
-        y: Math.max(0, Math.min(b.y + dy, 1 - win.h)),
-        w: win.w,
-        h: win.h,
-      });
-    } else {
-      // corner handles: 'nw','ne','sw','se'
-      const left = drag.mode.includes("w");
-      const top = drag.mode.includes("n");
+  function startPinch() {
+    const [a, b] = [...ptrs.values()];
+    const r = stageRect();
+    const d0 = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    const mx = (a.x + b.x) / 2 - r.left;
+    const my = (a.y + b.y) / 2 - r.top;
+    pinch = {
+      d0,
+      scale0: view.scale,
+      ix: (mx - stageW / 2 - view.tx) / view.scale + natW / 2,
+      iy: (my - stageH / 2 - view.ty) / view.scale + natH / 2,
+    };
+    mode = "pinch";
+    drag = null;
+  }
+
+  /** Zoom to `scale`, keeping the image point under (mx,my) pinned. */
+  function zoomTo(scale, mx, my, ix, iy) {
+    const s = Math.min(Math.max(scale, coverScale(frame, natW, natH)), maxScale());
+    const tx = mx - stageW / 2 - (ix - natW / 2) * s;
+    const ty = my - stageH / 2 - (iy - natH / 2) * s;
+    view = clampView({ scale: s, tx, ty }, frame, natW, natH, stageW, stageH, maxScale());
+    dirty = true;
+  }
+
+  function move(e) {
+    if (!ptrs.has(e.pointerId)) return;
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (mode === "resize" && drag) {
+      // Resize the window only — the view is untouched, so the photo holds still.
+      const dx = e.clientX - drag.sx;
+      const dy = e.clientY - drag.sy;
+      const b = drag.frame;
       let x1 = b.x;
       let y1 = b.y;
       let x2 = b.x + b.w;
       let y2 = b.y + b.h;
-      if (left) x1 = Math.min(b.x + dx, x2 - MIN_WIN);
-      else x2 = Math.max(b.x + b.w + dx, x1 + MIN_WIN);
-      if (top) y1 = Math.min(b.y + dy, y2 - MIN_WIN);
-      else y2 = Math.max(b.y + b.h + dy, y1 + MIN_WIN);
-      win = clampWin({ x: Math.max(0, x1), y: Math.max(0, y1), w: Math.min(1, x2) - Math.max(0, x1), h: Math.min(1, y2) - Math.max(0, y1) });
+      if (corner.includes("w")) x1 = Math.min(b.x + dx, x2 - MIN);
+      else x2 = Math.max(b.x + b.w + dx, x1 + MIN);
+      if (corner.includes("n")) y1 = Math.min(b.y + dy, y2 - MIN);
+      else y2 = Math.max(b.y + b.h + dy, y1 + MIN);
+      frame = clampFrame(
+        { x: x1, y: y1, w: x2 - x1, h: y2 - y1 },
+        displayRect(drag.view, natW, natH, stageW, stageH),
+        MIN
+      );
+      dirty = true;
+    } else if (mode === "pinch" && pinch) {
+      const [a, b] = [...ptrs.values()];
+      const r = stageRect();
+      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      const mx = (a.x + b.x) / 2 - r.left;
+      const my = (a.y + b.y) / 2 - r.top;
+      zoomTo(pinch.scale0 * (d / pinch.d0), mx, my, pinch.ix, pinch.iy);
+    } else if (mode === "pan" && drag) {
+      view = clampView(
+        {
+          scale: drag.view.scale,
+          tx: drag.view.tx + (e.clientX - drag.sx),
+          ty: drag.view.ty + (e.clientY - drag.sy),
+        },
+        frame,
+        natW,
+        natH,
+        stageW,
+        stageH,
+        maxScale()
+      );
+      dirty = true;
     }
-    winMoved = true;
-    e.stopPropagation();
-  }
-
-  function winUp(e) {
-    drag = null;
-    clampPan();
-    e?.stopPropagation?.();
-  }
-
-  /* ---------- image: pan / pinch (background only) ---------- */
-  const ptrs = new Map();
-  let pz = 1;
-  let pdist = 0;
-
-  function pDown(e) {
-    stageEl.setPointerCapture(e.pointerId);
-    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    pz = z;
-    pdist = 0;
     e.preventDefault();
   }
 
-  function pMove(e) {
-    if (!ptrs.has(e.pointerId)) return;
-    const prev = ptrs.get(e.pointerId);
-    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (ptrs.size === 1) {
-      tx += e.clientX - prev.x;
-      ty += e.clientY - prev.y;
-    } else if (ptrs.size === 2) {
-      const [a, b] = [...ptrs.values()];
-      const d = Math.hypot(a.x - b.x, a.y - b.y);
-      const mx = (a.x + b.x) / 2;
-      const my = (a.y + b.y) / 2;
-      if (pdist) {
-        const nz = Math.min(ZMAX, Math.max(ZMIN, pz * (d / (pdist || 1))));
-        const k = nz / z;
-        const r = stageRect();
-        const dispW = natW * baseScale * z;
-        const dispH = natH * baseScale * z;
-        const imgL = r.left + r.width / 2 - dispW / 2 + tx;
-        const imgT = r.top + r.height / 2 - dispH / 2 + ty;
-        tx = mx - (mx - imgL) * k - (r.left + r.width / 2 - (dispW * k) / 2);
-        ty = my - (my - imgT) * k - (r.top + r.height / 2 - (dispH * k) / 2);
-        z = nz;
-      }
-      pdist = d;
-    }
-    clampPan();
-  }
-
-  function pUp(e) {
+  function up(e) {
     ptrs.delete(e.pointerId);
-    if (ptrs.size < 2) pdist = 0;
-    clampPan();
+    if (ptrs.size === 0) {
+      // Focus the window after a resize so the user can fine-tune it.
+      if (mode === "resize" && dirty) {
+        const focused = focusView(frame, view, natW, natH, stageW, stageH, {
+          pad: FOCUS_PAD,
+          maxScale: maxScale(),
+        });
+        if (focused) {
+          animating = true;
+          frame = focused.frame;
+          view = focused.view;
+        }
+      }
+      mode = null;
+      corner = null;
+      drag = null;
+      pinch = null;
+    } else if (ptrs.size === 1 && mode === "pinch") {
+      // Lifted one finger: continue as a one-finger photo pan.
+      const p = [...ptrs.values()][0];
+      mode = "pan";
+      corner = null;
+      pinch = null;
+      drag = { sx: p.x, sy: p.y, frame: { ...frame }, view: { ...view } };
+    }
+    e?.preventDefault?.();
   }
 
   function wheel(e) {
-    const f = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-    const nz = Math.min(ZMAX, Math.max(ZMIN, z * f));
+    if (!ready) return;
     const r = stageRect();
-    const cx = e.clientX - r.left;
-    const cy = e.clientY - r.top;
-    const dispW = natW * baseScale * z;
-    const dispH = natH * baseScale * z;
-    const imgL = r.width / 2 - dispW / 2 + tx;
-    const imgT = r.height / 2 - dispH / 2 + ty;
-    tx = cx - (cx - imgL) * (nz / z) - (r.width / 2 - (dispW * (nz / z)) / 2);
-    ty = cy - (cy - imgT) * (nz / z) - (r.height / 2 - (dispH * (nz / z)) / 2);
-    z = nz;
-    clampPan();
+    const mx = e.clientX - r.left;
+    const my = e.clientY - r.top;
+    const ix = (mx - stageW / 2 - view.tx) / view.scale + natW / 2;
+    const iy = (my - stageH / 2 - view.ty) / view.scale + natH / 2;
+    const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+    animating = false;
+    zoomTo(view.scale * factor, mx, my, ix, iy);
     e.preventDefault();
   }
+
+  onMount(() => {
+    const onResize = () => {
+      if (!ready) return;
+      const r = stageRect();
+      stageW = r.width;
+      stageH = r.height;
+      view = clampView(view, frame, natW, natH, stageW, stageH, maxScale());
+      frame = clampFrame(frame, displayRect(view, natW, natH, stageW, stageH), MIN);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  });
 </script>
 
 <div class="cropmode" role="dialog" aria-modal="true" aria-label={t("viewCrop")}>
@@ -261,46 +285,41 @@
       <Icon name="x" size={22} />
     </button>
     <span class="cm-title">{t("viewCrop")}</span>
-    <button type="button" class="btn btn-sm" disabled={!changed} onclick={revert}>{t("cmRevert")}</button>
+    <button type="button" class="btn btn-sm" disabled={!dirty} onclick={revert}>{t("cmRevert")}</button>
     <button type="button" class="btn btn-sm btn-primary" onclick={finish}>{t("cmSave")}</button>
   </div>
 
   <div
     class="cm-stage"
+    role="application"
+    aria-label={t("viewCrop")}
     bind:this={stageEl}
-    onpointerdown={pDown}
-    onpointermove={pMove}
-    onpointerup={pUp}
-    onpointercancel={pUp}
+    onpointerdown={down}
+    onpointermove={move}
+    onpointerup={up}
+    onpointercancel={up}
     onwheel={wheel}
     style="touch-action:none"
   >
-    <div class="cm-pan" bind:this={panEl}>
+    <div class="cm-pan" class:animating bind:this={panEl}>
       <img
         bind:this={imgEl}
         src={url}
         alt={t("viewCrop")}
         draggable="false"
-        onload={onImgLoad}
+        onload={init}
         style={filter && filter !== "none" ? "filter:" + filter : ""}
       />
     </div>
 
-    <div class="cm-win" style={winStyle} onpointerdown={(e) => winDown(e, "move")} onpointermove={winMove} onpointerup={winUp} onpointercancel={winUp}>
-      <span class="cm-grid" aria-hidden="true"></span>
-      {#each ["nw", "ne", "sw", "se"] as corner (corner)}
-        <span
-          class="cm-handle cm-{corner}"
-          role="button"
-          tabindex="-1"
-          aria-label={t("pcResizeH")}
-          onpointerdown={(e) => winDown(e, corner)}
-          onpointermove={winMove}
-          onpointerup={winUp}
-          onpointercancel={winUp}
-        ></span>
-      {/each}
-    </div>
+    {#if ready}
+      <div class="cm-win" class:animating style={winStyle}>
+        <span class="cm-grid" aria-hidden="true"></span>
+        {#each ["nw", "ne", "sw", "se"] as c (c)}
+          <span class="cm-handle cm-{c}" data-corner={c} aria-hidden="true"></span>
+        {/each}
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -334,6 +353,7 @@
   }
   .cm-stage:active { cursor: grabbing; }
   .cm-pan { position: absolute; inset: 0; will-change: transform; }
+  .cm-pan.animating { transition: transform 0.22s ease; }
   .cm-pan img {
     position: absolute;
     left: 50%;
@@ -351,6 +371,9 @@
     cursor: move;
     touch-action: none;
     box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  }
+  .cm-win.animating {
+    transition: left 0.22s ease, top 0.22s ease, width 0.22s ease, height 0.22s ease;
   }
   .cm-grid {
     position: absolute;
