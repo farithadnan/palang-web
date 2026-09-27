@@ -79,7 +79,7 @@
   "installReq": "Keperluan",
   "installReqList": "Windows 10 atau lebih baharu. Android 8 atau lebih baharu.",
   "installUpdates": "Kemas kini",
-  "installUpdatesBody": "App menyemak fail versi kecil dan memberitahu anda apabila binaan baharu tersedia.",
+  "installUpdatesBody": "App menyemak versi yang diterbitkan apabila dibuka dan memberitahu anda apabila binaan baharu tersedia. Pada telefon atau app Windows, \"Kemas kini\" membuka halaman muat turun untuk memasangnya.",
   "privacyTitle": "Privasi",
   "privacyLede": "Palang melakukan kerjanya pada peranti anda. Fail anda tidak dimuat naik, dan tiada akaun.",
   "privacySite": "Laman web ini statik. Tiada analitik, tiada penjejak dan tiada kuki, dan ia tidak pernah menyentuh dokumen anda.",

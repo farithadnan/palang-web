@@ -79,7 +79,7 @@
   "installReq": "Requirements",
   "installReqList": "Windows 10 or newer. Android 8 or newer.",
   "installUpdates": "Updates",
-  "installUpdatesBody": "The app checks a small version file and tells you when a newer build is available.",
+  "installUpdatesBody": "The app checks the published version when it opens and tells you when a newer build is available. On a phone or Windows app, \"Update\" opens the download page to install it.",
   "privacyTitle": "Privacy",
   "privacyLede": "Palang does its work on your device. Your files are not uploaded, and there is no account.",
   "privacySite": "This website is static. It has no analytics, no trackers and no cookies, and it never touches your documents.",
