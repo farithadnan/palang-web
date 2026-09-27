@@ -234,6 +234,10 @@ import { onMount } from "svelte";
 
   function begin(e, m) {
     if (!box || !armed) return;
+    if (editingText) {
+      cancelText(); // clicking the marking also leaves edit mode, unsaved
+      return;
+    }
     if (pinching || pointers.size >= 2) return; // a pinch is in progress
     sx = e.clientX;
     sy = e.clientY;
@@ -271,6 +275,11 @@ import { onMount } from "svelte";
   }
 
   function wrapDown(e) {
+    // Clicking anywhere on the page leaves text editing WITHOUT saving.
+    if (editingText) {
+      cancelText();
+      return;
+    }
     // A pinch owns the gesture: never start a drag while two fingers are down.
     if (pinching || pointers.size >= 2) return;
     // Track background touches for pinch zoom.
