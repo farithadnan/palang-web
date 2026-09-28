@@ -187,18 +187,19 @@ docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro pala
 Same codebase, same tools bundle, wrapped by [Tauri] and [Capacitor]. One
 workflow, `.github/workflows/release.yml`, builds both platforms.
 
-**Cut a release** — `npm version` bumps `package.json`, commits and tags; the
-push triggers the release workflow:
+**Cut a release** — releases are automated by [release-please]. On every push to
+`main` it reads [Conventional Commits] (`feat:`, `fix:`, breaking `!`) and keeps
+a release PR open, bumping `package.json`, `src-tauri/Cargo.toml` and
+`CHANGELOG.md`. Merging that PR is the **only** manual step: it creates the
+version tag and a **draft** GitHub release, and the same workflow run then builds
+both platforms, attaches the binaries, and publishes the release — so a release
+is never visible without its downloads.
 
-```bash
-npm version patch        # or minor / major
-git push --follow-tags
-```
+Nothing else needs bumping: `package.json` is the source of version
+(`src-tauri/tauri.conf.json` points at it), and `Cargo.toml` is kept in sync for
+you. Write `feat:`/`fix:` messages and let the bot propose the number.
 
-`package.json` is the single source of version: `src-tauri/tauri.conf.json`
-points at it (`"version": "../package.json"`), so there is nothing else to bump.
-
-The workflow produces a **draft** GitHub release carrying:
+The release carries:
 
 - **Windows EXE/MSI** — built by tauri-action.
 - **Android APK** — debug-signed (sideloadable). Play-Store signing needs a
@@ -216,6 +217,8 @@ there).
 
 [Tauri]: https://tauri.app
 [Capacitor]: https://capacitorjs.com
+[release-please]: https://github.com/googleapis/release-please
+[Conventional Commits]: https://www.conventionalcommits.org/
 
 ## Roadmap
 

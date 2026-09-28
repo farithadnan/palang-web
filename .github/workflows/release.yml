@@ -1,32 +1,61 @@
 name: Release
 
-# One workflow, one release. On a version tag both platform builds run, then a
-# single `publish` job attaches the EXE/MSI and the APK to one draft release —
-# no two workflows racing to create the same release.
+# One workflow, one release, fully automated.
 #
-# Manual dispatch (no tag) builds the same artifacts and stops there: download
-# them from the run's Artifacts section to test without cutting a release.
+# `release-please` reads Conventional Commits on `main` and keeps a release PR
+# open (bumping package.json, src-tauri/Cargo.toml, and CHANGELOG.md). Merging
+# that PR is the only step a human takes: it creates the version tag and a
+# *draft* GitHub Release. This same run then builds both platforms, attaches the
+# binaries, and only then publishes the release — so a release is never visible
+# without its downloads.
+#
+# Why not trigger on tag pushes? Tags created by release-please use GITHUB_TOKEN,
+# and GITHUB_TOKEN-generated events do not start new workflow runs. Building
+# here, in the same run, avoids needing a personal access token.
+#
+# Manual dispatch (no release) just builds the artifacts for testing.
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write # needed to create the release / attach assets on tag pushes
+  contents: write # create tags/draft releases, upload assets, publish
+  pull-requests: write # open and update the release PR
+  issues: write # release-please applies its lifecycle labels
 
 jobs:
+  release-please:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
   windows:
+    needs: release-please
+    # Build when a release was just cut, or for a manual test build.
+    if: always() && (needs.release-please.outputs.released == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: windows-latest
     steps:
+      # Check out the release commit (its package.json holds the new version),
+      # or the dispatched ref for a manual build.
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.tag || github.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: npm ci
       # tauri-action sets up Rust and runs `npm run tauri build` (which runs
-      # `npm run build:app`). It only builds here — the `publish` job owns the
-      # release, so there is exactly one place that creates it.
+      # `npm run build:app`). It only builds — the release already exists.
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,11 +66,25 @@ jobs:
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
+      - name: Attach installers to the release
+        if: needs.release-please.outputs.released == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ needs.release-please.outputs.tag }}" \
+            src-tauri/target/release/bundle/msi/*.msi \
+            src-tauri/target/release/bundle/nsis/*.exe \
+            --clobber
 
   android:
+    needs: release-please
+    if: always() && (needs.release-please.outputs.released == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.tag || github.sha }}
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -66,54 +109,22 @@ jobs:
         with:
           name: android-apk
           path: android/app/build/outputs/apk/debug/*.apk
+      - name: Attach APK to the release
+        if: needs.release-please.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ needs.release-please.outputs.tag }}" android/app/build/outputs/apk/debug/*.apk --clobber
 
   publish:
-    # Tag pushes publish; manual dispatch only produces test artifacts.
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [windows, android]
+    # Publish only once the release exists AND both platforms built cleanly, so
+    # the release is never visible without its downloads.
+    needs: [release-please, windows, android]
+    if: needs.release-please.outputs.released == 'true' && needs.windows.result == 'success' && needs.android.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v8
-        with:
-          path: dist-artifacts
-          merge-multiple: true
-      - uses: softprops/action-gh-release@v3
-        with:
-          draft: false
-          name: Palang ${{ github.ref_name }}
-          # The Windows artifact keeps its msi/ and nsis/ subfolders, so match
-          # recursively — `dist-artifacts/*` would only catch the flat APK.
-          files: dist-artifacts/**
-          body: |
-            Prepare documents for sharing: convert photos to one PDF, stamp a
-            palang purpose band, and merge PDFs. Everything runs on your device.
-            Nothing is uploaded, nothing is stored on a server, and there are no
-            accounts.
-
-            ## Downloads
-
-            | File | What it is |
-            | --- | --- |
-            | `Palang_x.x.x_x64-setup.exe` | Windows installer (recommended) |
-            | `Palang_x.x.x_x64_en-US.msi` | Windows installer for managed / silent installs |
-            | `Palang_x.x.x.apk` | Android app. Debug-signed, so Android asks you to allow installs from this source |
-
-            ## Install notes
-
-            - **Windows:** run the installer and follow the prompts, then open
-              Palang from the Start menu. It works offline.
-            - **Android:** open the APK on the device that will run it, allow the
-              install when asked, and open Palang. It works offline.
-            - Both builds are packaged from the same codebase and the same
-              on-device PDF engine, so the documents they produce are identical.
-
-            ## Updates
-
-            The app checks a small version file when it opens and offers to
-            update when a newer build exists. It is the only network request the
-            app makes; your documents never leave the device.
-
-            ## License
-
-            MIT. The source, the issue tracker and this release live in the same
-            repository.
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "${{ needs.release-please.outputs.tag }}" \
+            --draft=false \
+            --latest
