@@ -17,8 +17,14 @@ async function decodeImage(bytes, opts) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(blob);
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onload = () => {
+      URL.revokeObjectURL(url); // the decoded bitmap stays valid after release
+      resolve(img);
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
     img.src = url;
   });
 }

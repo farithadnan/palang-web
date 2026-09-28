@@ -32,6 +32,10 @@ export default defineConfig(({ mode }) => {
       __APP_BUILT_AT__: JSON.stringify(new Date().toISOString()),
     },
     plugins: [svelte(), tailwindcss()],
+    // Dev-only: allow a Cloudflare quick-tunnel hostname so the running dev
+    // server can be previewed from another device (npm run dev:host +
+    // `cloudflared tunnel --url http://localhost:5173`).
+    server: { allowedHosts: [".trycloudflare.com"] },
     resolve: {
       alias: {
         $landing: fileURLToPath(

@@ -212,13 +212,18 @@ export function updateImage(id, patch) {
 /**
  * Apply a crop and show the RESULT: the gallery thumbnail is replaced with an
  * actually-cropped version of the photo, so "is it cropped or not" is visible.
+ * The result is a Blob URL (not a base64 data URL) and is capped on its longest
+ * side: `im.url` is only ever DISPLAYED (the engine re-crops the original File),
+ * so a full-resolution PNG data URL would just burn mobile memory for nothing.
  */
+const MAX_PREVIEW_PX = 2400;
 export function cropPreview(id, crop) {
   const im = app.images.find((i) => i.id === id);
   if (!im) return;
   const source = im.originalUrl || im.url;
   const img = new Image();
-  img.onload = () => {
+  img.onload = async () => {
+    if (!app.images.includes(im)) return; // removed while decoding
     const w = img.naturalWidth;
     const h = img.naturalHeight;
     const l = Math.round(crop.l * w);
@@ -227,13 +232,18 @@ export function cropPreview(id, crop) {
     const b = Math.round(crop.b * h);
     const cw = Math.max(1, r - l);
     const ch = Math.max(1, b - t);
+    const s = Math.min(1, MAX_PREVIEW_PX / Math.max(cw, ch));
     const canvas = document.createElement("canvas");
-    canvas.width = cw;
-    canvas.height = ch;
-    canvas.getContext("2d").drawImage(img, l, t, cw, ch, 0, 0, cw, ch);
-    const croppedUrl = canvas.toDataURL("image/png");
+    canvas.width = Math.max(1, Math.round(cw * s));
+    canvas.height = Math.max(1, Math.round(ch * s));
+    canvas.getContext("2d").drawImage(img, l, t, cw, ch, 0, 0, canvas.width, canvas.height);
+    const isPng = im.file?.type === "image/png";
+    const blob = await new Promise((res) =>
+      canvas.toBlob(res, isPng ? "image/png" : "image/jpeg", 0.92)
+    );
+    if (!blob || !app.images.includes(im)) return;
     if (im.url !== im.originalUrl) URL.revokeObjectURL(im.url);
-    im.url = croppedUrl;
+    im.url = URL.createObjectURL(blob);
     im.crop = crop;
   };
   img.src = source;
@@ -418,6 +428,22 @@ function imageDims(url) {
   });
 }
 
+/** Revoke the blob URLs held by a preview's pages (image pages and rendered
+ *  PDF pages). `revokeObjectURL` ignores data URLs, so this is always safe. */
+function releasePages(pages) {
+  for (const pg of pages ?? []) {
+    if (pg?.url && pg.url.startsWith("blob:")) URL.revokeObjectURL(pg.url);
+  }
+}
+
+/** Tear down the current preview, releasing its page blob URLs. Rebuilding
+ *  (add more / remove / retry) must go through this, or every rebuild leaks
+ *  one object URL per image and per rendered PDF page. */
+function clearPreview() {
+  releasePages(app.preview?.pages);
+  app.preview = null;
+}
+
 /**
  /** Build the preview STRUCTURE for any document (images, PDFs, mixed), in
   *  the browser with no server round-trip. Mirrors the server's image->PDF
@@ -474,7 +500,11 @@ function imageDims(url) {
        err: false,
      });
    }
-   if (seq !== previewSeq || !files.every((f, i) => app.previewFiles[i] === f)) return;
+   if (seq !== previewSeq || !files.every((f, i) => app.previewFiles[i] === f)) {
+     releasePages(pages); // this run was superseded: drop what it created
+     return;
+   }
+   releasePages(app.preview?.pages);
    app.preview = { count: pages.length, client: true, pages };
    app.previewLoading = false;
    void ensurePreviewPage(0); // open on the first page
@@ -519,12 +549,12 @@ function imageDims(url) {
      app.stamp = files.map((f, i) => app.stamp[i] ?? newSpec());
      app.activePage = 0;
    if (!files.length) {
-     app.preview = null;
+     clearPreview();
      return;
    }
    // Everything renders on-device now: images directly from the browser,
    // PDF pages via pdf.js — one page at a time, metadata first.
-   app.preview = null;
+   clearPreview();
    app.previewLoading = true;
    void buildPreviewMeta(files);
  }
@@ -540,10 +570,10 @@ function imageDims(url) {
    app.previewFiles.splice(index, 1);
    app.activePage = 0;
    if (!app.previewFiles.length) {
-     app.preview = null;
+     clearPreview();
      return;
    }
-   app.preview = null;
+   clearPreview();
    app.previewLoading = true;
    void buildPreviewMeta(app.previewFiles);
  }
@@ -576,7 +606,7 @@ function imageDims(url) {
  /** Rebuild the on-device preview (the retry path after a failed render). */
  export function retryPreview() {
    if (!app.previewFiles.length) return;
-   app.preview = null;
+   clearPreview();
    app.previewLoading = true;
    void buildPreviewMeta(app.previewFiles);
  }
@@ -899,8 +929,9 @@ export function humanSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
-/* Test/verification hook: lets headless checks read and drive the store. */
-if (typeof window !== "undefined") {
+/* Test/verification hook: lets headless checks read and drive the store.
+   Dev-only — it must not exist in the packaged production bundle. */
+if (import.meta.env.DEV && typeof window !== "undefined") {
   window.__palang = {
     app,
     updateImage,

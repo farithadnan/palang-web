@@ -33,6 +33,10 @@
   const MIN = 48; // smallest crop window, stage px
   const MAX_ZOOM = 8; // zoom-in limit, relative to "fit"
   const FOCUS_PAD = 0.06; // breathing room around the focused window
+  // Keep the whole photo this far from the stage edge, so the corner handles
+  // never sit flush against the screen (where the OS back-gesture eats the
+  // touch and clips them) and are always fully visible inside the crop.
+  const EDGE_PAD = 20;
 
   let stageEl;
   let imgEl;
@@ -52,11 +56,40 @@
     `left:${frame.x}px;top:${frame.y}px;width:${frame.w}px;height:${frame.h}px`
   );
 
+  // Dim only outside the crop window with four cheap rectangles. The old
+  // single `box-shadow: 0 0 0 9999px` forced a ~20,000px GPU layer that threw
+  // black squares over the photo and painted past higher z-index UI on mobile.
+  const dims = $derived.by(() => {
+    const { x, y, w, h } = frame;
+    const right = x + w;
+    const bottom = y + h;
+    return {
+      top: `left:0;right:0;top:0;height:${Math.max(0, y)}px`,
+      bottom: `left:0;right:0;top:${bottom}px;bottom:0`,
+      left: `left:0;top:${y}px;width:${Math.max(0, x)}px;height:${h}px`,
+      right: `left:${right}px;right:0;top:${y}px;height:${h}px`,
+    };
+  });
+
   function stageRect() {
     return stageEl?.getBoundingClientRect() ?? { left: 0, top: 0, width: 1, height: 1 };
   }
   function baseScale() {
-    return fitScale(stageW, stageH, natW, natH);
+    // Fit with a margin so the default (whole-photo) window leaves room for
+    // the handles inside the clipped stage.
+    return fitScale(stageW - 2 * EDGE_PAD, stageH - 2 * EDGE_PAD, natW, natH);
+  }
+  /** Where the crop window may sit: the displayed photo intersected with the
+   *  visible stage (minus a handle margin). Zooming makes the photo larger
+   *  than the stage; without the stage bound a handle could be dragged to the
+   *  photo's off-screen edge and disappear under `overflow:hidden`. */
+  function frameBounds(v) {
+    const img = displayRect(v, natW, natH, stageW, stageH);
+    const left = Math.max(img.left, EDGE_PAD);
+    const top = Math.max(img.top, EDGE_PAD);
+    const right = Math.min(img.right, stageW - EDGE_PAD);
+    const bottom = Math.min(img.bottom, stageH - EDGE_PAD);
+    return { left, top, right, bottom, w: Math.max(0, right - left), h: Math.max(0, bottom - top) };
   }
   function maxScale() {
     return Math.max(baseScale(), coverScale(frame, natW, natH)) * MAX_ZOOM;
@@ -87,7 +120,7 @@
     natH = imgEl.naturalHeight;
     stageW = r.width;
     stageH = r.height;
-    const scale = fitScale(stageW, stageH, natW, natH);
+    const scale = baseScale();
     view = { scale, tx: 0, ty: 0 };
     const rect = displayRect(view, natW, natH, stageW, stageH);
     if (crop) {
@@ -100,7 +133,7 @@
           w: Math.max(MIN, (crop.r - crop.l) * natW * scale),
           h: Math.max(MIN, (crop.b - crop.t) * natH * scale),
         },
-        rect,
+        frameBounds(view),
         MIN
       );
       dirty = true;
@@ -118,7 +151,7 @@
     const r = stageRect();
     stageW = r.width;
     stageH = r.height;
-    const scale = fitScale(stageW, stageH, natW, natH);
+    const scale = baseScale();
     animating = true;
     view = { scale, tx: 0, ty: 0 };
     const rect = displayRect(view, natW, natH, stageW, stageH);
@@ -198,7 +231,7 @@
       else y2 = Math.max(b.y + b.h + dy, y1 + MIN);
       frame = clampFrame(
         { x: x1, y: y1, w: x2 - x1, h: y2 - y1 },
-        displayRect(drag.view, natW, natH, stageW, stageH),
+        frameBounds(drag.view),
         MIN
       );
       dirty = true;
@@ -239,7 +272,7 @@
         });
         if (focused) {
           animating = true;
-          frame = focused.frame;
+          frame = clampFrame(focused.frame, frameBounds(focused.view), MIN);
           view = focused.view;
         }
       }
@@ -282,7 +315,7 @@
       stageW = r.width;
       stageH = r.height;
       view = clampView(view, frame, natW, natH, stageW, stageH, maxScale());
-      frame = clampFrame(frame, displayRect(view, natW, natH, stageW, stageH), MIN);
+      frame = clampFrame(frame, frameBounds(view), MIN);
     };
     window.addEventListener("resize", onResize);
     let ro = null;
@@ -331,6 +364,10 @@
     </div>
 
     {#if ready}
+      <div class="cm-dim" style={dims.top}></div>
+      <div class="cm-dim" style={dims.bottom}></div>
+      <div class="cm-dim" style={dims.left}></div>
+      <div class="cm-dim" style={dims.right}></div>
       <div class="cm-win" class:animating style={winStyle}>
         <span class="cm-grid" aria-hidden="true"></span>
         {#each ["nw", "ne", "sw", "se"] as c (c)}
@@ -346,7 +383,7 @@
     position: fixed;
     inset: 0;
     z-index: 70;
-    background: var(--bg, #111);
+    background: #000;
     display: flex;
     flex-direction: column;
     color: var(--text);
@@ -355,7 +392,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.55rem 0.8rem;
+    padding: max(0.55rem, env(safe-area-inset-top)) 0.8rem 0.55rem;
     border-bottom: 1px solid var(--line);
     background: var(--panel);
     flex-wrap: wrap;
@@ -368,9 +405,17 @@
     overflow: hidden;
     background: #000;
     cursor: grab;
+    /* Inset the photo area from the physical edge: keeps the corner handles
+       out of the OS back-gesture strip and the notch/nav bar. */
+    margin: 0 max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    border-radius: 10px;
   }
   .cm-stage:active { cursor: grabbing; }
-  .cm-pan { position: absolute; inset: 0; will-change: transform; visibility: hidden; }
+  /* No `will-change: transform` here: it stops Chrome re-rasterising the photo
+     as the zoom scale changes, so on mobile the stretched texture blows past
+     the GPU texture limit and renders as black tiles. Re-rastering per zoom is
+     also crisper. */
+  .cm-pan { position: absolute; inset: 0; visibility: hidden; }
   .cm-pan.ready { visibility: visible; }
   .cm-pan.animating { transition: transform 0.22s ease; }
   .cm-pan img {
@@ -384,12 +429,18 @@
     user-select: none;
     -webkit-user-drag: none;
   }
+  .cm-dim {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+    z-index: 1;
+  }
   .cm-win {
     position: absolute;
+    z-index: 2;
     border: 1px solid rgba(255, 255, 255, 0.9);
     cursor: move;
     touch-action: none;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
   }
   .cm-win.animating {
     transition: left 0.22s ease, top 0.22s ease, width 0.22s ease, height 0.22s ease;
