@@ -109,6 +109,15 @@ Transitional cost, called out honestly: the app now has **7 bottom tabs**
 (Prepare, Convert, Palang, Merge, Session, About, Settings). Prepare is first
 because it is the unified entry; the tab count drops as stages land.
 
+## Stage 2 progress
+
+- **Done (increment 1):** images are edited in Prepare — crop / rotate /
+  enhance reuse the ONE preview renderer (`rebuildBase`/`rebuildDisplay`)
+  shared with Convert, and the export passes per-image rotation, crop and
+  enhance to the engine. Prepare reuses `FullView` and `CropMode`.
+- **Remaining:** drag placement of the purpose band in Prepare, then retiring
+  the Convert / Palang / Merge tabs once placement reaches parity.
+
 ## Tests
 
 - `movePrepareItem`, `removePrepareItem`, `setPrepare` (store).
