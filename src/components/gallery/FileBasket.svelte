@@ -21,6 +21,7 @@
     requestAddTick = 0, // topbar "+" drives the picker from outside
     onRemove,
     onItem,
+    onMove,
     onPick,
   } = $props();
 
@@ -63,5 +64,6 @@
     {frameAspect}
     onOpen={onItem}
     onRemove={onRemove}
+    onMove={onMove}
   />
 {/if}

@@ -361,6 +361,7 @@ aside.side nav { display: flex; flex-direction: column; gap: 0.2rem; }
 /* ---------- navigation: sidebar at >=720px, bottom tabs below ---------- */
 .tabbtn {
   min-height: 44px;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;

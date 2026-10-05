@@ -7,8 +7,8 @@
  * Geometry parity: images are fitted into the chosen page (margin 0,
  * centred) using the SAME formula as the server, via fittedPageSize.
  */
-import { PDFDocument } from "pdf-lib";
-import { buildPalangSpec, fittedPageSize, pageDims } from "../domain/domain.js";
+import { PDFDocument, degrees } from "pdf-lib";
+import { palangLabel, fittedPageSize, pageDims } from "../domain/domain.js";
 
 /** Decode bytes into an ImageBitmap/HTMLImageElement for canvas work. */
 async function decodeImage(bytes, opts) {
@@ -52,44 +52,64 @@ function jpegDims(bytes) {
   return null;
 }
 
-/** Crop + basic enhance via canvas (browser-native; the old server-side
- *  Pillow enhance is not available offline). Returns new image bytes.
+/** Normalise a decoded image to an upright canvas: EXIF orientation is applied
+ *  by the browser's decode, then the user's 90° steps are baked in. Crop
+ *  fractions are expressed against THIS canvas, so rotation always precedes
+ *  crop — in the preview and in the output. */
+function uprightCanvas(img, deg) {
+  const rot = (((deg ?? 0) % 360) + 360) % 360;
+  const swap = rot === 90 || rot === 270;
+  const w = swap ? img.height : img.width;
+  const h = swap ? img.width : img.height;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, w);
+  canvas.height = Math.max(1, h);
+  const ctx = canvas.getContext("2d");
+  if (rot === 0) {
+    ctx.drawImage(img, 0, 0);
+  } else {
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((rot * Math.PI) / 180);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+  }
+  return canvas;
+}
+
+/** Rotate + crop + basic enhance via canvas (browser-native; the old
+ *  server-side Pillow enhance is not available offline). Returns new bytes.
  *
  *  JPEGs are ALWAYS normalised through a decode→canvas→re-encode: browsers
  *  apply EXIF orientation when decoding (so the preview shows the photo
- *  rotated), but pdf-lib embeds raw JPEG bytes with the UNrotated
- *  dimensions — a phone photo would get a different fit and letterbox in
- *  the output than in the preview, and the palang would land off relative
- *  to the photo. Re-encoding bakes the orientation into the pixels, so the
- *  embedded dims always match the preview's. */
+ *  rotated), but pdf-lib embeds raw JPEG bytes with the UNrotated dimensions —
+ *  a phone photo would get a different fit and letterbox in the output than in
+ *  the preview. Re-encoding bakes orientation + rotation into the pixels, so
+ *  the embedded dims always match the preview's. */
 async function processImage(bytes, mime, setting) {
-  const needsWork = setting && (setting.crop || setting.enhance);
+  const rotation = setting?.rotation ?? 0;
+  const needsWork = setting && (setting.crop || setting.enhance || rotation);
   if (!needsWork && mime !== "image/jpeg") return bytes;
   const img = await decodeImage(bytes);
+  const base = uprightCanvas(img, rotation);
   if (!needsWork) {
-    // plain JPEG: orientation-baked copy, no crop/enhance
-    const out = document.createElement("canvas");
-    out.width = img.width; // oriented dims — what the preview shows
-    out.height = img.height;
-    out.getContext("2d").drawImage(img, 0, 0);
-    return out.toBlob ? new Uint8Array(await outToBytes(out, "image/jpeg")) : bytes;
+    // plain JPEG: orientation-baked copy, no crop/enhance/rotation
+    return base.toBlob ? new Uint8Array(await outToBytes(base, "image/jpeg")) : bytes;
   }
-  const cw = Math.round(img.width * ((setting.crop?.r ?? 1) - (setting.crop?.l ?? 0)));
-  const ch = Math.round(img.height * ((setting.crop?.b ?? 1) - (setting.crop?.t ?? 0)));
+  const cw = Math.max(1, Math.round(base.width * ((setting.crop?.r ?? 1) - (setting.crop?.l ?? 0))));
+  const ch = Math.max(1, Math.round(base.height * ((setting.crop?.b ?? 1) - (setting.crop?.t ?? 0))));
   const out = document.createElement("canvas");
-  out.width = Math.max(1, cw);
-  out.height = Math.max(1, ch);
+  out.width = cw;
+  out.height = ch;
   const ctx = out.getContext("2d");
   ctx.drawImage(
-    img,
-    Math.round(img.width * (setting.crop?.l ?? 0)),
-    Math.round(img.height * (setting.crop?.t ?? 0)),
-    Math.round(img.width * ((setting.crop?.r ?? 1) - (setting.crop?.l ?? 0))) || img.width,
-    Math.round(img.height * ((setting.crop?.b ?? 1) - (setting.crop?.t ?? 0))) || img.height,
+    base,
+    Math.round(base.width * (setting.crop?.l ?? 0)),
+    Math.round(base.height * (setting.crop?.t ?? 0)),
+    Math.max(1, Math.round(base.width * ((setting.crop?.r ?? 1) - (setting.crop?.l ?? 0)))),
+    Math.max(1, Math.round(base.height * ((setting.crop?.b ?? 1) - (setting.crop?.t ?? 0)))),
     0,
     0,
-    out.width,
-    out.height
+    cw,
+    ch
   );
   if (setting.enhance) {
     ctx.filter = "contrast(1.12) saturate(1.08) brightness(1.02)";
@@ -112,10 +132,7 @@ function outToBytes(canvas, type) {
  *  in pt — w/h is the unrotated frame (the editor's coordinate space),
  *  rw/rh the rotated bounding box the PDF must draw. */
 async function renderPalang(spec) {
-  const api = buildPalangSpec(spec);
-  const text = api.label?.text || "";
-  const fontPt = api.label?.font_size ?? 18;
-  const color = api.label?.color ?? spec.color;
+  const { text, color, fontPt } = palangLabel(spec);
   const rotation = ((spec.rotationDeg ?? 0) % 360 + 360) % 360;
   const pad = 7; // pt padding around the text, mirrors the lines band
   const size = 4; // canvas oversample for crisp text
@@ -229,20 +246,17 @@ async function drawStamped(c, page, spec) {
   ctx.drawImage(palangImg, r.x, r.y, r.w, r.h);
 }
 
-/** Compile ONE photo into its stamped form (the "second temp": every armed
+/** Compile ONE photo into its stamped form (the "second temp": the armed
  *  palang is baked in and can no longer move). The editor keeps showing the
  *  original photo for re-editing. The compiled image is capped at
  *  MAX_COMPILE_PX on its longest side — it is only ever embedded on an A4
  *  page (~340 dpi at 2400 px); a 24 MP bake would be memory-heavy and bloat
  *  the PDF for zero visible gain. The cap is applied AT DECODE via
- *  createImageBitmap's native resize (no full-resolution rasterisation).
- *  `specs` is an ARRAY — the multi-stamp loop runs the exact same per-spec
- *  routine, so parity with the preview holds for every band. */
+ *  createImageBitmap's native resize (no full-resolution rasterisation). */
 export const MAX_COMPILE_PX = 2400;
 
-export async function compileStampedImage(input, pageSize, specs) {
+export async function compileStampedImage(input, pageSize, spec) {
   const bytes = new Uint8Array(await input.bytes());
-  const armed = (specs ?? []).filter((s) => s?.armed);
   const c = document.createElement("canvas");
   let img;
   const dims = jpegDims(bytes);
@@ -265,7 +279,7 @@ export async function compileStampedImage(input, pageSize, specs) {
   // The page box follows the image (fit) or the chosen paper size, so the
   // stamp lands at the same point the preview placed it.
   const page = pageDims(pageSize, img.width, img.height);
-  for (const spec of armed) await drawStamped(c, page, spec);
+  if (spec?.armed) await drawStamped(c, page, spec);
   return { bytes: new Uint8Array(await outToBytes(c, "image/png")), mime: "image/png" };
 }
 
@@ -274,14 +288,53 @@ function textWidthApprox(text, fontPt) {
   return text.length * fontPt * 0.84;
 }
 
+/** A PDF that could not be loaded, tagged so the UI can explain WHY (and for
+ *  which file). The store maps `code` to a localised toast. */
+export class PdfLoadError extends Error {
+  constructor(code, fileName) {
+    super(code);
+    this.name = "PdfLoadError";
+    this.code = code; // "pdf-locked" | "pdf-unreadable"
+    this.fileName = fileName || "PDF";
+  }
+}
+
+/** Map a pdf-lib load failure to a stable code the UI can explain. Pure +
+ *  exported for tests. */
+export function pdfLoadErrorCode(err) {
+  const msg = String(err?.message || "");
+  return err?.name === "EncryptedPDFError" || /encrypt|password/i.test(msg)
+    ? "pdf-locked"
+    : "pdf-unreadable";
+}
+
+function loadPdf(bytes, fileName) {
+  return PDFDocument.load(bytes).catch((err) => {
+    throw new PdfLoadError(pdfLoadErrorCode(err), fileName);
+  });
+}
+
+/** The armed palang that applies to ONE source file: the file's own `spec`,
+ *  or the shared fallback when it carries none — never another file's spec.
+ *  Returns null when the file has no armed palang. Pure + exported so the
+ *  "one file's band stays on its own pages" contract is pinned by a test. */
+export function palangSpecFor(file, fallback = null) {
+  const own = file ? file.spec : undefined;
+  const s = own !== undefined ? own : fallback;
+  return s && s.armed ? s : null;
+}
+
 /** The full offline pipeline: images (+optional pdfs) → one PDF with the
- *  palang marking(s) stamped, exactly like /api/process with merge=true.
- *  All pages are stamped in page space with per-native-size + /Rotate-aware
- *  placement (see palangDrawRect). `specs` is an ARRAY: each armed spec is
- *  rendered and drawn on every page that isn't already compiled. */
-export async function processOffline({ images, pdfs, pageSize = "A4", specs }) {
+ *  palang stamped. Each file carries its OWN single spec (`f.spec`) — one
+ *  palang per file, never several — so a file's band lands only on that file's
+ *  pages; a fallback `spec` is honoured for files that do not carry their own.
+ *  Images are normally already compiled ("second temp", `f.stamped`), so they
+ *  are not stamped twice; an uncompiled image falls back to page-space
+ *  stamping with its own spec. */
+export async function processOffline({ images, pdfs, pageSize = "A4", spec = null }) {
   const doc = await PDFDocument.create();
   const imagePages = new Set(); // pre-stamped (compiled) pages skip the stamp loop
+  const pageSpec = new Map(); // pdf-lib page -> its single armed palang spec
 
   for (const f of images) {
     const bytes = new Uint8Array(await f.bytes());
@@ -294,37 +347,64 @@ export async function processOffline({ images, pdfs, pageSize = "A4", specs }) {
     const p = doc.addPage([page.w, page.h]);
     const { w, h } = fittedPageSize(image.width, image.height, page.w, page.h);
     p.drawImage(image, { x: (page.w - w) / 2, y: (page.h - h) / 2, width: w, height: h });
-    if (f.stamped) imagePages.add(p); // the palang is already baked in
-  }
-
-  for (const f of pdfs) {
-    const src = await PDFDocument.load(await f.bytes());
-    const pages = await doc.copyPages(src, src.getPageIndices());
-    for (const pg of pages) doc.addPage(pg);
-  }
-
-  const armed = (specs ?? []).filter((s) => s?.armed);
-  if (armed.length && images.length + pdfs.length > 0) {
-    for (const p of doc.getPages()) {
-      if (imagePages.has(p)) continue; // compiled image: palang already baked in
-      // Each page has its OWN size: image pages are the chosen page size,
-      // but pages copied from a source PDF keep their native geometry
-      // (Letter, landscape, photo-size…).
-      const { width: pw, height: ph } = p.getSize();
-      for (const spec of armed) {
-        const palang = await renderPalang(spec);
-        const png = await doc.embedPng(palang.bytes);
-        const w = palang.rw;
-        const h = palang.rh;
-        const cx = (spec.leftPt ?? (pw - palang.w) / 2) + palang.w / 2;
-        const cy = (spec.topPt ?? (ph - palang.h) / 2) + palang.h / 2;
-        // Visual space (what the preview shows, pdf.js applies /Rotate) →
-        // user space (pdf-lib draws unrotated): rotation-aware mapping.
-        const rect = palangDrawRect(pw, ph, p.getRotation().angle, cx - w / 2, cy - h / 2, w, h);
-        p.drawImage(png, rect);
-      }
+    if (f.stamped) {
+      imagePages.add(p); // the palang is already baked in
+    } else {
+      const s = palangSpecFor(f, spec);
+      if (s) pageSpec.set(p, s);
     }
   }
 
+  for (const f of pdfs) {
+    const src = await loadPdf(await f.bytes(), f.name);
+    const pages = await doc.copyPages(src, src.getPageIndices());
+    const s = palangSpecFor(f, spec);
+    for (const pg of pages) {
+      const p = doc.addPage(pg);
+      if (s) pageSpec.set(p, s);
+    }
+  }
+
+  for (const [p, s] of pageSpec) {
+    if (imagePages.has(p)) continue; // compiled image: palang already baked in
+    // Each page has its OWN size: image pages are the chosen page size, but
+    // pages copied from a source PDF keep their native geometry (Letter,
+    // landscape, photo-size…).
+    const { width: pw, height: ph } = p.getSize();
+    const palang = await renderPalang(s);
+    const png = await doc.embedPng(palang.bytes);
+    const w = palang.rw;
+    const h = palang.rh;
+    const cx = (s.leftPt ?? (pw - palang.w) / 2) + palang.w / 2;
+    const cy = (s.topPt ?? (ph - palang.h) / 2) + palang.h / 2;
+    // Visual space (what the preview shows, pdf.js applies /Rotate) →
+    // user space (pdf-lib draws unrotated): rotation-aware mapping.
+    const rect = palangDrawRect(pw, ph, p.getRotation().angle, cx - w / 2, cy - h / 2, w, h);
+    p.drawImage(png, rect);
+  }
+
+  return doc.save();
+}
+
+/** Build ONE PDF from an explicit page plan, in order. Each entry names a
+ *  source (grouped by `key`, so a file is parsed once), a 1-based `page`, and
+ *  an optional extra `rotate` in degrees. Shared by Merge (page-level edits —
+ *  removal is applied by the caller filtering the plan) and Split/Extract. */
+export async function buildPdf(plan) {
+  const doc = await PDFDocument.create();
+  const cache = new Map(); // key -> parsed source PDFDocument
+  for (const p of plan) {
+    let src = cache.get(p.key);
+    if (!src) {
+      src = await loadPdf(await p.bytes(), p.name);
+      cache.set(p.key, src);
+    }
+    const [copied] = await doc.copyPages(src, [p.page - 1]);
+    if (p.rotate) {
+      const base = copied.getRotation().angle;
+      copied.setRotation(degrees((((base + p.rotate) % 360) + 360) % 360));
+    }
+    doc.addPage(copied);
+  }
   return doc.save();
 }

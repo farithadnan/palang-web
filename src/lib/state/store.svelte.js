@@ -3,11 +3,11 @@
 
 import { t, __bindLang } from "../i18n/index.js";
 import { SvelteMap } from "svelte/reactivity";
-import { processOffline, compileStampedImage } from "../engine/local-engine.js";
+import { processOffline, compileStampedImage, buildPdf } from "../engine/local-engine.js";
 import { openPdf, renderPdfPage } from "../engine/pdf-preview.js";
 import { LIMITS, loadLimits } from "../util/config.js";
 import { APP_VERSION } from "../util/version.js";
-import { defaultSpec, PAGE_DIMS, pageDims } from "../domain/domain.js";
+import { defaultSpec, PAGE_DIMS, pageDims, parseRangeGroups } from "../domain/domain.js";
 import { toast } from "./toast.svelte.js";
 import { RELEASES_URL, SITE_URL } from "../util/links.js";
 import { saveDocument, isNativeApp } from "../util/save.js";
@@ -66,15 +66,24 @@ export const app = $state({
   defaultText: savedDefaultText(),
   images: [],
   pdfs: [],
-  specs: [newSpec()],
-  specIndex: 0,
   preview: null, // { count, pages: [{kind,file,page,url,w,h,loading,err}] }
   previewFiles: [],
   previewLoading: false,
   activePage: 0,
   merge: { pages: [], active: 0 }, // flat ordered page list across all merge PDFs
+  split: { file: null, count: 0, ranges: "" }, // Extract tool: one PDF + chosen pages
+  prepare: {
+    // Stage 1 of the unified pipeline: ONE mixed basket + one export sheet.
+    items: [], // { id, kind:'image'|'pdf', file, url, pageCount }
+    paper: "fit",
+    stamp: false,
+    stampText: "UNTUK KEGUNAAN BANK SAHAJA",
+    merge: true, // merge everything into one PDF (vs one PDF per item)
+    filename: "",
+  },
   busy: false,
   result: null, // { name, blob, size, mode } — the file just produced
+  session: newSession(), // this run's summary: counts + recent outputs (in memory only)
   update: null, // { version } when a newer version.json is published
   lang: initialLang(), // ui language (en | ms)
   requestAdd: 0,
@@ -196,9 +205,11 @@ export function addImages(fileList) {
     app.images.push({
       id: "img-" + ++imageSeq,
       file,
-      url,
-      originalUrl: url,
+      url, // display: cropped(rotated(original))
+      originalUrl: url, // the raw file, and the rotation source
+      baseUrl: url, // rotated (uncropped); === originalUrl while rotation is 0
       crop: null,
+      rotationDeg: 0,
       enhance: false,
     });
   }
@@ -209,51 +220,137 @@ export function updateImage(id, patch) {
   if (im) Object.assign(im, patch);
 }
 
-/**
- * Apply a crop and show the RESULT: the gallery thumbnail is replaced with an
- * actually-cropped version of the photo, so "is it cropped or not" is visible.
- * The result is a Blob URL (not a base64 data URL) and is capped on its longest
- * side: `im.url` is only ever DISPLAYED (the engine re-crops the original File),
- * so a full-resolution PNG data URL would just burn mobile memory for nothing.
- */
+/* ---------- image preview rendering ----------
+   `originalUrl` is the raw file; `baseUrl` is the ROTATED (uncropped) preview;
+   `url` is what the app displays (cropped when a crop is set). The engine never
+   uses these: it re-crops the original File with the same rotation + fractions,
+   so preview and output stay in lock-step. */
+
 const MAX_PREVIEW_PX = 2400;
+
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+function canvasBlob(canvas, type) {
+  return new Promise((res) => canvas.toBlob(res, type, 0.92));
+}
+
+function imageMime(im) {
+  return im.file?.type === "image/png" ? "image/png" : "image/jpeg";
+}
+
+/** Revoke the derived (base/display) blob URLs — never the original. */
+function releaseDerived(im) {
+  for (const u of new Set([im.url, im.baseUrl])) {
+    if (u && u !== im.originalUrl) URL.revokeObjectURL(u);
+  }
+}
+
+function rotatedDeg(v) {
+  return (((v ?? 0) % 360) + 360) % 360;
+}
+
+/** Rebuild `baseUrl` from the original at the current rotation. */
+async function rebuildBase(im) {
+  const deg = rotatedDeg(im.rotationDeg);
+  const prev = im.baseUrl;
+  if (deg === 0) {
+    im.baseUrl = im.originalUrl;
+  } else {
+    const img = await loadImage(im.originalUrl);
+    const swap = deg === 90 || deg === 270;
+    const w = swap ? img.naturalHeight : img.naturalWidth;
+    const h = swap ? img.naturalWidth : img.naturalHeight;
+    const s = Math.min(1, MAX_PREVIEW_PX / Math.max(w, h));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(w * s));
+    canvas.height = Math.max(1, Math.round(h * s));
+    const ctx = canvas.getContext("2d");
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((deg * Math.PI) / 180);
+    ctx.drawImage(
+      img,
+      (-img.naturalWidth * s) / 2,
+      (-img.naturalHeight * s) / 2,
+      img.naturalWidth * s,
+      img.naturalHeight * s
+    );
+    const blob = await canvasBlob(canvas, imageMime(im));
+    im.baseUrl = blob ? URL.createObjectURL(blob) : im.originalUrl;
+  }
+  if (prev && prev !== im.originalUrl && prev !== im.baseUrl) URL.revokeObjectURL(prev);
+}
+
+/** Rebuild `url` (what is displayed) from `baseUrl` + the current crop. */
+async function rebuildDisplay(im) {
+  const prev = im.url;
+  if (!im.crop) {
+    im.url = im.baseUrl;
+  } else {
+    const img = await loadImage(im.baseUrl);
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    const l = Math.round(im.crop.l * w);
+    const t = Math.round(im.crop.t * h);
+    const r = Math.round(im.crop.r * w);
+    const b = Math.round(im.crop.b * h);
+    const cw = Math.max(1, r - l);
+    const ch = Math.max(1, b - t);
+    const canvas = document.createElement("canvas");
+    canvas.width = cw;
+    canvas.height = ch;
+    canvas.getContext("2d").drawImage(img, l, t, cw, ch, 0, 0, cw, ch);
+    const blob = await canvasBlob(canvas, imageMime(im));
+    im.url = blob ? URL.createObjectURL(blob) : im.baseUrl;
+  }
+  if (prev && prev !== im.originalUrl && prev !== im.url && prev !== im.baseUrl) {
+    URL.revokeObjectURL(prev);
+  }
+}
+
+async function refreshImage(im) {
+  await rebuildBase(im);
+  if (!app.images.includes(im)) return; // removed while decoding
+  await rebuildDisplay(im);
+}
+
+/** Rotate a photo in 90° steps; an existing crop stays in rotated space. */
+export function rotateImage(id, delta) {
+  const im = app.images.find((i) => i.id === id);
+  if (!im) return;
+  im.rotationDeg = rotatedDeg((im.rotationDeg ?? 0) + delta);
+  void refreshImage(im);
+}
+
+/** Commit a crop (fractions of the rotated image) and show the result. */
 export function cropPreview(id, crop) {
   const im = app.images.find((i) => i.id === id);
   if (!im) return;
-  const source = im.originalUrl || im.url;
-  const img = new Image();
-  img.onload = async () => {
-    if (!app.images.includes(im)) return; // removed while decoding
-    const w = img.naturalWidth;
-    const h = img.naturalHeight;
-    const l = Math.round(crop.l * w);
-    const t = Math.round(crop.t * h);
-    const r = Math.round(crop.r * w);
-    const b = Math.round(crop.b * h);
-    const cw = Math.max(1, r - l);
-    const ch = Math.max(1, b - t);
-    const s = Math.min(1, MAX_PREVIEW_PX / Math.max(cw, ch));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(cw * s));
-    canvas.height = Math.max(1, Math.round(ch * s));
-    canvas.getContext("2d").drawImage(img, l, t, cw, ch, 0, 0, canvas.width, canvas.height);
-    const isPng = im.file?.type === "image/png";
-    const blob = await new Promise((res) =>
-      canvas.toBlob(res, isPng ? "image/png" : "image/jpeg", 0.92)
-    );
-    if (!blob || !app.images.includes(im)) return;
-    if (im.url !== im.originalUrl) URL.revokeObjectURL(im.url);
-    im.url = URL.createObjectURL(blob);
-    im.crop = crop;
-  };
-  img.src = source;
+  im.crop = crop;
+  void rebuildDisplay(im);
+}
+
+/** Swap a photo with its neighbour — page order follows list order. */
+export function moveImage(id, delta) {
+  const i = app.images.findIndex((im) => im.id === id);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= app.images.length) return;
+  const tmp = app.images[i];
+  app.images[i] = app.images[j];
+  app.images[j] = tmp;
 }
 
 export function removeImage(id) {
   const index = app.images.findIndex((i) => i.id === id);
   if (index >= 0) {
     const im = app.images[index];
-    if (im.url !== im.originalUrl) URL.revokeObjectURL(im.url);
+    releaseDerived(im);
     URL.revokeObjectURL(im.originalUrl);
     app.images.splice(index, 1);
   }
@@ -263,18 +360,20 @@ export function removeImages(ids) {
   const doomed = new Set(ids);
   for (const im of app.images) {
     if (doomed.has(im.id)) {
-      if (im.url !== im.originalUrl) URL.revokeObjectURL(im.url);
+      releaseDerived(im);
       URL.revokeObjectURL(im.originalUrl);
     }
   }
   app.images = app.images.filter((im) => !doomed.has(im.id));
 }
 
-/** Undo: back to the original photo, crop and enhance cleared. */
+/** Undo: back to the original photo; crop, rotation and enhance cleared. */
 export function revertImage(id) {
   const im = app.images.find((i) => i.id === id);
   if (!im) return;
-  if (im.url !== im.originalUrl) URL.revokeObjectURL(im.url);
+  releaseDerived(im);
+  im.rotationDeg = 0;
+  im.baseUrl = im.originalUrl;
   im.url = im.originalUrl;
   im.crop = null;
   im.enhance = false;
@@ -283,13 +382,15 @@ export function revertImage(id) {
 export function replaceImage(id, file) {
   const im = app.images.find((i) => i.id === id);
   if (!im) return;
-  if (im.url !== im.originalUrl) URL.revokeObjectURL(im.url);
+  releaseDerived(im);
   URL.revokeObjectURL(im.originalUrl);
   const url = URL.createObjectURL(file);
   im.file = file;
   im.url = url;
   im.originalUrl = url;
+  im.baseUrl = url;
   im.crop = null;
+  im.rotationDeg = 0;
   im.enhance = false;
 }
 
@@ -320,22 +421,37 @@ export function addPdfs(fileList) {
  *  1000+ page files) and render the page being viewed. */
 async function buildMergePreview() {
   const seq = ++mergePreviewSeq;
+  // Preserve any page-level edits (removed / rotation) across a rebuild, keyed
+  // by source + page, so reordering files does not silently undo page work.
+  const prev = new Map(app.merge.pages.map((p) => [`${p.pdfId}:${p.page}`, p]));
   const pages = [];
   let cum = 0;
   for (const p of app.pdfs) {
     try {
       const doc = await openPdf(p.file);
       if (cum + doc.count > LIMITS.pdfPages) {
-        flash("error", t("msgOverflow", { n: LIMITS.pdfPages }));
+        flash("error", t("msgOverflowFile", { name: p.file.name, n: LIMITS.pdfPages }));
         break;
       }
       for (let i = 1; i <= doc.count; i++) {
-        pages.push({ pdfId: p.id, file: p.file, page: i, url: null, w: null, h: null, loading: false, err: false });
+        const was = prev.get(`${p.id}:${i}`);
+        pages.push({
+          pdfId: p.id,
+          file: p.file,
+          page: i,
+          url: null,
+          w: null,
+          h: null,
+          loading: false,
+          err: false,
+          removed: was?.removed ?? false,
+          rotationDeg: was?.rotationDeg ?? 0,
+        });
       }
       cum += doc.count;
     } catch {
       console.warn("pdf structure failed:", p.file.name);
-      pages.push({ pdfId: p.id, file: p.file, page: 1, url: null, w: null, h: null, loading: false, err: true });
+      pages.push({ pdfId: p.id, file: p.file, page: 1, url: null, w: null, h: null, loading: false, err: true, removed: false, rotationDeg: 0 });
     }
   }
   if (seq !== mergePreviewSeq) return;
@@ -345,6 +461,30 @@ async function buildMergePreview() {
 }
 
 let mergePreviewSeq = 0;
+
+/** Toggle a page out of (or back into) the merged output. Recoverable: the page
+ *  stays in the list, dimmed, and export simply filters it out. */
+export function removeMergePage(index) {
+  const pg = app.merge.pages?.[index];
+  if (!pg) return;
+  pg.removed = !pg.removed;
+}
+
+/** Rotate ONE page of the merged output in 90° steps. */
+export function rotateMergePage(index, delta) {
+  const pg = app.merge.pages?.[index];
+  if (!pg) return;
+  pg.rotationDeg = ((((pg.rotationDeg ?? 0) + delta) % 360) + 360) % 360;
+}
+
+/** Move ONE page earlier/later in the merged output. */
+export function moveMergePage(index, delta) {
+  const pages = app.merge.pages;
+  const j = index + delta;
+  if (!pages || index < 0 || index >= pages.length || j < 0 || j >= pages.length) return;
+  [pages[index], pages[j]] = [pages[j], pages[index]];
+  app.merge.active = j;
+}
 
 export function movePdf(id, delta) {
   const index = app.pdfs.findIndex((p) => p.id === id);
@@ -462,7 +602,7 @@ function clearPreview() {
        try {
          const doc = await openPdf(f);
          if (cumPdf + doc.count > LIMITS.pdfPages) {
-           flash("error", t("msgOverflow", { n: LIMITS.pdfPages }));
+           flash("error", t("msgOverflowFile", { name: f.name, n: LIMITS.pdfPages }));
            cumPdf = LIMITS.pdfPages;
          }
          const until = Math.min(doc.count, LIMITS.pdfPages - cumPdf);
@@ -583,6 +723,20 @@ function clearPreview() {
    void ensurePreviewPage(index);
  }
 
+ /** Swap a palang-basket file with its neighbour. The page order of the output
+  *  follows the list, so this reorders the produced pages too. The per-file
+  *  palang list is swapped with its file to stay aligned. */
+ export function movePreviewFile(index, delta) {
+   const j = index + delta;
+   if (index < 0 || index >= app.previewFiles.length || j < 0 || j >= app.previewFiles.length) return;
+   [app.previewFiles[index], app.previewFiles[j]] = [app.previewFiles[j], app.previewFiles[index]];
+   [app.stamp[index], app.stamp[j]] = [app.stamp[j], app.stamp[index]];
+   app.activePage = 0;
+   clearPreview();
+   app.previewLoading = true;
+   void buildPreviewMeta(app.previewFiles);
+ }
+
  /** Render a PDF's FIRST page once, for the Palang basket thumbnail (so a PDF
   *  shows like an image instead of a file icon). Cached per File and queued so
   *  many PDFs render one at a time; "" marks a failed render (icon fallback). */
@@ -624,43 +778,6 @@ export function updateSpec(patch) {
   app.compiledFiles.clear();
 }
 
-export function setSpecIndex(i) {
-  if (i >= 0 && i < app.specs.length) {
-    app.specIndex = i;
-    app.compiledFiles.clear();
-  }
-}
-
-/** Add another palang marking (multi-stamp). A new band stacks below the
- *  previous one when that one is centred, so it is visible immediately. */
-export function addSpec() {
-  const base = newSpec();
-  // Stack the new marking below the one the user is currently looking at
-  // (the active spec), never at a guessed 60pt that lands it against the top
-  // edge. Fall back to a comfortable mid-page offset when the active stamp
-  // is centred (topPt null).
-  const active = app.specs[app.specIndex] ?? app.specs[app.specs.length - 1];
-  const fallbackTop = 200;
-  const top = (active && active.topPt != null ? active.topPt : fallbackTop) + (active?.heightPt ?? 48) + 16;
-  base.topPt = top;
-  app.specs = [...app.specs, base];
-  app.specIndex = app.specs.length - 1;
-  app.compiledFiles.clear();
-}
-
-export function removeSpecAt(i) {
-  if (i < 0 || i >= app.specs.length || app.specs.length <= 1) return;
-  app.specs = app.specs.filter((_, k) => k !== i);
-  app.specIndex = Math.min(Math.max(0, app.specIndex === i ? i - 1 : app.specIndex), app.specs.length - 1);
-  app.compiledFiles.clear();
-}
-
-export function resetSpec() {
-  app.specs = [newSpec()];
-  app.specIndex = 0;
-  app.compiledFiles.clear();
-}
-
 /* ---------- compiled ("second temp") images ---------- */
 
 /** The image/page the user is currently editing in the palang editor. */
@@ -674,7 +791,7 @@ function fileIndex(file) {
 /** Each photo keeps its OWN palang spec (per-image stamps). Lazy-seeds the
  *  default stamp the first time an image is edited. */
 export function specFor(file) {
-  // Pure read: specs are seeded when files are picked (pickPreviewFiles), so
+  // Pure read: a spec is seeded when a file is picked (pickPreviewFiles), so
   // this never mutates state — calling it from a $derived is safe.
   const i = file ? app.previewFiles.indexOf(file) : -1;
   return i >= 0 && app.stamp[i] ? app.stamp[i] : newSpec();
@@ -701,15 +818,16 @@ export async function applyCompiled({ onlyMissing = false } = {}) {
     if (onlyMissing && app.compiledFiles.has(f)) continue;
     // Per-image: bake THIS photo with ITS own stamp (or none if removed). Every
     // photo is always compiled, so the output honours each image's
-    // stamped / not-stamped state instead of the old document-wide specs.
+    // stamped / not-stamped state instead of the old document-wide spec.
     const i = fileIndex(f);
     const s = i >= 0 ? app.stamp[i] : null;
-    const specs = s && s.armed ? [s] : [];
+    // One palang per file: bake it when armed, otherwise nothing.
+    const spec = s && s.armed ? s : null;
     try {
       const out = await compileStampedImage(
         { bytes: () => f.arrayBuffer(), mime: f.type, setting: null },
         app.pageSize,
-        specs
+        spec
       );
       app.compiledFiles.set(f, new Blob([out.bytes], { type: "image/png" }));
     } catch (err) {
@@ -797,6 +915,30 @@ export function dismissUpdate() {
   app.update = null;
 }
 
+/* ---------- session summary ----------
+   What was made THIS run. In memory only — never persisted, cleared on close —
+   so the "nothing is stored" guarantee holds. */
+
+const SESSION_LIMIT = 10; // recent outputs kept for re-save
+let outputSeq = 0;
+
+function newSession() {
+  return { startedAt: Date.now(), outputs: [], counts: { convert: 0, palang: 0, merge: 0, prepare: 0 } };
+}
+
+/** Record one produced file. Newest first; the oldest is dropped past the cap
+ *  (its blob reference is released with it). */
+export function recordOutput(entry) {
+  const s = app.session;
+  s.counts[entry.mode] = (s.counts[entry.mode] ?? 0) + 1;
+  s.outputs = [{ id: `out-${++outputSeq}`, at: Date.now(), ...entry }, ...s.outputs].slice(0, SESSION_LIMIT);
+}
+
+export function clearSession() {
+  app.session = newSession();
+  flash("ok", t("sessionCleared"));
+}
+
 /* ---------- generate ---------- */
 
 export function canGenerate() {
@@ -808,8 +950,16 @@ export function canMerge() {
   return app.pdfs.length >= 2 && !app.busy;
 }
 
-const DONE_KEY = { convert: "msgDoneConvert", palang: "msgDonePalang", merge: "msgDoneMerge" };
-const FAIL_KEY = { convert: "msgFailConvert", palang: "msgFailPalang", merge: "msgFailMerge" };
+const DONE_KEY = { convert: "msgDoneConvert", palang: "msgDonePalang", merge: "msgDoneMerge", prepare: "msgDonePrepare" };
+const FAIL_KEY = { convert: "msgFailConvert", palang: "msgFailPalang", merge: "msgFailMerge", split: "msgFailSplit", prepare: "msgFailPrepare" };
+
+/** Local date+time for filenames (toISOString is UTC, so a late-day run in
+ *  UTC+8 carried yesterday's date). One helper, used by every export. */
+function localStamp() {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+}
 
 export async function generate(mode = "convert") {
   const files =
@@ -826,6 +976,24 @@ export async function generate(mode = "convert") {
     flash("error", t("mgNeedMore"));
     return;
   }
+  // The merged output follows the page plan (order + per-page rotation), minus
+  // any page the user removed. Built here so the UI can validate early.
+  const mergePlan =
+    mode === "merge"
+      ? app.merge.pages
+          .filter((p) => !p.removed && !p.err)
+          .map((p) => ({
+            key: p.pdfId,
+            name: p.file.name,
+            bytes: () => p.file.arrayBuffer(),
+            page: p.page,
+            rotate: p.rotationDeg,
+          }))
+      : [];
+  if (mode === "merge" && !mergePlan.length) {
+    flash("error", t("mgNoPages"));
+    return;
+  }
   if (mode === "palang") {
     const missing = app.stamp.some(
       (x) => x && x.armed && x.mode === "band" && !(x.text || "").trim()
@@ -836,11 +1004,7 @@ export async function generate(mode = "convert") {
     }
   }
 
-  // LOCAL date+time: toISOString() is UTC, so a filename made late in the day
-  // in UTC+8 carried yesterday's date (the "outdated timestamp" report).
-  const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  const stamp = localStamp();
   const filename =
     mode === "merge"
       ? `palang-merged-${stamp}.pdf`
@@ -854,21 +1018,217 @@ export async function generate(mode = "convert") {
       // all pre-compiled, so a later page-space pass never re-stamps them.
       await applyCompiled({ onlyMissing: true });
     }
-    const blob = await offlineBlob(mode, files);
+    let blob;
+    if (mode === "merge") {
+      blob = new Blob([await buildPdf(mergePlan)], { type: "application/pdf" });
+    } else {
+      blob = await offlineBlob(files);
+    }
     const how = await saveDocument(blob, filename);
     app.result = { name: filename, blob, size: blob.size, mode };
+    recordOutput({ mode, name: filename, blob, size: blob.size, files: files.length });
     if (how !== "cancelled") flash("ok", t(DONE_KEY[mode] ?? DONE_KEY.convert));
   } catch (err) {
-    // Short state toast first; the reason is appended only when the engine
-    // hands us one (an unknown throw must not print "undefined").
-    const reason = typeof err?.message === "string" && err.message ? " · " + err.message.slice(0, 90) : "";
-    flash("error", (t(FAIL_KEY[mode] ?? FAIL_KEY.convert) + reason).trim());
+    flash("error", generateErrorText(mode, err));
   } finally {
     app.busy = false;
   }
 }
 
-async function offlineBlob(mode, files) {
+/** Turn a generate failure into a localised message: known PDF errors name the
+ *  file and the reason; anything else keeps the short state line + the raw
+ *  reason (never "undefined"). */
+function generateErrorText(mode, err) {
+  if (err?.code === "pdf-locked") return t("msgPdfLocked", { name: err.fileName });
+  if (err?.code === "pdf-unreadable") return t("msgPdfBroken", { name: err.fileName });
+  const reason = typeof err?.message === "string" && err.message ? " · " + err.message.slice(0, 90) : "";
+  return (t(FAIL_KEY[mode] ?? FAIL_KEY.convert) + reason).trim();
+}
+
+/* ---------- extract (split) ---------- */
+
+/** Choose the PDF to extract from; page count is read lazily. */
+export function setSplitFile(file) {
+  app.split = { file: file ?? null, count: 0, ranges: app.split.ranges };
+  if (!file) return;
+  void openPdf(file)
+    .then((doc) => {
+      if (app.split.file === file) app.split.count = doc.count;
+    })
+    .catch(() => {
+      if (app.split.file === file) app.split.count = 0;
+    });
+}
+
+export function setSplitRanges(text) {
+  app.split.ranges = text;
+}
+
+/** Extract the chosen ranges: one PDF, or one PDF per range. */
+export async function generateSplit(onePerRange) {
+  const file = app.split.file;
+  if (!file || !app.split.count) {
+    flash("error", t("splitChooseFirst"));
+    return;
+  }
+  const groups = parseRangeGroups(app.split.ranges, app.split.count);
+  if (!groups.length) {
+    flash("error", t("splitNoPages"));
+    return;
+  }
+  const stamp = localStamp();
+  app.busy = true;
+  try {
+    const outputs = onePerRange ? groups : [groups.flat()];
+    let first = null;
+    for (let i = 0; i < outputs.length; i++) {
+      const plan = outputs[i].map((page) => ({
+        key: "split",
+        name: file.name,
+        bytes: () => file.arrayBuffer(),
+        page,
+        rotate: 0,
+      }));
+      const blob = new Blob([await buildPdf(plan)], { type: "application/pdf" });
+      const name = onePerRange
+        ? `palang-split-${i + 1}-${stamp}.pdf`
+        : `palang-extracted-${stamp}.pdf`;
+      await saveBlob(blob, name);
+      if (!first) first = { name, blob, size: blob.size, mode: "split" };
+    }
+    app.result = first;
+    flash("ok", t("splitDone"));
+  } catch (err) {
+    flash("error", generateErrorText("split", err));
+  } finally {
+    app.busy = false;
+  }
+}
+
+/* ---------- prepare (unified pipeline, stage 1) ----------
+   ONE mixed basket of images and PDFs, exported by the SAME engine path as the
+   rest of the app. Per-item editing (crop/rotate/enhance/placement) is stage 2;
+   here the basket, paper size, optional purpose stamp and export shape are
+   unified. */
+
+let prepareSeq = 0;
+
+function isPdfFile(file) {
+  return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+}
+
+export function addPrepareFiles(fileList) {
+  const room = LIMITS.images - app.prepare.items.length;
+  if (room <= 0) {
+    flash("error", t("msgMaxImages", { n: LIMITS.images }));
+    return;
+  }
+  for (const file of fileList.slice(0, room)) {
+    if (file.size > LIMITS.fileMb * 1024 * 1024) {
+      flash("error", t("msgOverMb", { name: file.name, n: LIMITS.fileMb }));
+      continue;
+    }
+    const isPdf = isPdfFile(file);
+    const item = {
+      id: `prep-${++prepareSeq}`,
+      kind: isPdf ? "pdf" : "image",
+      file,
+      url: isPdf ? null : URL.createObjectURL(file),
+      pageCount: 0,
+    };
+    app.prepare.items.push(item);
+    if (isPdf) void readPreparePageCount(item);
+  }
+}
+
+async function readPreparePageCount(item) {
+  try {
+    const doc = await openPdf(item.file);
+    if (app.prepare.items.includes(item)) item.pageCount = doc.count;
+  } catch {
+    /* unreadable: the export will report it */
+  }
+}
+
+export function removePrepareItem(id) {
+  const i = app.prepare.items.findIndex((x) => x.id === id);
+  if (i < 0) return;
+  const item = app.prepare.items[i];
+  if (item.url) URL.revokeObjectURL(item.url);
+  app.prepare.items.splice(i, 1);
+}
+
+export function movePrepareItem(id, delta) {
+  const i = app.prepare.items.findIndex((x) => x.id === id);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= app.prepare.items.length) return;
+  const tmp = app.prepare.items[i];
+  app.prepare.items[i] = app.prepare.items[j];
+  app.prepare.items[j] = tmp;
+}
+
+export function setPrepare(patch) {
+  Object.assign(app.prepare, patch);
+}
+
+/** The engine setup for a slice of prepare items (images vs pdfs). */
+function prepareSetups(items) {
+  const images = [];
+  const pdfs = [];
+  for (const it of items) {
+    const bytes = () => it.file.arrayBuffer();
+    if (it.kind === "pdf") {
+      pdfs.push({ bytes, name: it.file.name, mime: "application/pdf", isPdf: true });
+    } else {
+      images.push({ bytes, mime: it.file.type || "image/jpeg", setting: null, isPdf: false });
+    }
+  }
+  return { images, pdfs };
+}
+
+export async function generatePrepare() {
+  const items = app.prepare.items;
+  if (!items.length) {
+    flash("error", t("msgAddFirst"));
+    return;
+  }
+  const paper = app.prepare.paper;
+  const stampText = (app.prepare.stampText || "").trim();
+  const spec = app.prepare.stamp ? { ...defaultSpec(), text: stampText || defaultSpec().text } : null;
+  const stamp = localStamp();
+  const base = (app.prepare.filename || "palang-prepared").replace(/\.pdf$/i, "").trim() || "palang-prepared";
+  app.busy = true;
+  try {
+    if (app.prepare.merge) {
+      const setup = prepareSetups(items);
+      const out = await processOffline({ images: setup.images, pdfs: setup.pdfs, pageSize: paper, spec });
+      const blob = new Blob([out], { type: "application/pdf" });
+      const filename = `${base}-${stamp}.pdf`;
+      await saveBlob(blob, filename);
+      app.result = { name: filename, blob, size: blob.size, mode: "prepare" };
+      recordOutput({ mode: "prepare", name: filename, blob, size: blob.size, files: items.length });
+    } else {
+      let first = null;
+      for (let i = 0; i < items.length; i++) {
+        const setup = prepareSetups([items[i]]);
+        const out = await processOffline({ images: setup.images, pdfs: setup.pdfs, pageSize: paper, spec });
+        const blob = new Blob([out], { type: "application/pdf" });
+        const filename = `${base}-${i + 1}-${stamp}.pdf`;
+        await saveBlob(blob, filename);
+        if (!first) first = { name: filename, blob, size: blob.size, mode: "prepare" };
+      }
+      app.result = first;
+      recordOutput({ mode: "prepare", name: first.name, blob: first.blob, size: first.size, files: items.length });
+    }
+    flash("ok", t("msgDonePrepare"));
+  } catch (err) {
+    flash("error", generateErrorText("prepare", err));
+  } finally {
+    app.busy = false;
+  }
+}
+
+async function offlineBlob(files) {
   // Everything on-device: images are cropped/enhanced/stamped in the
   // browser; nothing is uploaded anywhere.
   const setup = await Promise.all(
@@ -881,6 +1241,11 @@ async function offlineBlob(mode, files) {
       const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
       const im = app.images.find((x) => x.file === f);
       const compiled = app.compiledFiles.get(f);
+      // This file's OWN palang (one per file). Convert/merge files are not in
+      // previewFiles, so they get none — each file's band stays on its own
+      // pages instead of every file's palang landing on every PDF page.
+      const fi = app.previewFiles.indexOf(f);
+      const ownSpec = fi >= 0 ? app.stamp[fi] : null;
       if (compiled && !isPdf) {
         // The photo already carries the baked palang ("second temp") — the
         // engine must NOT stamp it again.
@@ -895,8 +1260,12 @@ async function offlineBlob(mode, files) {
       return {
         bytes: () => Promise.resolve(bytes),
         mime,
-        setting: im ? { enhance: im.enhance, crop: im.crop } : null,
+        name: f.name,
+        setting: im ? { enhance: im.enhance, crop: im.crop, rotation: im.rotationDeg } : null,
         isPdf,
+        // Used only for PDF pages, and as a page-space fallback when a photo
+        // could not be pre-compiled.
+        spec: ownSpec,
       };
     })
   );
@@ -904,9 +1273,6 @@ async function offlineBlob(mode, files) {
     images: setup.filter((s) => !s.isPdf),
     pdfs: setup.filter((s) => s.isPdf),
     pageSize: app.pageSize,
-    // Images are pre-compiled per image; this spec list only pages-stamps PDF
-    // pages (a per-file concern for the image case is handled by the bake).
-    specs: mode === "palang" ? app.stamp.filter((s) => s && s.armed) : [],
   });
   return new Blob([out], { type: "application/pdf" });
 }
@@ -915,11 +1281,50 @@ export function clearResult() {
   app.result = null;
 }
 
+/** ONE path to (re-)save any produced file, so Result and Session cannot
+ *  drift. Returns the platform outcome ("saved" | "shared" | "downloaded" |
+ *  "cancelled"). */
+async function saveBlob(blob, name) {
+  const how = await saveDocument(blob, name);
+  if (how === "shared" || how === "saved") flash("ok", t("msgSaved"));
+  return how;
+}
+
 /** Save the current result again — the same platform path as the first save. */
 export async function saveResult() {
-  if (!app.result) return;
-  const how = await saveDocument(app.result.blob, app.result.name);
-  if (how === "shared" || how === "saved") flash("ok", t("msgSaved"));
+  if (app.result) await saveBlob(app.result.blob, app.result.name);
+}
+
+/** Re-save an entry from the session summary. */
+export async function saveOutput(out) {
+  if (out) await saveBlob(out.blob, out.name);
+}
+
+/* ---------- tool handoff ----------
+   Move a produced file into the next tool's basket, so the user never re-adds
+   their own output. The store only seeds; the caller navigates (SOC). */
+
+function seedBasket(blob, name, target) {
+  const file = new File([blob], name, { type: "application/pdf" });
+  if (target === "palang") {
+    pickPreviewFiles([file]);
+    return true;
+  }
+  if (target === "merge") {
+    addPdfs([file]);
+    return true;
+  }
+  return false;
+}
+
+/** Seed `target` from the current result. Returns false when there is none. */
+export function sendResultTo(target) {
+  return app.result ? seedBasket(app.result.blob, app.result.name, target) : false;
+}
+
+/** Seed `target` from a session output (an earlier file). */
+export function sendOutputTo(out, target) {
+  return out ? seedBasket(out.blob, out.name, target) : false;
 }
 
 export function humanSize(bytes) {

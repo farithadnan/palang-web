@@ -1,15 +1,16 @@
 <script>
-  /** Merge tab: dropzone + ordered PDF list + a fullscreen page viewer opened
-   *  by tapping a row. The preview walks the WHOLE merged output — every
-   *  file's pages, in merge order — one page at a time, so a 1000-page
-   *  document never triggers bulk work. */
+  /** Merge tab: merge PDFs, or switch to Extract. The preview walks the WHOLE
+   *  merged output — every file's pages, in merge order — one page at a time,
+   *  and each page can be rotated, moved, or dropped from the output. */
   import ToolHeader from "../ui/ToolHeader.svelte";
   import Dropzone from "../ui/Dropzone.svelte";
   import OrderedList from "../ui/OrderedList.svelte";
+  import Segmented from "../ui/Segmented.svelte";
   import Icon from "../ui/Icon.svelte";
   import ResultBar from "../ui/ResultBar.svelte";
   import BusyButton from "../ui/BusyButton.svelte";
   import Skeleton from "../ui/Skeleton.svelte";
+  import SplitPanel from "./SplitPanel.svelte";
   import { t } from "../../lib/i18n/index.js";
   import { takeFiles, ACCEPT } from "../../lib/util/pick.js";
   import {
@@ -17,6 +18,9 @@
     addPdfs,
     movePdf,
     removePdf,
+    rotateMergePage,
+    moveMergePage,
+    removeMergePage,
     selectMergeFile,
     stepMerge,
     setMergePage,
@@ -25,8 +29,14 @@
     requestAdd,
   } from "../../lib/state/store.svelte.js";
 
+  let mode = $state("merge"); // "merge" | "split"
   let mergeInput = $state(null);
   let fsOpen = $state(false); // fullscreen page preview
+
+  const modeOptions = $derived([
+    { id: "merge", label: t("mergeLabel") },
+    { id: "split", label: t("splitTab") },
+  ]);
 
   // The topbar "+" is a counter: open the picker only when it CHANGES, or
   // every mount re-opens the chooser by itself.
@@ -61,59 +71,76 @@
     if (!mergePage) return "";
     let fileCount = 0;
     for (const pg of app.merge.pages) if (pg.pdfId === mergePage.pdfId) fileCount++;
-    return mergePage.file.name + " · " + mergePage.page + " of " + fileCount + (mergePage.err ? " · " + t("mgPrevUnavail") : "");
+    const tags = [
+      mergePage.file.name,
+      mergePage.page + " of " + fileCount,
+      mergePage.err ? t("mgPrevUnavail") : "",
+      mergePage.removed ? t("mgRemoved") : "",
+    ].filter(Boolean);
+    return tags.join(" · ");
   }
 </script>
 
 <div class="panel flat">
-  <ToolHeader title={t("mergeLabel")} help={t("helpMerge")} onAdd={requestAdd} addLabel={t("addFiles")} />
-
-  <input
-    bind:this={mergeInput}
-    class="hidden-input"
-    id="merge-more"
-    type="file"
-    accept={ACCEPT.pdf}
-    multiple
-    onchange={(e) => {
-      const picked = takeFiles(e.currentTarget);
-      if (picked.length) addPdfs(picked);
-    }}
-  />
-
-  {#if !app.pdfs.length}
-    <Dropzone
-      id="merge-files"
-      accept={ACCEPT.pdf}
-      multiple
-      main={t("mgChoose")}
-      sub={t("mgPickHint")}
-      icon="merge"
-      onPick={addPdfs}
-      onRequest={() => mergeInput?.click()}
-    />
+  {#if mode === "merge"}
+    <ToolHeader title={t("mergeLabel")} help={t("helpMerge")} onAdd={requestAdd} addLabel={t("addFiles")} />
   {:else}
-    <OrderedList
-      items={items}
-      onSelect={openFs}
-      onMove={movePdf}
-      onRemove={removePdf}
-      empty=""
-    />
-    {#if app.pdfs.length < 2}
-      <p class="caption merge-hint">{t("mgNeedMore")}</p>
-    {/if}
+    <ToolHeader title={t("splitTitle")} help={t("helpSplit")} />
   {/if}
 
-  <div class="actbar">
-    <BusyButton
-      busy={app.busy}
-      disabled={!canMerge()}
-      label={t("mergeLabel")}
-      busyLabel={t("working")}
-      onclick={() => generate("merge")}
+  <Segmented options={modeOptions} value={mode} onchange={(v) => (mode = v)} label={t("pdfTools")} />
+
+  {#if mode === "merge"}
+    <input
+      bind:this={mergeInput}
+      class="hidden-input"
+      id="merge-more"
+      type="file"
+      accept={ACCEPT.pdf}
+      multiple
+      onchange={(e) => {
+        const picked = takeFiles(e.currentTarget);
+        if (picked.length) addPdfs(picked);
+      }}
     />
-  </div>
+
+    {#if !app.pdfs.length}
+      <Dropzone
+        id="merge-files"
+        accept={ACCEPT.pdf}
+        multiple
+        main={t("mgChoose")}
+        sub={t("mgPickHint")}
+        icon="merge"
+        onPick={addPdfs}
+        onRequest={() => mergeInput?.click()}
+      />
+    {:else}
+      <OrderedList
+        items={items}
+        onSelect={openFs}
+        onMove={movePdf}
+        onRemove={removePdf}
+        empty=""
+      />
+      {#if app.pdfs.length < 2}
+        <p class="caption merge-hint">{t("mgNeedMore")}</p>
+      {/if}
+    {/if}
+
+    <div class="actbar">
+      <BusyButton
+        busy={app.busy}
+        disabled={!canMerge()}
+        label={t("mergeLabel")}
+        busyLabel={t("working")}
+        onclick={() => generate("merge")}
+      />
+    </div>
+  {:else}
+    <SplitPanel />
+  {/if}
+
   <ResultBar />
 </div>
 
@@ -156,6 +183,7 @@
     max-height: 100%;
     object-fit: contain;
     border-radius: 6px;
+    transition: transform 0.15s ease;
   }
   .mgfs-skel { width: min(70%, 26rem); max-height: 100%; aspect-ratio: 1 / 1.414; }
   .mgfs-bar {
@@ -169,6 +197,43 @@
     padding: 0.3rem 0.9rem;
     margin-bottom: 0.5rem;
     box-shadow: var(--shadow);
+  }
+  .mgfs-ops {
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.3rem;
+    margin-bottom: 0.9rem;
+    box-shadow: var(--shadow);
+  }
+  .mgfs-ops .op {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .mgfs-ops .op:hover { background: color-mix(in srgb, var(--muted) 12%, transparent); }
+  .mgfs-ops .op:disabled { opacity: 0.4; cursor: default; }
+  .mgfs-ops .op.remove { color: var(--bad); }
+  .mgfs-ops .op.labelled {
+    width: auto;
+    height: 2.4rem;
+    gap: 0.35rem;
+    padding: 0 0.7rem;
+    border-radius: 999px;
+    font: inherit;
+    font-size: var(--fs-btn);
+    font-weight: 600;
   }
   .mgfs-range {
     align-self: center;
@@ -189,7 +254,11 @@
     </div>
     <div class="mgfs-stage">
       {#if mergePage.url}
-        <img src={mergePage.url} alt={fileContext()} />
+        <img
+          src={mergePage.url}
+          alt={fileContext()}
+          style="transform:rotate({mergePage.rotationDeg ?? 0}deg); opacity:{mergePage.removed ? 0.35 : 1}"
+        />
       {:else if mergePage.loading}
         <div class="mgfs-skel" role="status" aria-label={t("mgRendering")}>
           <Skeleton height="100%" width="100%" />
@@ -217,6 +286,42 @@
         onclick={() => stepMerge(1)}
       >
         <Icon name="chevR" size={20} />
+      </button>
+    </div>
+    <div class="mgfs-ops" role="toolbar" aria-label={t("mergeLabel")}>
+      <button type="button" class="op" aria-label={t("viewRotateLeft")} title={t("viewRotateLeft")} onclick={() => rotateMergePage(app.merge.active, -90)}>
+        <Icon name="rotateL" size={18} />
+      </button>
+      <button type="button" class="op" aria-label={t("viewRotateRight")} title={t("viewRotateRight")} onclick={() => rotateMergePage(app.merge.active, 90)}>
+        <Icon name="rotateR" size={18} />
+      </button>
+      <button
+        type="button"
+        class="op"
+        aria-label={t("olUp")}
+        title={t("olUp")}
+        disabled={app.merge.active <= 0}
+        onclick={() => moveMergePage(app.merge.active, -1)}
+      >
+        <Icon name="chevL" size={18} />
+      </button>
+      <button
+        type="button"
+        class="op"
+        aria-label={t("olDown")}
+        title={t("olDown")}
+        disabled={app.merge.active >= total - 1}
+        onclick={() => moveMergePage(app.merge.active, 1)}
+      >
+        <Icon name="chevR" size={18} />
+      </button>
+      <button
+        type="button"
+        class="op labelled {mergePage.removed ? '' : 'remove'}"
+        onclick={() => removeMergePage(app.merge.active)}
+      >
+        <Icon name={mergePage.removed ? "reset" : "trash"} size={16} />
+        {mergePage.removed ? t("mgRestore") : t("mgRemove")}
       </button>
     </div>
     {#if total > 1}

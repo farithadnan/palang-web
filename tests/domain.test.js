@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildPalangSpec,
   defaultSpec,
   fittedPageSize,
-  imageSettings,
   PAGE_DIMS,
   pageDims,
-  pagesValue,
+  palangLabel,
+  parseRangeGroups,
 } from "../src/lib/domain/domain.js";
 
 describe("pageDims — the page box for an image", () => {
@@ -46,111 +45,48 @@ describe("fittedPageSize", () => {
   });
 });
 
-describe("pagesValue", () => {
-  it("passes through simple targets", () => {
-    expect(pagesValue("all", "")).toBe("all");
-    expect(pagesValue("odd", "")).toBe("odd");
-  });
-  it("falls back to all for an empty custom box", () => {
-    expect(pagesValue("custom", "  ")).toBe("all");
-    expect(pagesValue("custom", "1, 3, 5-8")).toBe("1, 3, 5-8");
-  });
-});
-
-describe("buildPalangSpec", () => {
-  it("builds a centred lines band by default (transparent, text-coloured)", () => {
-    const spec = defaultSpec(); // style: "lines"
-    spec.text = "UNTUK KEGUNAAN BANK SAHAJA";
-    const out = buildPalangSpec(spec, true);
-    expect(out.mode).toBe("band");
-    expect(out.band_style).toBe("lines");
-    expect(out.pages).toBe("all");
-    expect(out.position.anchor).toBe("center");
-    expect(out.position.top_pt).toBeUndefined();
-    expect(out.opacity).toBe(1.0);
-    expect(out.label.text).toBe("UNTUK KEGUNAAN BANK SAHAJA");
-    // Lines style is monochrome: text shares the bar colour.
-    expect(out.label.color).toBe(spec.color);
-  });
-
-  it("builds a filled see-through band with white text", () => {
+describe("palangLabel — the only shape the engine draws", () => {
+  it("returns the trimmed text, the band colour and the font size", () => {
     const spec = defaultSpec();
-    spec.style = "see-through";
-    spec.text = "UNTUK KEGUNAAN BANK SAHAJA";
-    const out = buildPalangSpec(spec, true);
-    expect(out.band_style).toBe("filled");
-    expect(out.opacity).toBe(0.6);
-    expect(out.label.color).toBe("#FFFFFF");
-  });
-
-  it("emits absolute points for canvas mode", () => {
-    const spec = defaultSpec();
-    spec.topPt = 120;
-    spec.heightPt = 40;
-    const out = buildPalangSpec(spec, false);
-    expect(out.position.top_pt).toBe(120);
-    expect(out.position.anchor).toBeUndefined();
-    expect(out.height_pt).toBe(40);
-  });
-
-  it("emits left_pt for a freely placed lines band", () => {
-    const spec = defaultSpec(); // style: "lines"
-    spec.topPt = 300;
-    spec.leftPt = 140;
-    const out = buildPalangSpec(spec, false);
-    expect(out.position.left_pt).toBe(140);
-    expect(out.position.top_pt).toBe(300);
-  });
-
-  it("maps rotation and text size into the API spec", () => {
-    const spec = defaultSpec();
-    spec.text = "UNTUK KEGUNAAN";
+    spec.text = "  UNTUK KEGUNAAN BANK SAHAJA  ";
     spec.fontSize = 26;
-    spec.rotationDeg = 45;
-    const out = buildPalangSpec(spec, true);
-    expect(out.rotation_deg).toBe(45);
-    expect(out.label.font_size).toBe(26);
+    spec.color = "#1a3a8f";
+    expect(palangLabel(spec)).toEqual({
+      text: "UNTUK KEGUNAAN BANK SAHAJA",
+      color: "#1a3a8f",
+      fontPt: 26,
+    });
   });
 
-  it("omits rotation when unset", () => {
-    const out = buildPalangSpec(defaultSpec(), true);
-    expect(out.rotation_deg).toBeUndefined();
-  });
-
-  it("builds a region with left offset and no empty label", () => {
+  it("falls back to the default font size and an empty text", () => {
     const spec = defaultSpec();
-    spec.mode = "region";
-    spec.horiz = "right";
-    spec.widthPt = 200;
-    spec.heightPt = 30;
-    spec.text = ""; // empty purpose text means no label at all
-    const out = buildPalangSpec(spec, true);
-    expect(out.mode).toBe("region");
-    expect(out.position.left_pt).toBe(395);
-    expect(out.width_pt).toBe(200);
-    expect(out.label).toBeNull();
+    spec.fontSize = 0;
+    spec.text = "";
+    const out = palangLabel(spec);
+    expect(out.text).toBe("");
+    expect(out.fontPt).toBe(18);
   });
 
-  it("injects date and reference tokens", () => {
+  it("keeps the lines band monochrome (text shares the band colour)", () => {
     const spec = defaultSpec();
-    spec.text = "UNTUK KEGUNAAN KERAJAAN SAHAJA";
-    spec.second = "Dijana pada {date} - Rujukan {ref}";
-    spec.ref = "MOHON-2026";
-    const out = buildPalangSpec(spec, true);
-    expect(out.label.second_line).toContain("{date}");
-    expect(out.label.template_data.ref).toBe("MOHON-2026");
+    spec.color = "#b3261e";
+    expect(palangLabel(spec).color).toBe(spec.color);
   });
 });
 
-describe("imageSettings", () => {
-  it("maps each image to its enhance/crop settings in order", () => {
-    const images = [
-      { enhance: true, crop: { l: 0, t: 0, r: 1, b: 0.5 } },
-      { enhance: false, crop: null },
-    ];
-    expect(imageSettings(images)).toEqual([
-      { enhance: true, crop: { l: 0, t: 0, r: 1, b: 0.5 } },
-      { enhance: false, crop: null },
-    ]);
+describe("parseRangeGroups — page ranges for Extract", () => {
+  it("parses comma groups of ranges and single pages", () => {
+    expect(parseRangeGroups("1-3, 5, 8-10", 10)).toEqual([[1, 2, 3], [5], [8, 9, 10]]);
+  });
+
+  it("clamps to the page count and drops out-of-range numbers", () => {
+    expect(parseRangeGroups("0, 3-100", 5)).toEqual([[3, 4, 5]]);
+    expect(parseRangeGroups("9", 5)).toEqual([]);
+  });
+
+  it("accepts a reversed range and ignores empty/invalid parts", () => {
+    expect(parseRangeGroups("5-2", 10)).toEqual([[2, 3, 4, 5]]);
+    expect(parseRangeGroups("", 10)).toEqual([]);
+    expect(parseRangeGroups("abc, , -", 10)).toEqual([]);
   });
 });

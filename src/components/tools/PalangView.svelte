@@ -14,6 +14,7 @@
     app,
     pickPreviewFiles,
     removePreviewFile,
+    movePreviewFile,
     retryPreview,
     setActivePage,
     ensureFileThumb,
@@ -76,6 +77,7 @@
     items={basketItems}
     frameAspect={app.pageSize !== "fit" ? PAGE_DIMS[app.pageSize]?.w + "/" + PAGE_DIMS[app.pageSize]?.h : ""}
     onRemove={(id) => removePreviewFile(Number(id.replace("pf-", "")))}
+    onMove={(id, delta) => movePreviewFile(Number(id.replace("pf-", "")), delta)}
     onItem={(id) => {
       // Open the editor on the tapped file, not the first one.
       setActivePage(Number(id.replace("pf-", "")));

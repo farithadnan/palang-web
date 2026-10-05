@@ -13,6 +13,7 @@ there are no accounts.
 - Site: <https://farithadnan.github.io/palang-web/> (landing, install, privacy, feature pages)
 - Source: <https://github.com/farithadnan/palang-web>
 - Builds are published on the repository's releases page
+- Feature specs and architecture decisions: [`docs/`](./docs)
 
 The product ships as **Windows (EXE/MSI, Tauri)** and **Android (APK,
 Capacitor)**. Both are packaged from the same tools bundle, so there is one
@@ -177,7 +178,20 @@ docker run -p 8000:80 -v ./limits.json:/usr/share/nginx/html/limits.json:ro pala
   releasing a handle focuses the crop window to fill the screen, one finger/mouse
   drag pans the photo, and pinch/wheel zooms (limited so the window never sees
   empty background). Save re-crops the thumbnail so you see the result.
-- Merge needs **at least two PDFs** — one file is not a merge.
+- Convert photos can be **rotated in 90° steps** and **reordered**; page order
+  follows the list, and the thumbnail shows the rotated, cropped result the PDF
+  will contain (rotation is baked before the crop, in the preview and output).
+- Merge needs **at least two PDFs** — one file is not a merge. Individual pages
+  can be rotated, reordered, or dropped before saving (a dropped page stays
+  visible, dimmed, so the change is reversible).
+- **Extract** (Merge → Extract) copies chosen page ranges out of one PDF, as a
+  single file or one file per range.
+- **Prepare** is the start of the unified flow: one basket for photos **and**
+  PDFs, with paper size, an optional purpose stamp, merge-all vs one file per
+  item, and a chosen file name — exported through the same engine as the
+  dedicated tools.
+- A **Session** tab summarises what you produced this run and lets you re-save
+  or hand off any of it. It lives in memory only and is cleared on close.
 - Downloads use branded, timestamped names (e.g.
   `palang-stamped-2026-09-24-1430.pdf`), in local time.
 - Every result is shown in-app (name, size, save again) so the file is findable.

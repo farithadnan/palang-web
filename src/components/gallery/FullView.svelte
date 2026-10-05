@@ -11,6 +11,7 @@
     onClose,
     onDelete,
     onCrop,
+    onRotate,
     onEnhance,
   } = $props();
 
@@ -102,6 +103,22 @@
   <div class="fview-pill">
     <button type="button" class="fpill-btn" aria-label={t("viewCrop")} onclick={() => onCrop?.(item.id)}>
       <Icon name="crop" size={18} />
+    </button>
+    <button
+      type="button"
+      class="fpill-btn"
+      aria-label={t("viewRotateLeft")}
+      onclick={() => onRotate?.(item.id, -90)}
+    >
+      <Icon name="rotateL" size={18} />
+    </button>
+    <button
+      type="button"
+      class="fpill-btn"
+      aria-label={t("viewRotateRight")}
+      onclick={() => onRotate?.(item.id, 90)}
+    >
+      <Icon name="rotateR" size={18} />
     </button>
     <button
       type="button"

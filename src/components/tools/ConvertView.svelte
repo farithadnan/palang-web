@@ -18,6 +18,8 @@
     app,
     addImages,
     cropPreview,
+    rotateImage,
+    moveImage,
     removeImage,
     updateImage,
     setDefaultPageSize,
@@ -107,6 +109,7 @@
     frameAspect={app.pageSize !== "fit" ? PAGE_DIMS[app.pageSize]?.w + "/" + PAGE_DIMS[app.pageSize]?.h : ""}
     onRemove={removeImage}
     onItem={openViewer}
+    onMove={moveImage}
     onPick={addImages}
   />
 
@@ -135,13 +138,14 @@
     onClose={() => (viewing = null)}
     onDelete={confirmDelete}
     onCrop={viewerCrop}
+    onRotate={rotateImage}
     onEnhance={viewerEnhance}
   />
 {/if}
 
 {#if cropOpen && cropImage}
   <CropMode
-    url={cropImage.url}
+    url={cropImage.baseUrl}
     filter={cropImage.enhance ? ENHANCE_FILTER : "none"}
     crop={cropImage.crop ?? null}
     onClose={() => {

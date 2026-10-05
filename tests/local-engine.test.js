@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
-import { processOffline, rotatedPalangBox, palangDrawRect, imageStampRect } from "../src/lib/engine/local-engine.js";
+import { processOffline, palangSpecFor, pdfLoadErrorCode, buildPdf, rotatedPalangBox, palangDrawRect, imageStampRect } from "../src/lib/engine/local-engine.js";
 
 const PNG = new Uint8Array(Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -10,6 +10,12 @@ const PNG = new Uint8Array(Buffer.from(
 async function tinyPdfBytes() {
   const d = await PDFDocument.create();
   d.addPage([100, 100]);
+  return Buffer.from(await d.save());
+}
+
+async function pdfWithSize(w, h) {
+  const d = await PDFDocument.create();
+  d.addPage([w, h]);
   return Buffer.from(await d.save());
 }
 
@@ -91,6 +97,65 @@ describe("imageStampRect — compiled-image baking (two-temp flow)", () => {
   });
 });
 
+describe("palangSpecFor — a file's band stays on its own pages", () => {
+  const a = { text: "A", armed: true };
+  const b = { text: "B", armed: true };
+
+  it("uses the file's OWN spec, not another file's or the fallback", () => {
+    expect(palangSpecFor({ spec: a }, b)).toBe(a);
+    expect(palangSpecFor({ spec: b }, a)).toBe(b);
+  });
+
+  it("falls back only when the file carries no spec at all", () => {
+    expect(palangSpecFor({}, b)).toBe(b);
+    expect(palangSpecFor(undefined, b)).toBe(b);
+  });
+
+  it("an explicit null means unstamped — it never borrows the fallback", () => {
+    expect(palangSpecFor({ spec: null }, b)).toBeNull();
+  });
+
+  it("drops unarmed specs", () => {
+    expect(palangSpecFor({ spec: { text: "off", armed: false } }, a)).toBeNull();
+    expect(palangSpecFor({}, { text: "off", armed: false })).toBeNull();
+    expect(palangSpecFor({}, null)).toBeNull();
+  });
+});
+
+describe("pdfLoadErrorCode — explain why a PDF failed", () => {
+  it("tags an encrypted/ password-protected PDF", () => {
+    expect(pdfLoadErrorCode({ name: "EncryptedPDFError", message: "anything" })).toBe("pdf-locked");
+    expect(pdfLoadErrorCode(new Error("This PDF is encrypted"))).toBe("pdf-locked");
+    expect(pdfLoadErrorCode(new Error("password required"))).toBe("pdf-locked");
+  });
+  it("tags anything else as unreadable", () => {
+    expect(pdfLoadErrorCode(new Error("Failed to parse"))).toBe("pdf-unreadable");
+    expect(pdfLoadErrorCode(undefined)).toBe("pdf-unreadable");
+  });
+});
+
+describe("buildPdf — explicit page plan (Merge & Extract)", () => {
+  it("copies pages in plan order from grouped sources", async () => {
+    const a = await pdfWithSize(100, 200);
+    const b = await pdfWithSize(300, 150);
+    const out = await buildPdf([
+      { key: "b", name: "b", bytes: async () => b, page: 1, rotate: 0 },
+      { key: "a", name: "a", bytes: async () => a, page: 1, rotate: 0 },
+    ]);
+    const doc = await PDFDocument.load(out);
+    expect(doc.getPageCount()).toBe(2);
+    expect(Math.round(doc.getPage(0).getSize().width)).toBe(300);
+    expect(Math.round(doc.getPage(1).getSize().width)).toBe(100);
+  });
+
+  it("applies per-page rotation", async () => {
+    const a = await pdfWithSize(100, 200);
+    const out = await buildPdf([{ key: "a", name: "a", bytes: async () => a, page: 1, rotate: 90 }]);
+    const doc = await PDFDocument.load(out);
+    expect(doc.getPage(0).getRotation().angle).toBe(90);
+  });
+});
+
 describe("processOffline — the on-device engine", () => {
   it("converts one image into a single A4 page", async () => {
     const out = await processOffline({
@@ -153,11 +218,21 @@ describe("processOffline — the on-device engine", () => {
       images: [image()], // 1×1 png
       pdfs: [],
       pageSize: "fit",
-      specs: [],
+      spec: { armed: false },
     });
     const doc = await PDFDocument.load(out);
     const { width, height } = doc.getPage(0).getSize();
     expect([Math.round(width), Math.round(height)]).toEqual([595, 595]);
+  });
+
+  it("wraps a broken PDF load with the file name and a code", async () => {
+    await expect(
+      processOffline({
+        images: [],
+        pdfs: [{ bytes: async () => new Uint8Array([1, 2, 3]), name: "bad.pdf" }],
+        pageSize: "A4",
+      })
+    ).rejects.toMatchObject({ code: "pdf-unreadable", fileName: "bad.pdf" });
   });
 
   it("still produces a parseable pdf when there is nothing to process", async () => {

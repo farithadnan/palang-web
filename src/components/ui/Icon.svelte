@@ -39,6 +39,13 @@
     reset: '<path d="M3 12a9 9 0 1 0 2.7-6.5M3 3v5h5"/>',
     colorwell: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/>',
     more: '<path d="M5 12h.01M12 12h.01M19 12h.01"/>',
+    rotateL: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
+    rotateR: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    prepare:
+      '<path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 17l8 4 8-4"/>',
+    split:
+      '<circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><path d="M8.1 7.4L20 19M8.1 16.6L20 5"/>',
   };
 </script>
 

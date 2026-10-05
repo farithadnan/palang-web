@@ -4,10 +4,16 @@ import {
   setTheme,
   setLang,
   updateSpec,
-  addSpec,
-  removeSpecAt,
-  setSpecIndex,
-  resetSpec,
+  moveImage,
+  rotateMergePage,
+  moveMergePage,
+  removeMergePage,
+  movePrepareItem,
+  removePrepareItem,
+  setPrepare,
+  recordOutput,
+  clearSession,
+  sendResultTo,
   canMerge,
   humanSize,
 } from "../src/lib/state/store.svelte.js";
@@ -15,9 +21,23 @@ import { nextLang } from "../src/lib/i18n/index.js";
 import { defaultSpec } from "../src/lib/domain/domain.js";
 
 beforeEach(() => {
-  app.specs = [defaultSpec()];
-  app.specIndex = 0;
   app.images = [];
+  app.pdfs = [];
+  app.previewFiles = [];
+  app.stamp = [];
+  app.preview = null;
+  app.activePage = 0;
+  app.result = null;
+  app.merge = { pages: [], active: 0 };
+  app.prepare = {
+    items: [],
+    paper: "fit",
+    stamp: false,
+    stampText: "UNTUK KEGUNAAN BANK SAHAJA",
+    merge: true,
+    filename: "",
+  };
+  app.session = { startedAt: 0, outputs: [], counts: { convert: 0, palang: 0, merge: 0, prepare: 0 } };
 });
 
 function seedActiveImage() {
@@ -74,40 +94,128 @@ describe("updateSpec (active image's own palang)", () => {
   });
 });
 
-describe("multi-palang", () => {
-  it("addSpec appends a new spec and makes it active", () => {
-    addSpec();
-    expect(app.specs.length).toBe(2);
-    expect(app.specIndex).toBe(1);
-    // stacks below the previous band so it is visible immediately
-    expect(app.specs[1].topPt).toBeGreaterThan(app.specs[0].topPt ?? 0);
+describe("moveImage — page order follows list order", () => {
+  it("swaps an image with its neighbour and clamps at the ends", () => {
+    app.images = [{ id: "a" }, { id: "b" }, { id: "c" }];
+    moveImage("a", 1);
+    expect(app.images.map((i) => i.id)).toEqual(["b", "a", "c"]);
+    moveImage("a", 1);
+    expect(app.images.map((i) => i.id)).toEqual(["b", "c", "a"]);
+    moveImage("a", 1); // already last: no-op
+    expect(app.images.map((i) => i.id)).toEqual(["b", "c", "a"]);
+    moveImage("b", -1); // already first: no-op
+    expect(app.images.map((i) => i.id)).toEqual(["b", "c", "a"]);
   });
 
-  it("removeSpecAt deletes only named spec and keeps at least one", () => {
-    addSpec();
-    addSpec();
-    removeSpecAt(1);
-    expect(app.specs.length).toBe(2);
-    removeSpecAt(0);
-    expect(app.specs.length).toBe(1);
-    removeSpecAt(0); // last one cannot be removed
-    expect(app.specs.length).toBe(1);
+  it("ignores an unknown id", () => {
+    app.images = [{ id: "a" }];
+    moveImage("nope", 1);
+    expect(app.images.map((i) => i.id)).toEqual(["a"]);
+  });
+});
+
+describe("session summary", () => {
+  it("records outputs newest-first and counts by mode", () => {
+    recordOutput({ mode: "convert", name: "a.pdf", size: 1 });
+    recordOutput({ mode: "palang", name: "b.pdf", size: 2 });
+    expect(app.session.counts.convert).toBe(1);
+    expect(app.session.counts.palang).toBe(1);
+    expect(app.session.outputs.map((o) => o.name)).toEqual(["b.pdf", "a.pdf"]);
+    expect(app.session.outputs[0]).toMatchObject({ mode: "palang", name: "b.pdf", size: 2 });
   });
 
-  it("setSpecIndex selects and bounds-checks", () => {
-    addSpec();
-    setSpecIndex(0);
-    expect(app.specIndex).toBe(0);
-    setSpecIndex(9);
-    expect(app.specIndex).toBe(0);
+  it("caps the recent list and drops the oldest", () => {
+    for (let i = 0; i < 12; i++) recordOutput({ mode: "convert", name: `f${i}.pdf`, size: i });
+    expect(app.session.outputs.length).toBe(10);
+    expect(app.session.outputs[0].name).toBe("f11.pdf");
+    expect(app.session.counts.convert).toBe(12);
   });
 
-  it("resetSpec restores a single default spec", () => {
-    addSpec();
-    addSpec();
-    resetSpec();
-    expect(app.specs.length).toBe(1);
-    expect(app.specIndex).toBe(0);
+  it("clearSession resets counts and outputs", () => {
+    recordOutput({ mode: "merge", name: "m.pdf", size: 3 });
+    clearSession();
+    expect(app.session.outputs).toEqual([]);
+    expect(app.session.counts).toEqual({ convert: 0, palang: 0, merge: 0, prepare: 0 });
+  });
+});
+
+describe("tool handoff", () => {
+  it("seeds the Palang basket (with a palang) from the current result", () => {
+    app.result = { name: "x.pdf", blob: new Blob(["a"]), mode: "convert" };
+    expect(sendResultTo("palang")).toBe(true);
+    expect(app.previewFiles.length).toBe(1);
+    expect(app.previewFiles[0].name).toBe("x.pdf");
+    expect(app.stamp.length).toBe(1);
+  });
+
+  it("seeds the Merge basket from the current result", () => {
+    app.result = { name: "y.pdf", blob: new Blob(["a"]), mode: "palang" };
+    expect(sendResultTo("merge")).toBe(true);
+    expect(app.pdfs.length).toBe(1);
+  });
+
+  it("no-ops without a result or for an unknown target", () => {
+    expect(sendResultTo("palang")).toBe(false);
+    app.result = { name: "z.pdf", blob: new Blob(["a"]), mode: "convert" };
+    expect(sendResultTo("nope")).toBe(false);
+  });
+});
+
+describe("merge page-level edits", () => {
+  const page = (id) => ({ pdfId: id, file: { name: id + ".pdf" }, page: 1, removed: false, rotationDeg: 0 });
+
+  it("removeMergePage toggles a page in and out, recoverably", () => {
+    app.merge = { pages: [page("a")], active: 0 };
+    removeMergePage(0);
+    expect(app.merge.pages[0].removed).toBe(true);
+    removeMergePage(0);
+    expect(app.merge.pages[0].removed).toBe(false);
+  });
+
+  it("rotateMergePage rotates in 90° steps and normalises", () => {
+    app.merge = { pages: [page("a")], active: 0 };
+    rotateMergePage(0, 90);
+    expect(app.merge.pages[0].rotationDeg).toBe(90);
+    rotateMergePage(0, 270);
+    expect(app.merge.pages[0].rotationDeg).toBe(0);
+    rotateMergePage(0, -90);
+    expect(app.merge.pages[0].rotationDeg).toBe(270);
+  });
+
+  it("moveMergePage swaps neighbours and follows the page with the active index", () => {
+    app.merge = { pages: [page("a"), page("b"), page("c")], active: 0 };
+    moveMergePage(0, 1);
+    expect(app.merge.pages.map((p) => p.pdfId)).toEqual(["b", "a", "c"]);
+    expect(app.merge.active).toBe(1);
+    moveMergePage(0, -1); // already first: no-op
+    expect(app.merge.pages.map((p) => p.pdfId)).toEqual(["b", "a", "c"]);
+  });
+});
+
+describe("prepare (unified basket)", () => {
+  const item = (id) => ({ id, kind: "image", file: { name: id + ".png" }, url: null, pageCount: 0 });
+
+  it("moves an item with its neighbour", () => {
+    app.prepare.items = [item("a"), item("b"), item("c")];
+    movePrepareItem("a", 1);
+    expect(app.prepare.items.map((i) => i.id)).toEqual(["b", "a", "c"]);
+    movePrepareItem("a", 1);
+    expect(app.prepare.items.map((i) => i.id)).toEqual(["b", "c", "a"]);
+    movePrepareItem("b", -1); // already first: no-op
+    expect(app.prepare.items.map((i) => i.id)).toEqual(["b", "c", "a"]);
+  });
+
+  it("removes an item", () => {
+    app.prepare.items = [item("a"), item("b")];
+    removePrepareItem("a");
+    expect(app.prepare.items.map((i) => i.id)).toEqual(["b"]);
+  });
+
+  it("setPrepare merges export options", () => {
+    setPrepare({ stamp: true, filename: "x" });
+    expect(app.prepare.stamp).toBe(true);
+    expect(app.prepare.filename).toBe("x");
+    expect(app.prepare.merge).toBe(true); // untouched
   });
 });
 

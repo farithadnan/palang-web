@@ -18,15 +18,19 @@
   import ConvertView from "./components/tools/ConvertView.svelte";
   import PalangView from "./components/tools/PalangView.svelte";
   import MergeView from "./components/tools/MergeView.svelte";
+  import SessionView from "./components/tools/SessionView.svelte";
+  import PrepareView from "./components/tools/PrepareView.svelte";
   import { app, applyUpdate, checkForUpdate, dismissUpdate } from "./lib/state/store.svelte.js";
   import { loadLimits } from "./lib/util/config.js";
   import { t } from "./lib/i18n/index.js";
   import { route, goto, subscribe } from "./lib/util/router.js";
 
   const TOOLS = [
+    { id: "prepare", label: () => t("prepare"), icon: "prepare" },
     { id: "convert", label: () => t("convertLabel"), icon: "convert" },
     { id: "palang", label: () => t("palang"), icon: "palang" },
     { id: "merge", label: () => t("navMerge"), icon: "merge" },
+    { id: "session", label: () => t("session"), icon: "clock" },
     { id: "about", label: () => t("about"), icon: "info" },
     { id: "settings", label: () => t("settings"), icon: "sliders" },
   ];
@@ -133,12 +137,16 @@
       </aside>
 
       <main class="app-body">
-        {#if view === "convert"}
+        {#if view === "prepare"}
+          <PrepareView />
+        {:else if view === "convert"}
           <ConvertView />
         {:else if view === "palang"}
           <PalangView />
         {:else if view === "merge"}
           <MergeView />
+        {:else if view === "session"}
+          <SessionView />
         {:else if view === "about"}
           <AboutView />
         {:else if view === "settings"}

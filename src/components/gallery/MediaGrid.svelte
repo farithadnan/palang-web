@@ -21,6 +21,7 @@
     selectable = true,
     onOpen,
     onRemove,
+    onMove,
   } = $props();
 
   const MOVE_SLOP = 12; // px of finger drift still counted as a press
@@ -158,6 +159,26 @@
       <Icon name="x" size={20} />
     </button>
     <span class="msel-count">{t("selCount", { n: selected.length })}</span>
+    {#if onMove && selected.length === 1}
+      <button
+        type="button"
+        class="iconbtn"
+        aria-label={t("olUp")}
+        title={t("olUp")}
+        onclick={() => onMove(selected[0], -1)}
+      >
+        <Icon name="chevL" size={20} />
+      </button>
+      <button
+        type="button"
+        class="iconbtn"
+        aria-label={t("olDown")}
+        title={t("olDown")}
+        onclick={() => onMove(selected[0], 1)}
+      >
+        <Icon name="chevR" size={20} />
+      </button>
+    {/if}
     <button
       type="button"
       class="btn btn-sm"
