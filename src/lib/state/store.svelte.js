@@ -1129,11 +1129,19 @@ export function addPrepareFiles(fileList) {
       continue;
     }
     const isPdf = isPdfFile(file);
+    const url = isPdf ? null : URL.createObjectURL(file);
     const item = {
       id: `prep-${++prepareSeq}`,
       kind: isPdf ? "pdf" : "image",
       file,
-      url: isPdf ? null : URL.createObjectURL(file),
+      // Images carry the same shape as the Convert basket, so the ONE preview
+      // renderer (rebuildBase / rebuildDisplay) edits them identically.
+      url, // display: cropped(rotated(original))
+      originalUrl: url,
+      baseUrl: url,
+      crop: null,
+      rotationDeg: 0,
+      enhance: false,
       pageCount: 0,
     };
     app.prepare.items.push(item);
@@ -1154,8 +1162,47 @@ export function removePrepareItem(id) {
   const i = app.prepare.items.findIndex((x) => x.id === id);
   if (i < 0) return;
   const item = app.prepare.items[i];
-  if (item.url) URL.revokeObjectURL(item.url);
+  releaseDerived(item);
+  if (item.originalUrl) URL.revokeObjectURL(item.originalUrl);
   app.prepare.items.splice(i, 1);
+}
+
+/** A prepare IMAGE as a preview entry (or null for a PDF / unknown id). */
+function prepareImage(id) {
+  const it = app.prepare.items.find((x) => x.id === id);
+  return it && it.kind === "image" ? it : null;
+}
+
+/** Image editing reuses the ONE renderer shared with Convert. */
+export function rotatePrepareImage(id, delta) {
+  const im = prepareImage(id);
+  if (!im) return;
+  im.rotationDeg = rotatedDeg((im.rotationDeg ?? 0) + delta);
+  void refreshImage(im);
+}
+
+export function cropPrepareImage(id, crop) {
+  const im = prepareImage(id);
+  if (!im) return;
+  im.crop = crop;
+  void rebuildDisplay(im);
+}
+
+export function togglePrepareEnhance(id) {
+  const im = prepareImage(id);
+  if (!im) return;
+  im.enhance = !im.enhance;
+}
+
+export function revertPrepareImage(id) {
+  const im = prepareImage(id);
+  if (!im) return;
+  releaseDerived(im);
+  im.rotationDeg = 0;
+  im.baseUrl = im.originalUrl;
+  im.url = im.originalUrl;
+  im.crop = null;
+  im.enhance = false;
 }
 
 export function movePrepareItem(id, delta) {
@@ -1180,7 +1227,12 @@ function prepareSetups(items) {
     if (it.kind === "pdf") {
       pdfs.push({ bytes, name: it.file.name, mime: "application/pdf", isPdf: true });
     } else {
-      images.push({ bytes, mime: it.file.type || "image/jpeg", setting: null, isPdf: false });
+      images.push({
+        bytes,
+        mime: it.file.type || "image/jpeg",
+        setting: { crop: it.crop, rotation: it.rotationDeg, enhance: it.enhance },
+        isPdf: false,
+      });
     }
   }
   return { images, pdfs };

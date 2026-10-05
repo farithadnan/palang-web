@@ -10,6 +10,7 @@ import {
   removeMergePage,
   movePrepareItem,
   removePrepareItem,
+  revertPrepareImage,
   setPrepare,
   recordOutput,
   clearSession,
@@ -216,6 +217,28 @@ describe("prepare (unified basket)", () => {
     expect(app.prepare.stamp).toBe(true);
     expect(app.prepare.filename).toBe("x");
     expect(app.prepare.merge).toBe(true); // untouched
+  });
+
+  it("revertPrepareImage clears crop, rotation and enhance", () => {
+    app.prepare.items = [
+      {
+        id: "a",
+        kind: "image",
+        file: {},
+        url: "blob:x",
+        originalUrl: "blob:x",
+        baseUrl: "blob:x",
+        rotationDeg: 90,
+        crop: { l: 0, t: 0, r: 1, b: 1 },
+        enhance: true,
+      },
+    ];
+    revertPrepareImage("a");
+    const it = app.prepare.items[0];
+    expect(it.rotationDeg).toBe(0);
+    expect(it.crop).toBeNull();
+    expect(it.enhance).toBe(false);
+    expect(it.url).toBe(it.originalUrl);
   });
 });
 
