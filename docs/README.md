@@ -5,6 +5,10 @@ stays the product guide (what the app is, how it builds, how releases work);
 this folder holds the **specs** (what a feature should do before code is
 written) and **ADRs** (decisions that outlive a single feature).
 
+**Start with [`ROADMAP.md`](./ROADMAP.md)** — it is the status/handoff: what is
+done, what is next, and where things live. Useful when resuming in a new
+session.
+
 - [`adr/`](./adr) — Architecture Decision Records, one file per decision.
 - [`specs/`](./specs) — feature specs. Each carries a **Status** line:
   `Draft` (proposed), `Accepted` (agreed, not built), `In progress` (partly

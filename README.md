@@ -13,7 +13,8 @@ there are no accounts.
 - Site: <https://farithadnan.github.io/palang-web/> (landing, install, privacy, feature pages)
 - Source: <https://github.com/farithadnan/palang-web>
 - Builds are published on the repository's releases page
-- Feature specs and architecture decisions: [`docs/`](./docs)
+- Feature specs and architecture decisions: [`docs/`](./docs) — see
+  [`docs/ROADMAP.md`](./docs/ROADMAP.md) for status and what's next
 
 The product ships as **Windows (EXE/MSI, Tauri)** and **Android (APK,
 Capacitor)**. Both are packaged from the same tools bundle, so there is one
